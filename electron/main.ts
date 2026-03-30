@@ -7,7 +7,7 @@ import { basename, extname, join } from 'node:path';
 import { platform } from 'node:process';
 import packageJson from '../package.json';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem } from '../src/lib/search/types';
-import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
+import { createBlurSuppressionDeadline, DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
 import { configureIndexWatchers, getSearchStatus, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
 import {
   ensureLauncherState,
@@ -518,10 +518,11 @@ function broadcastIndexChanged() {
 function registerShortcuts() {
   void getLauncherSettings().then((settings) => {
     const requested = settings.launcherHotkey ?? '';
-    const fallback = 'CommandOrControl+Shift+Space';
-    const nextShortcut = registerLauncherShortcut(requested) ? requested : fallback;
+    const resolved = resolveLauncherShortcut(requested, app.isPackaged);
+    const fallback = DEFAULT_LAUNCHER_SHORTCUT;
+    const nextShortcut = registerLauncherShortcut(resolved) ? resolved : fallback;
 
-    if (nextShortcut !== requested) {
+    if (requested && nextShortcut !== requested) {
       void saveLauncherSettings({
         ...settings,
         launcherHotkey: nextShortcut
@@ -653,9 +654,12 @@ app.whenReady().then(async () => {
     const currentSettings = launcherSettingsCache;
     const nextSettings = await saveLauncherSettings(settings);
     launcherSettingsCache = nextSettings;
-    if (currentSettings.launcherHotkey !== nextSettings.launcherHotkey) {
-      const fallback = currentSettings.launcherHotkey || 'CommandOrControl+Shift+Space';
-      const registered = registerLauncherShortcut(nextSettings.launcherHotkey);
+    const currentRegisteredShortcut = resolveLauncherShortcut(currentSettings.launcherHotkey, app.isPackaged);
+    const nextRegisteredShortcut = resolveLauncherShortcut(nextSettings.launcherHotkey, app.isPackaged);
+
+    if (currentRegisteredShortcut !== nextRegisteredShortcut) {
+      const fallback = currentRegisteredShortcut || DEFAULT_LAUNCHER_SHORTCUT;
+      const registered = registerLauncherShortcut(nextRegisteredShortcut);
 
       if (!registered) {
         const recoveredSettings = await saveLauncherSettings({

@@ -80,6 +80,7 @@ The settings window is the control center for launcher preferences.
 
 - Toggle best match, app-first ranking, preview, quick look, snippets, and clipboard history.
 - Capture a new global launcher shortcut directly by pressing the combination in settings, or clear it entirely to disable the launcher hotkey.
+- During `npm run dev`, a cleared launcher shortcut still falls back to `Cmd+Shift+Space` for that session so the launcher cannot strand itself hidden while you are iterating.
 - Set how many clipboard items to retain.
 - Create aliases for paths, snippets, or direct settings access.
 - Create reusable text snippets.
