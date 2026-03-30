@@ -7,6 +7,7 @@ import { basename, extname, join } from 'node:path';
 import { platform } from 'node:process';
 import packageJson from '../package.json';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem } from '../src/lib/search/types';
+import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
 import { configureIndexWatchers, getSearchStatus, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
 import {
   ensureLauncherState,
@@ -28,6 +29,7 @@ let rendererReady = false;
 let pendingShow = false;
 let registeredLauncherShortcut: string | null = null;
 let launcherSettingsCache = getLauncherStateSnapshot().settings;
+let blurSuppressionDeadline = 0;
 const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 const textPreviewExtensions = new Set([
@@ -229,10 +231,15 @@ function showLauncher() {
   }
 
   pendingShow = false;
+  blurSuppressionDeadline = createBlurSuppressionDeadline(Date.now());
   positionLauncherWindow();
+  if (platform === 'darwin') {
+    app.focus({ steal: true });
+  }
   mainWindow.moveTop();
   mainWindow.show();
   mainWindow.focus();
+  mainWindow.webContents.focus();
 }
 
 function loadRenderer(targetWindow: BrowserWindow, view: 'launcher' | 'settings') {
@@ -303,7 +310,11 @@ async function createWindow() {
   positionLauncherWindow();
 
   mainWindow.on('blur', () => {
-    mainWindow?.hide();
+    if (!mainWindow || !shouldHideLauncherOnBlur(mainWindow.isVisible(), Date.now(), blurSuppressionDeadline)) {
+      return;
+    }
+
+    mainWindow.hide();
   });
 
   mainWindow.on('moved', () => {
