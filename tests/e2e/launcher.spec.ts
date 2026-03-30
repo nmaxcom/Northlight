@@ -1,0 +1,73 @@
+import { expect, test } from '@playwright/test';
+
+test('shows launcher shell', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.getByText(/northlight/i)).toBeVisible();
+  await expect(page.getByPlaceholder('Search files, folders, apps, or type 30mph to kmh')).toBeVisible();
+});
+
+test('shows deterministic conversion answers', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Launcher query').fill('30mph to kmh');
+
+  await expect(page.getByText('30 m/h = 48.28 km/h').first()).toBeVisible();
+  await expect(page.getByText('Copy Result').first()).toBeVisible();
+});
+
+test('shows extended deterministic calculations', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Launcher query').fill('15% of 240');
+  await expect(page.getByText('15% of 240 = 36').first()).toBeVisible();
+
+  await page.getByLabel('Launcher query').fill('45 usd to eur');
+  await expect(page.getByText(/45 USD = .* EUR/).first()).toBeVisible();
+});
+
+test('shows local fixture results and keyboard action hints', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Launcher query').fill('product');
+
+  await expect(page.getByRole('button', { name: /product-brief\.md/i })).toBeVisible();
+  await expect(page.locator('footer').getByText('Open File')).toBeVisible();
+  await expect(page.getByRole('button', { name: /actions cmd k/i })).toBeVisible();
+});
+
+test('supports fuzzy app matches and folder quick actions', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Launcher query').fill('btt');
+  await expect(page.getByRole('button', { name: /BetterTouchTool\.app/i })).toBeVisible();
+
+  await page.getByLabel('Launcher query').fill('steel');
+  await page.keyboard.press('Meta+K');
+  await expect(page.getByLabel('Action filter')).toBeVisible();
+  const panel = page.locator('[data-actions-panel="true"]');
+  await expect(panel.getByText('Open In Terminal')).toBeVisible();
+  await expect(panel.getByText('Copy Name')).toBeVisible();
+});
+
+test('filters actions inside the actions panel', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Launcher query').fill('product');
+  await page.keyboard.press('Meta+K');
+
+  const actionFilter = page.getByLabel('Action filter');
+  await expect(actionFilter).toBeVisible();
+  await actionFilter.fill('finder');
+
+  const panel = page.locator('[data-actions-panel="true"]');
+  await expect(panel.getByText('Reveal in Finder')).toBeVisible();
+  await expect(panel.getByText('Copy Path')).toHaveCount(0);
+});
+
+test('shows the settings view route', async ({ page }) => {
+  await page.goto('/?view=settings');
+
+  await expect(page.getByText('Northlight Settings')).toBeVisible();
+  await expect(page.getByRole('button', { name: /save settings/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Overview' })).toBeVisible();
+  await expect(page.getByText('Search And Ranking')).toBeVisible();
+  await expect(page.getByLabel('Launcher shortcut')).toHaveValue('CommandOrControl+Shift+Space');
+  await page.getByRole('button', { name: 'Scopes & Status' }).click();
+  await expect(page.getByRole('checkbox', { name: /watch filesystem changes/i })).toBeChecked();
+});

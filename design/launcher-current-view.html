@@ -1,0 +1,1396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Northlight Interactive Mock</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        --text-0: #f5f7fa;
+        --text-1: rgba(245, 247, 250, 0.76);
+        --text-2: rgba(245, 247, 250, 0.46);
+        --line: rgba(143, 165, 189, 0.24);
+        --line-soft: rgba(255, 255, 255, 0.08);
+        --shell-top: rgba(11, 17, 23, 0.98);
+        --shell-bottom: rgba(7, 10, 14, 0.995);
+        --surface: rgba(255, 255, 255, 0.03);
+        --surface-2: rgba(255, 255, 255, 0.05);
+        --surface-3: rgba(255, 255, 255, 0.06);
+        --surface-4: rgba(255, 255, 255, 0.09);
+        --green: #8ade92;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at top left, rgba(115, 142, 168, 0.18), transparent 32%),
+          linear-gradient(180deg, #0a0f14, #06090d 76%);
+        color: var(--text-0);
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        background: none;
+        color: inherit;
+      }
+
+      .window {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(170, 192, 214, 0.26);
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+          0 18px 50px rgba(0, 0, 0, 0.34);
+        background:
+          radial-gradient(circle at top left, rgba(115, 142, 168, 0.16), transparent 32%),
+          linear-gradient(180deg, var(--shell-top), var(--shell-bottom));
+      }
+
+      .shell {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 14px 8px;
+      }
+
+      .brand {
+        font-size: 0.9rem;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 30px;
+        padding: 0 14px;
+        border-radius: 8px;
+        background: #1d2732;
+        color: #d9e2ea;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .badge.ready {
+        background: #163722;
+        color: var(--green);
+      }
+
+      .search {
+        margin: 0 14px 10px;
+        height: 35px;
+        border-radius: 10px;
+        border: 1px solid rgba(128, 151, 176, 0.3);
+        background: rgba(255, 255, 255, 0.042);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.02),
+          0 0 0 1px rgba(0, 0, 0, 0.16);
+        display: grid;
+        grid-template-columns: 27px 1fr 27px;
+        align-items: center;
+        padding: 0 6px;
+      }
+
+      .search-icon,
+      .search-arrow {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 27px;
+        line-height: 1;
+        user-select: none;
+      }
+
+      .search-input {
+        width: 100%;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text-0);
+        font-size: 0.94rem;
+        font-weight: 700;
+        line-height: 1;
+        padding: 0;
+      }
+
+      .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      .body {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 37%;
+        gap: 16px;
+        padding: 0 26px;
+      }
+
+      .results {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .results::-webkit-scrollbar,
+      .action-list::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      .results::-webkit-scrollbar-thumb,
+      .action-list::-webkit-scrollbar-thumb {
+        background: rgba(171, 190, 208, 0.22);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+      }
+
+      .empty {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 22px;
+        border: 1px dashed rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.028);
+        text-align: center;
+        padding: 40px 20px;
+      }
+
+      .empty h2 {
+        margin: 0 0 12px;
+        font-size: 0.96rem;
+        font-weight: 800;
+      }
+
+      .empty p {
+        margin: 0;
+        color: var(--text-2);
+        font-size: 0.8rem;
+        line-height: 1.5;
+        max-width: 520px;
+      }
+
+      .preview-pane {
+        min-height: 0;
+        border-radius: 22px;
+        border: 1px solid rgba(170, 192, 214, 0.12);
+        background: rgba(255, 255, 255, 0.022);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .preview-header {
+        min-height: 76px;
+        padding: 0 26px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .preview-title {
+        font-size: 0.88rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-1);
+      }
+
+      .preview-hide {
+        min-height: 54px;
+        padding: 0 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(170, 192, 214, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text-0);
+        font-size: 0.96rem;
+      }
+
+      .preview-placeholder {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        color: var(--text-2);
+        text-align: center;
+        font-size: 0.82rem;
+        padding: 20px;
+      }
+
+      .preview-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding: 26px;
+      }
+
+      .preview-path {
+        color: var(--text-2);
+        font-size: 0.82rem;
+      }
+
+      .preview-code {
+        min-height: 190px;
+        border-radius: 18px;
+        border: 1px solid rgba(170, 192, 214, 0.12);
+        background: rgba(255, 255, 255, 0.035);
+        padding: 22px;
+        color: var(--text-0);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.88rem;
+      }
+
+      .preview-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .preview-meta-row {
+        min-height: 50px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+        gap: 16px;
+      }
+
+      .preview-meta-label {
+        color: var(--text-2);
+        font-size: 0.84rem;
+      }
+
+      .preview-meta-value {
+        color: var(--text-0);
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .best-match {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: start;
+        min-height: 132px;
+        padding: 24px 28px;
+        border-radius: 22px;
+        background: linear-gradient(180deg, rgba(50, 66, 84, 0.38), rgba(19, 26, 34, 0.66));
+        border: 1px solid rgba(141, 167, 191, 0.34);
+        box-shadow: inset 0 0 0 1px rgba(206, 222, 237, 0.12);
+        margin-bottom: 16px;
+      }
+
+      .best-match-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        color: #d9e2ea;
+        font-size: 1.6rem;
+        background: linear-gradient(180deg, rgba(66, 156, 120, 0.34), rgba(31, 97, 72, 0.56));
+      }
+
+      .best-match-copy {
+        min-width: 0;
+      }
+
+      .best-match-eyebrow {
+        color: var(--text-2);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+
+      .best-match-title {
+        margin-top: 10px;
+        font-size: 1.26rem;
+        font-weight: 800;
+      }
+
+      .preview-main-title {
+        margin-top: 0;
+      }
+
+      .best-match-subtitle {
+        margin-top: 10px;
+        color: var(--text-2);
+        font-size: 0.9rem;
+      }
+
+      .best-match-actions {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .best-match-chip {
+        min-height: 48px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(170, 192, 214, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        display: inline-flex;
+        gap: 14px;
+        align-items: center;
+        font-size: 0.9rem;
+      }
+
+      .best-match-chip-hint {
+        color: var(--text-2);
+      }
+
+      .result {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 14px;
+        background: var(--surface);
+        border: 1px solid transparent;
+        text-align: left;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+      }
+
+      .is-hidden {
+        display: none !important;
+      }
+
+      .result:hover,
+      .result[data-selected="true"] {
+        border-color: rgba(143, 165, 189, 0.32);
+        background: linear-gradient(180deg, rgba(84, 105, 124, 0.26), rgba(32, 40, 49, 0.45));
+      }
+
+      .result:hover {
+        transform: translateY(-1px);
+      }
+
+      .result-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: var(--surface-2);
+        color: #d9e2ea;
+        font-size: 1rem;
+      }
+
+      .result-copy {
+        min-width: 0;
+      }
+
+      .result-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        line-height: 1.15;
+      }
+
+      .result-subtitle {
+        margin-top: 4px;
+        color: var(--text-2);
+        font-size: 0.74rem;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .result-kind {
+        align-self: start;
+        min-height: 28px;
+        padding: 0 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        background: var(--surface-3);
+        color: #c8d3de;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .footer {
+        position: relative;
+        min-height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px 26px 18px;
+      }
+
+      .footer-left,
+      .footer-right {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .footer-left {
+        flex-wrap: wrap;
+      }
+
+      .footer-text {
+        font-size: 0.92rem;
+        color: var(--text-1);
+      }
+
+      .footer-text.strong {
+        color: var(--text-0);
+        font-weight: 700;
+      }
+
+      .kbd {
+        min-width: 32px;
+        min-height: 32px;
+        padding: 0 10px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--surface-3);
+        color: #ddd;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .actions-trigger {
+        min-height: 48px;
+        padding: 0 16px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface-3);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        cursor: pointer;
+      }
+
+      .actions-trigger:hover {
+        background: var(--surface-4);
+      }
+
+      .actions-trigger:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+
+      .actions-panel {
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 12px);
+        width: min(540px, 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(158, 181, 204, 0.18);
+        background:
+          linear-gradient(180deg, rgba(36, 44, 53, 0.98), rgba(20, 25, 31, 0.99)),
+          rgba(12, 15, 18, 0.98);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.03),
+          0 24px 46px rgba(0, 0, 0, 0.34);
+        overflow: hidden;
+      }
+
+      .actions-panel[hidden] {
+        display: none;
+      }
+
+      .action-header {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .action-header-title {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      .action-header-subtitle {
+        margin-top: 4px;
+        font-size: 0.82rem;
+        color: var(--text-2);
+      }
+
+      .action-list {
+        max-height: 280px;
+        overflow: auto;
+        padding: 8px;
+      }
+
+      .action-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .action-row:hover,
+      .action-row[data-selected="true"] {
+        background: var(--surface-3);
+        border-color: rgba(158, 181, 204, 0.18);
+      }
+
+      .action-copy {
+        min-width: 0;
+        display: inline-flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .action-label {
+        font-size: 0.98rem;
+        font-weight: 600;
+      }
+
+      .action-shortcuts {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .action-search {
+        padding: 12px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .action-search input {
+        width: 100%;
+        min-height: 42px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-0);
+        padding: 0 16px;
+        outline: 0;
+        font-size: 1rem;
+      }
+
+      .action-search input::placeholder {
+        color: var(--text-2);
+      }
+
+      .action-empty {
+        min-height: 140px;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        color: var(--text-2);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="window">
+      <section class="shell">
+        <header class="header">
+          <div class="brand">Northlight</div>
+          <div class="status">
+            <div class="badge">v0.4.5</div>
+            <div class="badge">7,046 indexed</div>
+            <div class="badge ready">Ready</div>
+          </div>
+        </header>
+
+        <section class="search">
+          <div class="search-icon">⌕</div>
+          <input
+            id="searchInput"
+            class="search-input"
+            type="text"
+            value="chro"
+            placeholder="Search files, folders, apps, or type 30mph to kmh"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <div class="search-arrow">→</div>
+        </section>
+
+        <section class="body">
+          <section id="results" class="results">
+            <section id="emptyState" class="empty is-hidden">
+              <div>
+                <h2>Start from recent context</h2>
+                <p>Recent launcher choices, clipboard items, and configured snippets<br />can appear here as you build history.</p>
+              </div>
+            </section>
+
+            <button
+              class="best-match"
+              type="button"
+              data-result-id="google-chrome"
+              data-title="Google Chrome.app"
+              data-subtitle="/Applications/Google Chrome.app"
+              data-kind="Application"
+              data-search="Google Chrome.app google chrome app browser chro"
+              data-action-primary="Launch App"
+              data-action-primary-hint="Enter"
+            >
+              <div class="best-match-icon">⌘</div>
+              <div class="best-match-copy">
+                <div class="best-match-eyebrow">Best Match</div>
+                <div class="best-match-title">Google Chrome.app</div>
+                <div class="best-match-subtitle">/Applications/Google Chrome.app</div>
+                <div class="best-match-actions">
+                  <span class="best-match-chip"><span>Launch App</span><span class="best-match-chip-hint">Enter</span></span>
+                  <span class="best-match-chip"><span>Quick Look</span></span>
+                  <span class="best-match-chip"><span>Reveal in Finder</span><span class="best-match-chip-hint">Cmd+Enter</span></span>
+                </div>
+              </div>
+              <div class="result-kind">Application</div>
+            </button>
+
+            <button
+            class="result"
+            type="button"
+            data-result-id="google-chrome-testing"
+            data-title="Google Chrome for Testing.app"
+            data-subtitle="/Users/nm4/STUFF/Coding/ChromeTranslate/.playwright-browsers/chromium-1209/chrome..."
+            data-kind="Application"
+            data-search="Google Chrome for Testing.app chrome chromium application"
+            data-action-primary="Launch App"
+            data-action-primary-hint="Enter"
+          >
+            <span class="result-icon">⌘</span>
+            <span class="result-copy">
+              <span class="result-title">Google Chrome for Testing.app</span>
+              <span class="result-subtitle">/Users/nm4/STUFF/Coding/ChromeTranslate/.playwright-browsers/chromium-1209/chrome...</span>
+            </span>
+            <span class="result-kind">Application</span>
+            </button>
+
+            <button
+            class="result"
+            type="button"
+            data-result-id="chrome-translate"
+            data-title="ChromeTranslate"
+            data-subtitle="/Users/nm4/STUFF/Coding/ChromeTranslate"
+            data-kind="Folder"
+            data-search="ChromeTranslate folder chro chrome"
+            data-action-primary="Open Folder"
+            data-action-primary-hint="Enter"
+          >
+            <span class="result-icon">⌂</span>
+            <span class="result-copy">
+              <span class="result-title">ChromeTranslate</span>
+              <span class="result-subtitle">/Users/nm4/STUFF/Coding/ChromeTranslate</span>
+            </span>
+            <span class="result-kind">Folder</span>
+            </button>
+
+            <button
+            class="result"
+            type="button"
+            data-result-id="chrome-cache-solution"
+            data-title="CHROME_CACHE_SOLUTION.md"
+            data-subtitle="/Users/nm4/STUFF/Coding/YTQuickSummarizer/CHROME_CACHE_SOLUTION.md"
+            data-kind="File"
+            data-search="CHROME_CACHE_SOLUTION.md chrome cache solution"
+            data-action-primary="Open File"
+            data-action-primary-hint="Enter"
+          >
+            <span class="result-icon">▤</span>
+            <span class="result-copy">
+              <span class="result-title">CHROME_CACHE_SOLUTION.md</span>
+              <span class="result-subtitle">/Users/nm4/STUFF/Coding/YTQuickSummarizer/CHROME_CACHE_SOLUTION.md</span>
+            </span>
+            <span class="result-kind">File</span>
+            </button>
+
+            <button
+            class="result"
+            type="button"
+            data-result-id="chrome-extension"
+            data-title="chrome-extension:"
+            data-subtitle="/Users/nm4/STUFF/Coding/tmp/chrome-extension:"
+            data-kind="Folder"
+            data-search="chrome-extension chrome extension folder"
+            data-action-primary="Open Folder"
+            data-action-primary-hint="Enter"
+          >
+            <span class="result-icon">⌂</span>
+            <span class="result-copy">
+              <span class="result-title">chrome-extension:</span>
+              <span class="result-subtitle">/Users/nm4/STUFF/Coding/tmp/chrome-extension:</span>
+            </span>
+            <span class="result-kind">Folder</span>
+            </button>
+
+            <button
+            class="result"
+            type="button"
+            data-result-id="chrome-store-description"
+            data-title="chrome-store-description.md"
+            data-subtitle="/Users/nm4/STUFF/Coding/Redittab/docs/chrome-store-description.md"
+            data-kind="File"
+            data-search="chrome-store-description.md chrome store description"
+            data-action-primary="Open File"
+            data-action-primary-hint="Enter"
+          >
+            <span class="result-icon">▤</span>
+            <span class="result-copy">
+              <span class="result-title">chrome-store-description.md</span>
+              <span class="result-subtitle">/Users/nm4/STUFF/Coding/Redittab/docs/chrome-store-description.md</span>
+            </span>
+            <span class="result-kind">File</span>
+            </button>
+
+            <button
+            class="result"
+            type="button"
+            data-result-id="chrome-feature-state"
+            data-title="ChromeFeatureState"
+            data-subtitle="/Users/nm4/STUFF/Coding/YTQuickSummarizer/.chrome-profile/ChromeFeatureState"
+            data-kind="Folder"
+            data-search="ChromeFeatureState chro chrome feature state folder"
+            data-action-primary="Open Folder"
+            data-action-primary-hint="Enter"
+          >
+            <span class="result-icon">⌂</span>
+            <span class="result-copy">
+              <span class="result-title">ChromeFeatureState</span>
+              <span class="result-subtitle">/Users/nm4/STUFF/Coding/YTQuickSummarizer/.chrome-profile/ChromeFeatureState</span>
+            </span>
+            <span class="result-kind">Folder</span>
+            </button>
+          </section>
+
+          <aside class="preview-pane">
+            <div class="preview-header">
+              <div class="preview-title">Preview</div>
+              <button class="preview-hide" type="button">Hide</button>
+            </div>
+            <div class="preview-content">
+              <div class="best-match-title preview-main-title">Google Chrome</div>
+              <div class="preview-path">/Applications/Google Chrome.app</div>
+              <div class="preview-code">macOS application bundle</div>
+              <div class="preview-meta">
+                <div class="preview-meta-row">
+                  <span class="preview-meta-label">Type</span>
+                  <span class="preview-meta-value">Application</span>
+                </div>
+                <div class="preview-meta-row">
+                  <span class="preview-meta-label">Bundle</span>
+                  <span class="preview-meta-value">Google Chrome.app</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <footer class="footer">
+          <div id="actionsPanel" class="actions-panel" hidden>
+            <div class="action-header">
+              <div id="actionHeaderTitle" class="action-header-title"></div>
+              <div id="actionHeaderSubtitle" class="action-header-subtitle"></div>
+            </div>
+            <div id="actionList" class="action-list">
+              <button class="action-row" type="button" data-result-actions="google-chrome" data-action-search="Launch App Enter">
+                <span class="action-copy">
+                  <span class="action-label">Launch App</span>
+                </span>
+                <span class="action-shortcuts"><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row" type="button" data-result-actions="google-chrome" data-action-search="Quick Look">
+                <span class="action-copy">
+                  <span class="action-label">Quick Look</span>
+                </span>
+                <span class="action-shortcuts"></span>
+              </button>
+              <button class="action-row" type="button" data-result-actions="google-chrome" data-action-search="Reveal in Finder Cmd Enter">
+                <span class="action-copy">
+                  <span class="action-label">Reveal in Finder</span>
+                </span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row" type="button" data-result-actions="google-chrome" data-action-search="Copy Path Cmd Shift C">
+                <span class="action-copy">
+                  <span class="action-label">Copy Path</span>
+                </span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">C</span></span>
+              </button>
+              <button class="action-row" type="button" data-result-actions="google-chrome" data-action-search="Copy Name Cmd Shift N">
+                <span class="action-copy">
+                  <span class="action-label">Copy Name</span>
+                </span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">N</span></span>
+              </button>
+
+              <button class="action-row is-hidden" type="button" data-result-actions="google-chrome-testing" data-action-search="Launch App Enter">
+                <span class="action-copy">
+                  <span class="action-label">Launch App</span>
+                </span>
+                <span class="action-shortcuts"><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="google-chrome-testing" data-action-search="Quick Look">
+                <span class="action-copy">
+                  <span class="action-label">Quick Look</span>
+                </span>
+                <span class="action-shortcuts"></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="google-chrome-testing" data-action-search="Reveal in Finder Cmd Enter">
+                <span class="action-copy">
+                  <span class="action-label">Reveal in Finder</span>
+                </span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="google-chrome-testing" data-action-search="Copy Path Cmd Shift C">
+                <span class="action-copy">
+                  <span class="action-label">Copy Path</span>
+                </span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">C</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="google-chrome-testing" data-action-search="Copy Name Cmd Shift N">
+                <span class="action-copy">
+                  <span class="action-label">Copy Name</span>
+                </span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">N</span></span>
+              </button>
+
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-translate" data-action-search="Open Folder Enter">
+                <span class="action-copy"><span class="action-label">Open Folder</span></span>
+                <span class="action-shortcuts"><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-translate" data-action-search="Reveal in Finder Cmd Enter">
+                <span class="action-copy"><span class="action-label">Reveal in Finder</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-translate" data-action-search="Copy Path Cmd Shift C">
+                <span class="action-copy"><span class="action-label">Copy Path</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">C</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-translate" data-action-search="Open In Terminal Alt Enter">
+                <span class="action-copy"><span class="action-label">Open In Terminal</span></span>
+                <span class="action-shortcuts"><span class="kbd">Alt</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-translate" data-action-search="Copy Name Cmd Shift N">
+                <span class="action-copy"><span class="action-label">Copy Name</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">N</span></span>
+              </button>
+
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-cache-solution" data-action-search="Open File Enter">
+                <span class="action-copy"><span class="action-label">Open File</span></span>
+                <span class="action-shortcuts"><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-cache-solution" data-action-search="Reveal in Finder Cmd Enter">
+                <span class="action-copy"><span class="action-label">Reveal in Finder</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-cache-solution" data-action-search="Copy Path Cmd Shift C">
+                <span class="action-copy"><span class="action-label">Copy Path</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">C</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-cache-solution" data-action-search="Open With TextEdit Alt Enter">
+                <span class="action-copy"><span class="action-label">Open With TextEdit</span></span>
+                <span class="action-shortcuts"><span class="kbd">Alt</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-cache-solution" data-action-search="Copy Name Cmd Shift N">
+                <span class="action-copy"><span class="action-label">Copy Name</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">N</span></span>
+              </button>
+
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-extension" data-action-search="Open Folder Enter">
+                <span class="action-copy"><span class="action-label">Open Folder</span></span>
+                <span class="action-shortcuts"><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-extension" data-action-search="Reveal in Finder Cmd Enter">
+                <span class="action-copy"><span class="action-label">Reveal in Finder</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-extension" data-action-search="Copy Path Cmd Shift C">
+                <span class="action-copy"><span class="action-label">Copy Path</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">C</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-extension" data-action-search="Open In Terminal Alt Enter">
+                <span class="action-copy"><span class="action-label">Open In Terminal</span></span>
+                <span class="action-shortcuts"><span class="kbd">Alt</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-extension" data-action-search="Copy Name Cmd Shift N">
+                <span class="action-copy"><span class="action-label">Copy Name</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">N</span></span>
+              </button>
+
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-store-description" data-action-search="Open File Enter">
+                <span class="action-copy"><span class="action-label">Open File</span></span>
+                <span class="action-shortcuts"><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-store-description" data-action-search="Reveal in Finder Cmd Enter">
+                <span class="action-copy"><span class="action-label">Reveal in Finder</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-store-description" data-action-search="Copy Path Cmd Shift C">
+                <span class="action-copy"><span class="action-label">Copy Path</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">C</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-store-description" data-action-search="Open With TextEdit Alt Enter">
+                <span class="action-copy"><span class="action-label">Open With TextEdit</span></span>
+                <span class="action-shortcuts"><span class="kbd">Alt</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-store-description" data-action-search="Copy Name Cmd Shift N">
+                <span class="action-copy"><span class="action-label">Copy Name</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">N</span></span>
+              </button>
+
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-feature-state" data-action-search="Open Folder Enter">
+                <span class="action-copy"><span class="action-label">Open Folder</span></span>
+                <span class="action-shortcuts"><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-feature-state" data-action-search="Reveal in Finder Cmd Enter">
+                <span class="action-copy"><span class="action-label">Reveal in Finder</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-feature-state" data-action-search="Copy Path Cmd Shift C">
+                <span class="action-copy"><span class="action-label">Copy Path</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">C</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-feature-state" data-action-search="Open In Terminal Alt Enter">
+                <span class="action-copy"><span class="action-label">Open In Terminal</span></span>
+                <span class="action-shortcuts"><span class="kbd">Alt</span><span class="kbd">Enter</span></span>
+              </button>
+              <button class="action-row is-hidden" type="button" data-result-actions="chrome-feature-state" data-action-search="Copy Name Cmd Shift N">
+                <span class="action-copy"><span class="action-label">Copy Name</span></span>
+                <span class="action-shortcuts"><span class="kbd">Cmd</span><span class="kbd">Shift</span><span class="kbd">N</span></span>
+              </button>
+
+              <div id="actionEmpty" class="action-empty is-hidden">No matching actions</div>
+            </div>
+            <div class="action-search">
+              <input id="actionSearchInput" type="text" placeholder="Search actions..." autocomplete="off" spellcheck="false" />
+            </div>
+          </div>
+
+          <div class="footer-left">
+            <span id="primaryActionLabel" class="footer-text strong"></span>
+            <span id="primaryActionHint" class="action-shortcuts">
+              <span class="kbd" data-kbd-slot="0"></span>
+              <span class="kbd" data-kbd-slot="1"></span>
+              <span class="kbd" data-kbd-slot="2"></span>
+            </span>
+            <span id="primaryActionHelper" class="footer-text"></span>
+          </div>
+
+          <div class="footer-right">
+            <button class="actions-trigger" type="button">
+              <span class="footer-text strong">Settings</span>
+              <span class="kbd">Cmd</span>
+              <span class="kbd">,</span>
+            </button>
+            <button id="actionsTrigger" class="actions-trigger" type="button">
+              <span class="footer-text strong">Actions</span>
+              <span class="kbd">Cmd</span>
+              <span class="kbd">K</span>
+            </button>
+          </div>
+        </footer>
+      </section>
+    </main>
+
+    <script>
+      const searchInput = document.getElementById('searchInput');
+      const actionSearchInput = document.getElementById('actionSearchInput');
+      const resultsEl = document.getElementById('results');
+      const bestMatchEl = resultsEl.querySelector('.best-match');
+      const resultRows = Array.from(resultsEl.querySelectorAll('.result'));
+      const emptyStateEl = document.getElementById('emptyState');
+      const actionsPanelEl = document.getElementById('actionsPanel');
+      const actionListEl = document.getElementById('actionList');
+      const actionRows = Array.from(actionListEl.querySelectorAll('.action-row'));
+      const actionEmptyEl = document.getElementById('actionEmpty');
+      const actionHeaderTitleEl = document.getElementById('actionHeaderTitle');
+      const actionHeaderSubtitleEl = document.getElementById('actionHeaderSubtitle');
+      const primaryActionLabelEl = document.getElementById('primaryActionLabel');
+      const primaryActionHintEl = document.getElementById('primaryActionHint');
+      const primaryActionHelperEl = document.getElementById('primaryActionHelper');
+      const actionsTriggerEl = document.getElementById('actionsTrigger');
+
+      let query = searchInput.value;
+      let selectedIndex = 0;
+      let isActionsOpen = false;
+      let actionQuery = '';
+      let actionSelectedIndex = 0;
+
+      const primaryActionHintSlots = Array.from(primaryActionHintEl.querySelectorAll('[data-kbd-slot]'));
+
+      function applyShortcut(containerSlots, hint) {
+        const parts = (hint || '')
+          .split('+')
+          .filter(Boolean)
+          .map((part) => part.replace('Backspace', 'Delete'));
+
+        containerSlots.forEach((slot, index) => {
+          const nextValue = parts[index];
+          slot.textContent = nextValue ?? '';
+          slot.classList.toggle('is-hidden', !nextValue);
+        });
+      }
+
+      function filteredResults() {
+        const trimmed = query.trim().toLowerCase();
+
+        if (!trimmed) {
+          return [];
+        }
+
+        return resultRows.filter((row) => row.dataset.search.toLowerCase().includes(trimmed));
+      }
+
+      function selectableResults() {
+        const items = filteredResults();
+        const trimmed = query.trim().toLowerCase();
+
+        if (!trimmed || !bestMatchEl || !bestMatchEl.dataset.search.toLowerCase().includes(trimmed)) {
+          return items;
+        }
+
+        return [bestMatchEl, ...items];
+      }
+
+      function selectedResult() {
+        const items = selectableResults();
+        return items[selectedIndex] ?? null;
+      }
+
+      function filteredActions() {
+        const current = selectedResult();
+        if (!current) {
+          return [];
+        }
+
+        const trimmed = actionQuery.trim().toLowerCase();
+        return actionRows.filter((row) => {
+          if (row.dataset.resultActions !== current.dataset.resultId) {
+            return false;
+          }
+
+          if (!trimmed) {
+            return true;
+          }
+
+          return row.dataset.actionSearch.toLowerCase().includes(trimmed);
+        });
+      }
+
+      function clampSelection() {
+        const items = selectableResults();
+        if (!items.length) {
+          selectedIndex = 0;
+          return;
+        }
+        selectedIndex = Math.max(0, Math.min(selectedIndex, items.length - 1));
+      }
+
+      function clampActionSelection() {
+        const items = filteredActions();
+        if (!items.length) {
+          actionSelectedIndex = 0;
+          return;
+        }
+        actionSelectedIndex = Math.max(0, Math.min(actionSelectedIndex, items.length - 1));
+      }
+
+      function renderResults() {
+        const items = selectableResults();
+        clampSelection();
+        emptyStateEl.classList.toggle('is-hidden', items.length > 0);
+
+        const bestMatchVisible = items[0] === bestMatchEl;
+        bestMatchEl?.classList.toggle('is-hidden', !bestMatchVisible);
+        if (bestMatchEl) {
+          bestMatchEl.dataset.selected = bestMatchVisible && selectedIndex === 0 ? 'true' : 'false';
+        }
+
+        resultRows.forEach((row) => {
+          const visibleIndex = items.indexOf(row);
+          const isVisible = visibleIndex !== -1;
+
+          row.classList.toggle('is-hidden', !isVisible);
+          row.dataset.selected = isVisible && visibleIndex === selectedIndex ? 'true' : 'false';
+          if (isVisible) {
+            row.dataset.visibleIndex = String(visibleIndex);
+          } else {
+            delete row.dataset.visibleIndex;
+          }
+        });
+      }
+
+      function renderFooter() {
+        const current = selectedResult();
+
+        if (!current) {
+          primaryActionLabelEl.textContent = '';
+          applyShortcut(primaryActionHintSlots, 'Enter');
+          primaryActionHelperEl.textContent = 'Type to search, then run the primary action.';
+          actionsTriggerEl.disabled = true;
+          return;
+        }
+
+        const actions = filteredActions();
+        const primaryAction = isActionsOpen ? actions[actionSelectedIndex] : null;
+        const label = primaryAction?.querySelector('.action-label')?.textContent ?? current.dataset.actionPrimary ?? '';
+        const hint = primaryAction
+          ? Array.from(primaryAction.querySelectorAll('.kbd'))
+              .map((kbd) => kbd.textContent?.trim())
+              .filter(Boolean)
+              .join('+')
+          : current.dataset.actionPrimaryHint ?? 'Enter';
+
+        primaryActionLabelEl.textContent = label;
+        applyShortcut(primaryActionHintSlots, hint);
+        primaryActionHelperEl.textContent = '';
+        actionsTriggerEl.disabled = false;
+      }
+
+      function renderActionsPanel() {
+        const current = selectedResult();
+
+        if (!isActionsOpen || !current) {
+          actionsPanelEl.hidden = true;
+          return;
+        }
+
+        const actions = filteredActions();
+        clampActionSelection();
+
+        actionHeaderTitleEl.textContent = current.dataset.title;
+        actionHeaderSubtitleEl.textContent = current.dataset.kind;
+        actionSearchInput.value = actionQuery;
+        actionEmptyEl.classList.toggle('is-hidden', actions.length > 0);
+
+        actionRows.forEach((row) => {
+          const visibleIndex = actions.indexOf(row);
+          const isVisible = visibleIndex !== -1;
+
+          row.classList.toggle('is-hidden', !isVisible);
+          row.dataset.selected = isVisible && visibleIndex === actionSelectedIndex ? 'true' : 'false';
+          if (isVisible) {
+            row.dataset.actionIndex = String(visibleIndex);
+          } else {
+            delete row.dataset.actionIndex;
+          }
+        });
+
+        actionsPanelEl.hidden = false;
+      }
+
+      function render() {
+        renderResults();
+        renderFooter();
+        renderActionsPanel();
+      }
+
+      searchInput.addEventListener('input', () => {
+        query = searchInput.value;
+        selectedIndex = 0;
+        isActionsOpen = false;
+        actionQuery = '';
+        render();
+      });
+
+      resultRows.forEach((row) => {
+        row.addEventListener('mouseenter', () => {
+          const visibleIndex = Number(row.dataset.visibleIndex);
+          if (Number.isNaN(visibleIndex)) {
+            return;
+          }
+
+          selectedIndex = visibleIndex;
+          render();
+        });
+
+        row.addEventListener('click', () => {
+          const visibleIndex = Number(row.dataset.visibleIndex);
+          if (Number.isNaN(visibleIndex)) {
+            return;
+          }
+
+          selectedIndex = visibleIndex;
+          render();
+        });
+      });
+
+      actionRows.forEach((row) => {
+        row.addEventListener('mouseenter', () => {
+          const visibleIndex = Number(row.dataset.actionIndex);
+          if (Number.isNaN(visibleIndex)) {
+            return;
+          }
+
+          actionSelectedIndex = visibleIndex;
+          renderActionsPanel();
+          renderFooter();
+        });
+      });
+
+      actionSearchInput.addEventListener('input', () => {
+        actionQuery = actionSearchInput.value;
+        actionSelectedIndex = 0;
+        renderActionsPanel();
+        renderFooter();
+      });
+
+      actionsTriggerEl.addEventListener('click', () => {
+        if (actionsTriggerEl.disabled) {
+          return;
+        }
+
+        isActionsOpen = !isActionsOpen;
+        actionQuery = '';
+        actionSelectedIndex = 0;
+        render();
+
+        if (isActionsOpen) {
+          actionSearchInput.focus();
+        } else {
+          searchInput.focus();
+        }
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.metaKey && event.key.toLowerCase() === 'k') {
+          event.preventDefault();
+
+          if (!selectedResult()) {
+            return;
+          }
+
+          isActionsOpen = !isActionsOpen;
+          actionQuery = '';
+          actionSelectedIndex = 0;
+          render();
+          (isActionsOpen ? actionSearchInput : searchInput).focus();
+          return;
+        }
+
+        if (isActionsOpen) {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            isActionsOpen = false;
+            actionQuery = '';
+            render();
+            searchInput.focus();
+            return;
+          }
+
+          if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            const actions = filteredActions();
+            if (actions.length) {
+              actionSelectedIndex = (actionSelectedIndex + 1) % actions.length;
+              renderActionsPanel();
+              renderFooter();
+            }
+            return;
+          }
+
+          if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            const actions = filteredActions();
+            if (actions.length) {
+              actionSelectedIndex = (actionSelectedIndex - 1 + actions.length) % actions.length;
+              renderActionsPanel();
+              renderFooter();
+            }
+          }
+
+          return;
+        }
+
+        const items = selectableResults();
+
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          if (items.length) {
+            selectedIndex = (selectedIndex + 1) % items.length;
+            render();
+          }
+        }
+
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          if (items.length) {
+            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+            render();
+          }
+        }
+      });
+
+      bestMatchEl?.addEventListener('mouseenter', () => {
+        if (!bestMatchEl.classList.contains('is-hidden')) {
+          selectedIndex = 0;
+          render();
+        }
+      });
+
+      bestMatchEl?.addEventListener('click', () => {
+        if (!bestMatchEl.classList.contains('is-hidden')) {
+          selectedIndex = 0;
+          render();
+        }
+      });
+
+      render();
+      searchInput.focus();
+      searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    </script>
+  </body>
+</html>
