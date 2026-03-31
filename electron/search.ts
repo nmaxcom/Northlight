@@ -3,6 +3,7 @@ import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { watch, type FSWatcher } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { isPrivateNorthlightPath } from '../src/lib/search/searchExclusions';
 import { baseSearchScore } from '../src/lib/search/scoring';
 import { localIntentFilterKey, matchesLocalIntent, type LocalIntentFilter } from '../src/lib/search/intentParser';
 import type { LauncherStatus, LocalSearchItem, ResultKind } from '../src/lib/search/types';
@@ -37,6 +38,7 @@ const PREFERRED_SEGMENTS = [
   join(homedir(), 'Downloads'),
   '/Applications'
 ];
+let appPrivateRootsCache: string[] | null = null;
 
 type IndexedEntry = Omit<LocalSearchItem, 'score'>;
 type RootConfig = (typeof FALLBACK_ROOTS)[number];
@@ -100,7 +102,21 @@ function classifyPath(path: string, isDirectory: boolean): ResultKind {
 }
 
 function isExcludedPath(path: string) {
-  return EXCLUDED_SEGMENTS.some((segment) => path.includes(segment));
+  return EXCLUDED_SEGMENTS.some((segment) => path.includes(segment)) || appPrivateRoots().some((root) => isPrivateNorthlightPath(path, root));
+}
+
+function appPrivateRoots() {
+  if (appPrivateRootsCache) {
+    return appPrivateRootsCache;
+  }
+
+  try {
+    appPrivateRootsCache = [app.getPath('userData')];
+  } catch {
+    appPrivateRootsCache = [];
+  }
+
+  return appPrivateRootsCache;
 }
 
 function preferredBoost(path: string) {
@@ -487,7 +503,14 @@ export async function configureIndexWatchers() {
   const roots = await existingRoots();
   for (const root of roots) {
     try {
-      const watcher = watch(root.path, { recursive: true }, () => {
+      const watcher = watch(root.path, { recursive: true }, (_eventType, relativePath) => {
+        if (typeof relativePath === 'string' && relativePath.length > 0) {
+          const changedPath = join(root.path, relativePath);
+          if (isExcludedPath(changedPath)) {
+            return;
+          }
+        }
+
         scheduleWatcherRefresh();
       });
       scopeWatchers.push(watcher);

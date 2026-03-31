@@ -96,6 +96,7 @@ The settings window is the control center for launcher preferences.
 - Enable or disable filesystem watchers for live scope invalidation.
 - Review validation warnings before saving.
 - The scopes view explains the tradeoff: wider roots improve recall, but they increase indexing cost and usually add more low-value results.
+- If you add Home or `~/Library`, Northlight now ignores its own internal support files so broad scopes do not keep retriggering the index on self-writes.
 
 ## Deterministic Calculations
 
