@@ -91,6 +91,7 @@ The settings window is the control center for launcher preferences.
 - Create reusable text snippets.
 - Enable or disable indexed scope paths.
 - Use scope presets like `~/Library`, Home, or `/` to broaden search coverage without typing full paths by hand.
+- `Add Scope` now opens a dedicated add-path composer instead of inserting a blank invalid scope row.
 - Enable or disable filesystem watchers for live scope invalidation.
 - Review validation warnings before saving.
 - The scopes view explains the tradeoff: wider roots improve recall, but they increase indexing cost and usually add more low-value results.

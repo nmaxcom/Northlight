@@ -101,7 +101,7 @@
 }
 
 .secondaryButton {
-  background: rgba(255, 255, 255, 0.04);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.035));
 }
 
 .grid {
@@ -313,113 +313,195 @@
   gap: 14px;
 }
 
-.scopeLead {
-  padding: 14px 15px;
-  border-radius: 14px;
-  border: 1px solid rgba(170, 192, 214, 0.08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.018));
-  color: rgba(245, 247, 250, 0.72);
-  line-height: 1.45;
-}
-
-.scopePresetGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.scopePreset {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  min-height: 132px;
-  padding: 14px;
-  border-radius: 15px;
-  border: 1px solid rgba(170, 192, 214, 0.1);
-  background: linear-gradient(180deg, rgba(49, 67, 87, 0.3), rgba(20, 29, 38, 0.58));
-  color: #f5f7fa;
-  text-align: left;
-  cursor: pointer;
-}
-
-.scopePresetWarm {
-  background: linear-gradient(180deg, rgba(77, 63, 39, 0.32), rgba(29, 22, 13, 0.56));
-}
-
-.scopePresetDanger {
-  background: linear-gradient(180deg, rgba(84, 39, 39, 0.34), rgba(33, 17, 17, 0.6));
-}
-
-.scopePresetLabel {
-  font-weight: 700;
-}
-
-.scopePresetPath {
-  font-size: 0.8rem;
-  color: rgba(245, 247, 250, 0.6);
-}
-
-.scopePresetMeta {
-  margin-top: auto;
-  min-height: 24px;
-  padding: 0 9px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.scopePresetNote {
-  font-size: 0.84rem;
-  color: rgba(245, 247, 250, 0.62);
-  line-height: 1.4;
-}
-
-.scopeRules {
+.scopeHero {
   margin-top: 14px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.scopeRule {
-  padding: 13px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(170, 192, 214, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+.scopeHeroCopy {
+  max-width: 620px;
 }
 
-.scopeRuleTitle {
-  font-size: 0.84rem;
+.scopeLead {
+  font-size: 1rem;
   font-weight: 700;
+}
+
+.scopeLeadText {
+  margin-top: 7px;
+  color: rgba(245, 247, 250, 0.6);
+  line-height: 1.48;
+}
+
+.scopeMetrics {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.scopeMetric {
+  min-width: 86px;
+  padding: 11px 12px;
+  border-radius: 13px;
+  border: 1px solid rgba(170, 192, 214, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.scopeMetricLabel {
+  display: block;
+  font-size: 0.72rem;
+  color: rgba(245, 247, 250, 0.48);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.scopeRuleText {
-  margin-top: 7px;
-  color: rgba(245, 247, 250, 0.58);
-  line-height: 1.42;
+.scopeMetricValue {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.scopeToolbar {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.scopeToolbarLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(245, 247, 250, 0.52);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.scopePresetRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.scopePresetButton,
+.scopeActionButton,
+.scopeComposerAdd,
+.scopeComposerCancel {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(170, 192, 214, 0.14);
+  color: #f5f7fa;
+  cursor: pointer;
+}
+
+.scopeActionButton,
+.scopeComposerAdd {
+  background: linear-gradient(180deg, #34495f, #263747);
+}
+
+.scopePresetButton,
+.scopeComposerCancel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.035));
+}
+
+.scopePresetButtonWarm {
+  border-color: rgba(191, 166, 115, 0.18);
+}
+
+.scopePresetButtonDanger {
+  border-color: rgba(200, 115, 115, 0.2);
+}
+
+.scopePresetButtonLabel {
+  font-weight: 700;
+}
+
+.scopePresetButtonCost {
+  margin-left: 8px;
+  color: rgba(245, 247, 250, 0.52);
+  font-size: 0.8rem;
+}
+
+.scopePresetNotes {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scopePresetNoteRow {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.scopePresetNoteLabel {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.scopePresetNoteText {
+  color: rgba(245, 247, 250, 0.56);
+  line-height: 1.4;
+}
+
+.scopeComposer {
+  margin-top: 14px;
+  padding: 14px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.scopeComposerHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.scopeComposerTitle {
+  font-weight: 700;
+}
+
+.scopeComposerHint {
+  margin-top: 4px;
+  color: rgba(245, 247, 250, 0.54);
+  font-size: 0.84rem;
+}
+
+.scopeComposerRow {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.scopeFeedback {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: rgba(86, 131, 182, 0.12);
+  border: 1px solid rgba(129, 167, 210, 0.18);
+  color: rgba(227, 237, 248, 0.86);
+  font-size: 0.88rem;
 }
 
 .scopeList {
   margin-top: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.scopeCard {
-  padding: 14px;
-  border-radius: 15px;
-  border: 1px solid rgba(170, 192, 214, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+.scopeRow {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .scopeCardMeta {
@@ -451,23 +533,52 @@
 }
 
 .iconButton {
-  min-height: 28px;
-  min-width: 28px;
-  border-radius: 9px;
+  min-height: 30px;
+  min-width: 30px;
+  border-radius: 999px;
   border: 1px solid rgba(170, 192, 214, 0.1);
-  background: rgba(255, 255, 255, 0.045);
+  background: rgba(255, 255, 255, 0.03);
   color: #f5f7fa;
   cursor: pointer;
   user-select: none;
 }
 
-.status {
-  min-height: 38px;
-  border-radius: 12px;
-  border: 1px solid rgba(170, 192, 214, 0.1);
-  background: rgba(255, 255, 255, 0.025);
-  padding: 9px 11px;
-  color: rgba(245, 247, 250, 0.74);
+.statusRow {
+  margin-top: 14px;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 247, 250, 0.84);
+}
+
+.statusPillReady {
+  background: rgba(46, 125, 81, 0.2);
+  color: #9ce5bb;
+}
+
+.statusPillPending {
+  background: rgba(123, 140, 166, 0.18);
+  color: #d9e2ea;
+}
+
+.statusPillError {
+  background: rgba(146, 62, 62, 0.22);
+  color: #ffb2b2;
+}
+
+.errorList {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #ffa7a7;
+  line-height: 1.5;
 }
 
 .scopeToggle {
@@ -483,10 +594,6 @@
   justify-content: space-between;
   gap: 16px;
   min-height: 22px;
-}
-
-.error {
-  color: #ff9d9d;
 }
 
 .hintList {
@@ -537,8 +644,14 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .scopePresetGrid,
-  .scopeRules {
+  .scopeHero,
+  .scopeComposerRow,
+  .scopePresetNoteRow {
     grid-template-columns: 1fr;
+    display: block;
+  }
+
+  .scopeMetrics {
+    margin-top: 10px;
   }
 }

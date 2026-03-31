@@ -19,8 +19,10 @@ The current scopes settings expose raw editable paths, but they do not help user
 - In scope:
 - Rework the `Scopes & Status` layout so the scopes editor is the main panel and explanatory guidance sits alongside it.
 - Add one-click scope presets for `~/Library`, home, and `/`.
+- Replace the current `Add Scope` behavior with an explicit add-path composer instead of immediately creating an empty scope row.
 - Prevent duplicate preset insertion when the scope already exists.
 - Add brief, visible copy about indexing cost, result noise, and the risk of indexing `/`.
+- Show lightweight feedback when a scope is added and make the new row easy to discover.
 
 ## Out of Scope
 
@@ -52,6 +54,7 @@ The current scopes settings expose raw editable paths, but they do not help user
 - [ ] `Scopes & Status` explains what scopes do and what broadening them costs.
 - [ ] A user can add `~/Library` with one click.
 - [ ] A user can add home or `/` with one click.
+- [ ] Clicking `Add Scope` does not create an empty invalid row before the user enters a path.
 - [ ] Clicking a preset that already exists does not add a duplicate scope.
 - [ ] The `/` preset is visually described as the highest-cost option.
 

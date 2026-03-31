@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { shortcutTokens } from '../lib/shortcuts';
 import type { AliasEntry, LauncherSettings, ScopeEntry, SnippetEntry } from '../lib/search/types';
 import { launcherRuntime } from '../lib/search/runtime';
@@ -100,17 +100,17 @@ function inferHomePath(scopes: ScopeEntry[]) {
 function validate(settings: LauncherSettings): ValidationState {
   const aliasTriggers = new Set<string>();
   const snippetTriggers = new Set<string>();
-  const messages: string[] = [];
+  const messages = new Set<string>();
 
   for (const alias of settings.aliases) {
     const trigger = alias.trigger.trim().toLowerCase();
     if (!trigger) {
-      messages.push('All aliases need a trigger.');
+      messages.add('All aliases need a trigger.');
       continue;
     }
 
     if (aliasTriggers.has(trigger)) {
-      messages.push(`Duplicate alias trigger: ${trigger}`);
+      messages.add(`Duplicate alias trigger: ${trigger}`);
     }
     aliasTriggers.add(trigger);
   }
@@ -118,27 +118,27 @@ function validate(settings: LauncherSettings): ValidationState {
   for (const snippet of settings.snippets) {
     const trigger = snippet.trigger.trim().toLowerCase();
     if (!trigger || !snippet.content.trim()) {
-      messages.push('All snippets need a trigger and content.');
+      messages.add('All snippets need a trigger and content.');
       continue;
     }
 
     if (snippetTriggers.has(trigger) || aliasTriggers.has(trigger)) {
-      messages.push(`Snippet trigger conflicts with an existing trigger: ${trigger}`);
+      messages.add(`Snippet trigger conflicts with an existing trigger: ${trigger}`);
     }
     snippetTriggers.add(trigger);
   }
 
   for (const scope of settings.scopes) {
     if (!scope.path.trim()) {
-      messages.push('Scopes cannot be empty.');
+      messages.add('Scopes cannot be empty.');
     }
   }
 
   return {
     aliasTriggers,
     snippetTriggers,
-    hasErrors: messages.length > 0,
-    messages
+    hasErrors: messages.size > 0,
+    messages: Array.from(messages)
   };
 }
 
@@ -148,6 +148,11 @@ export function SettingsView() {
   const [saveState, setSaveState] = useState('Loading settings...');
   const [isCapturingShortcut, setIsCapturingShortcut] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'scopes'>('overview');
+  const [isAddingScope, setIsAddingScope] = useState(false);
+  const [newScopePath, setNewScopePath] = useState('');
+  const [scopeFeedback, setScopeFeedback] = useState<string | null>(null);
+  const scopeListRef = useRef<HTMLDivElement | null>(null);
+  const newScopeInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -189,6 +194,23 @@ export function SettingsView() {
   const updateSettings = (updater: (current: LauncherSettings) => LauncherSettings) => {
     setSettings((current) => (current ? updater(cloneSettings(current)) : current));
     setSaveState('Unsaved changes');
+  };
+
+  const revealNewestScope = () => {
+    window.requestAnimationFrame(() => {
+      const container = scopeListRef.current;
+      const lastScope = container?.lastElementChild as HTMLElement | null;
+      lastScope?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const pathField = lastScope?.querySelector<HTMLInputElement>('input[data-scope-path="true"]');
+      pathField?.focus();
+      pathField?.select();
+    });
+  };
+
+  const showScopeFeedback = (message: string) => {
+    setScopeFeedback(message);
+    window.clearTimeout((showScopeFeedback as typeof showScopeFeedback & { timer?: number }).timer);
+    (showScopeFeedback as typeof showScopeFeedback & { timer?: number }).timer = window.setTimeout(() => setScopeFeedback(null), 2400);
   };
 
   const save = async () => {
@@ -236,10 +258,18 @@ export function SettingsView() {
   ] as const;
 
   const addScopePath = (path: string) => {
+    const trimmedPath = path.trim();
+    if (!trimmedPath) {
+      return false;
+    }
+
+    let added = false;
     updateSettings((current) => {
-      if (current.scopes.some((scope) => scope.path === path)) {
+      if (current.scopes.some((scope) => scope.path === trimmedPath)) {
         return current;
       }
+
+      added = true;
 
       return {
         ...current,
@@ -247,12 +277,36 @@ export function SettingsView() {
           ...current.scopes,
           {
             ...createScope(),
-            path
+            path: trimmedPath
           }
         ]
       };
     });
+
+    if (added) {
+      showScopeFeedback(`Added ${trimmedPath}. The new scope is shown at the bottom of the list.`);
+      revealNewestScope();
+      return true;
+    }
+
+    showScopeFeedback(`${trimmedPath} is already in your scope list.`);
+    return false;
   };
+
+  const addCustomScope = () => {
+    if (!addScopePath(newScopePath)) {
+      if (!newScopePath.trim()) {
+        newScopeInputRef.current?.focus();
+      }
+      return;
+    }
+
+    setNewScopePath('');
+    setIsAddingScope(false);
+  };
+
+  const enabledScopes = settings.scopes.filter((scope) => scope.enabled).length;
+  const statusTone = validation.hasErrors ? 'error' : saveState === 'Saved' || saveState === 'Ready' ? 'ready' : 'pending';
 
   return (
     <main className={classes.page}>
@@ -640,50 +694,97 @@ export function SettingsView() {
                     <div className={classes.cardSubtitle}>Scopes decide which roots feed local indexing and targeted fallback search.</div>
                   </div>
                   <button
-                    className={classes.secondaryButton}
+                    className={classes.scopeActionButton}
                     type="button"
-                    onClick={() =>
-                      updateSettings((current) => ({
-                        ...current,
-                        scopes: [...current.scopes, createScope()]
-                      }))
-                    }
+                    onClick={() => {
+                      setIsAddingScope(true);
+                      setScopeFeedback(null);
+                      window.requestAnimationFrame(() => newScopeInputRef.current?.focus());
+                    }}
                   >
                     Add Scope
                   </button>
                 </div>
 
-                <div className={classes.scopeIntro}>
-                  <div className={classes.scopeLead}>
-                    Start narrow, then widen only when you need more coverage. Adding large roots increases indexing time and can flood results with low-value system files.
+                <div className={classes.scopeHero}>
+                  <div className={classes.scopeHeroCopy}>
+                    <div className={classes.scopeLead}>Choose which roots Northlight indexes.</div>
+                    <div className={classes.scopeLeadText}>
+                      Start narrow. Add `~/Library` when you need app support files and preferences. Add Home or `/` only when broader recall matters more than speed and result cleanliness.
+                    </div>
                   </div>
-                  <div className={classes.scopePresetGrid}>
+                  <div className={classes.scopeMetrics}>
+                    <div className={classes.scopeMetric}>
+                      <span className={classes.scopeMetricLabel}>Enabled</span>
+                      <span className={classes.scopeMetricValue}>{enabledScopes}</span>
+                    </div>
+                    <div className={classes.scopeMetric}>
+                      <span className={classes.scopeMetricLabel}>Watchers</span>
+                      <span className={classes.scopeMetricValue}>{settings.watchFsChangesEnabled ? 'On' : 'Off'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={classes.scopeToolbar}>
+                  <div className={classes.scopeToolbarLabel}>Quick Add</div>
+                  <div className={classes.scopePresetRow}>
                     {scopePresets.map((preset) => (
                       <button
                         key={preset.id}
                         type="button"
-                        className={`${classes.scopePreset} ${preset.tone === 'danger' ? classes.scopePresetDanger : preset.tone === 'warm' ? classes.scopePresetWarm : ''}`}
+                        className={`${classes.scopePresetButton} ${preset.tone === 'danger' ? classes.scopePresetButtonDanger : preset.tone === 'warm' ? classes.scopePresetButtonWarm : ''}`}
                         onClick={() => addScopePath(preset.path)}
                       >
-                        <span className={classes.scopePresetLabel}>{preset.label}</span>
-                        <span className={classes.scopePresetPath}>{preset.path}</span>
-                        <span className={classes.scopePresetMeta}>{preset.cost}</span>
-                        <span className={classes.scopePresetNote}>{preset.note}</span>
+                        <span className={classes.scopePresetButtonLabel}>{preset.label}</span>
+                        <span className={classes.scopePresetButtonCost}>{preset.cost}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className={classes.scopeRules}>
-                  <div className={classes.scopeRule}>
-                    <div className={classes.scopeRuleTitle}>Recommended</div>
-                    <div className={classes.scopeRuleText}>Keep apps, work folders, and `~/Library` enabled for strong recall without indexing the whole machine.</div>
-                  </div>
-                  <div className={classes.scopeRule}>
-                    <div className={classes.scopeRuleTitle}>Use `/` carefully</div>
-                    <div className={classes.scopeRuleText}>Whole-disk search broadens coverage, but it is slower to index and usually adds much more noise from system paths.</div>
-                  </div>
+                <div className={classes.scopePresetNotes}>
+                  {scopePresets.map((preset) => (
+                    <div key={preset.id} className={classes.scopePresetNoteRow}>
+                      <span className={classes.scopePresetNoteLabel}>{preset.label}</span>
+                      <span className={classes.scopePresetNoteText}>{preset.note}</span>
+                    </div>
+                  ))}
                 </div>
+
+                {isAddingScope ? (
+                  <div className={classes.scopeComposer}>
+                    <div className={classes.scopeComposerHeader}>
+                      <div>
+                        <div className={classes.scopeComposerTitle}>Add Custom Scope</div>
+                        <div className={classes.scopeComposerHint}>Paste a folder path, then add it to the list.</div>
+                      </div>
+                      <button className={classes.scopeComposerCancel} type="button" onClick={() => {
+                        setIsAddingScope(false);
+                        setNewScopePath('');
+                      }}>
+                        Cancel
+                      </button>
+                    </div>
+                    <div className={classes.scopeComposerRow}>
+                      <input
+                        ref={newScopeInputRef}
+                        className={classes.input}
+                        placeholder="/Users/you/Library"
+                        value={newScopePath}
+                        onChange={(event) => setNewScopePath(event.currentTarget.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            addCustomScope();
+                          }
+                        }}
+                      />
+                      <button className={classes.scopeComposerAdd} type="button" onClick={addCustomScope}>
+                        Add Path
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className={classes.toggleRow}>
                   <label className={classes.toggle}>
@@ -705,9 +806,11 @@ export function SettingsView() {
                   </label>
                 </div>
 
-                <div className={classes.scopeList}>
+                {scopeFeedback ? <div className={classes.scopeFeedback}>{scopeFeedback}</div> : null}
+
+                <div className={classes.scopeList} ref={scopeListRef}>
                   {settings.scopes.map((scope, index) => (
-                    <div key={scope.id} className={classes.scopeCard}>
+                    <div key={scope.id} className={classes.scopeRow}>
                       <div className={classes.rowHeader}>
                         <div>
                           <div className={classes.rowTitle}>Scope {index + 1}</div>
@@ -730,6 +833,7 @@ export function SettingsView() {
                         <label className={classes.fieldFull}>
                           <span className={classes.label}>Path</span>
                           <input
+                            data-scope-path="true"
                             className={classes.input}
                             value={scope.path}
                             onChange={(event) =>
@@ -772,14 +876,18 @@ export function SettingsView() {
               {activeTab === 'scopes' ? (
               <section className={classes.card}>
                 <div className={classes.cardTitle}>Status</div>
-                <div className={classes.cardSubtitle}>Current validation and persistence state.</div>
-                <div className={classes.status}>{saveState}</div>
+                <div className={classes.cardSubtitle}>Read-only state for this settings session.</div>
+                <div className={classes.statusRow}>
+                  <span className={`${classes.statusPill} ${statusTone === 'ready' ? classes.statusPillReady : statusTone === 'error' ? classes.statusPillError : classes.statusPillPending}`}>
+                    {saveState}
+                  </span>
+                </div>
                 {validation.hasErrors ? (
-                  <div className={`${classes.status} ${classes.error}`}>
+                  <ul className={classes.errorList}>
                     {validation.messages.map((message) => (
-                      <div key={message}>{message}</div>
+                      <li key={message}>{message}</li>
                     ))}
-                  </div>
+                  </ul>
                 ) : null}
               </section>
               ) : null}

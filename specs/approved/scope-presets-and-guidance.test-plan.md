@@ -21,6 +21,7 @@
 
 - [ ] Render scope guidance and preset buttons.
 - [ ] Add `~/Library` from a preset.
+- [ ] Open the custom scope composer without creating a blank scope row.
 - [ ] Do not duplicate an existing preset path.
 - [ ] Keep existing scope editing and save behavior intact.
 
