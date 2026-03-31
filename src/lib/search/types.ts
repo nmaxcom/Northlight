@@ -110,7 +110,14 @@ export type LauncherResult = {
 };
 
 export type LauncherBridge = {
-  searchLocal: (query: string, scopePath?: string | null) => Promise<LocalSearchItem[]>;
+  searchLocal: (
+    query: string,
+    scopePath?: string | null,
+    localFilter?: {
+      kind?: LocalSearchItem['kind'];
+      extensions?: string[];
+    } | null
+  ) => Promise<LocalSearchItem[]>;
   getStatus: () => Promise<LauncherStatus>;
   getSettings: () => Promise<LauncherSettings>;
   getEffectiveShortcut?: () => Promise<string>;

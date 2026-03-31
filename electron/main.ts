@@ -7,6 +7,7 @@ import { basename, extname, join } from 'node:path';
 import { platform } from 'node:process';
 import packageJson from '../package.json';
 import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/shortcuts';
+import type { LocalIntentFilter } from '../src/lib/search/intentParser';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem } from '../src/lib/search/types';
 import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
 import { configureIndexWatchers, getSearchStatus, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
@@ -645,8 +646,8 @@ app.whenReady().then(async () => {
     await shell.openPath(path);
   });
 
-  ipcMain.handle('launcher:search-local', async (_event, query: string, scopePath?: string | null) =>
-    searchIndexedPaths(query, scopePath)
+  ipcMain.handle('launcher:search-local', async (_event, query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) =>
+    searchIndexedPaths(query, scopePath, localFilter)
   );
 
   ipcMain.handle('launcher:get-status', async () => getSearchStatus(packageJson.version));

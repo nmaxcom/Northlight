@@ -7,6 +7,7 @@ Northlight is a keyboard-first macOS launcher for fast local search, determinist
 Current built-in capabilities:
 
 - Search local files, folders, and apps by name.
+- Refine a broad query with trailing intent hints such as `project/`, `snowboard img`, `snowboard jpg`, `figma app`, or `notes md`.
 - Highlight each result type with a distinct color only in the left icon tile, so folders, apps, files, calculations, snippets, clipboard items, aliases, and commands are easier to scan.
 - Match abbreviations and fuzzy app names such as `btt` and `fig`.
 - Learn from repeated selections so important results rise to the top.
@@ -46,6 +47,8 @@ Current built-in capabilities:
 - Aliases rank above generic fuzzy matches when the trigger matches exactly.
 - Snippets and clipboard items can participate in search without overriding stronger file or app matches for broad queries.
 - Search is local-first and favors common personal locations such as `/Applications`, `~/Desktop`, `~/Documents`, `~/Downloads`, and `~/STUFF/Coding`.
+- Trailing intent refiners stay optional: Northlight first searches broadly, then lets you tighten the result type with suffixes like `/`, `img`, `jpg`, `pdf`, `md`, `app`, `file`, or `folder`.
+- Intent refiners are only recognized as trailing standalone terms, so literal names like `img-tools` keep searching as plain text.
 
 ## Keyboard Controls
 

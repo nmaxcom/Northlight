@@ -46,6 +46,18 @@ test('supports fuzzy app matches and folder quick actions', async ({ page }) => 
   await expect(panel.getByText('Copy Name')).toBeVisible();
 });
 
+test('supports trailing intent refiners for folders and apps', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Launcher query').fill('steel/');
+  await expect(page.getByRole('button', { name: /steel-moodboard/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /strategy-notes\.md/i })).toHaveCount(0);
+
+  await page.getByLabel('Launcher query').fill('better app');
+  await expect(page.getByRole('button', { name: /BetterTouchTool\.app/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /BetterBattery\.app/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Raycast-notes\.md/i })).toHaveCount(0);
+});
+
 test('filters actions inside the actions panel', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Launcher query').fill('product');

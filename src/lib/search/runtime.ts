@@ -1,4 +1,5 @@
 import { clearRankStore, recordSelection } from './adaptiveRanking';
+import { localIntentFilterKey, matchesLocalIntent, type LocalIntentFilter } from './intentParser';
 import { fileFixtures } from './mockData';
 import { adaptiveRankBoost } from './adaptiveRanking';
 import { baseSearchScore } from './scoring';
@@ -48,8 +49,8 @@ function clearTransientCaches() {
   previewCache.clear();
 }
 
-function cacheKey(query: string, scopePath?: string | null) {
-  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}`;
+function cacheKey(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
+  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${localIntentFilterKey(localFilter)}`;
 }
 
 function filterByScope(items: LocalSearchItem[], scopePath?: string | null) {
@@ -60,8 +61,9 @@ function filterByScope(items: LocalSearchItem[], scopePath?: string | null) {
   return items.filter((item) => item.path.startsWith(`${scopePath}/`) || item.path === scopePath);
 }
 
-function rankItems(query: string, items: LocalSearchItem[]) {
+function rankItems(query: string, items: LocalSearchItem[], localFilter?: LocalIntentFilter | null) {
   return items
+    .filter((item) => matchesLocalIntent(item, localFilter))
     .map((item) => ({
       ...item,
       score:
@@ -78,37 +80,37 @@ async function copyText(text: string) {
   await navigator.clipboard.writeText(text);
 }
 
-async function searchFixtureIndex(query: string, scopePath?: string | null): Promise<LocalSearchItem[]> {
+async function searchFixtureIndex(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null): Promise<LocalSearchItem[]> {
   const trimmed = query.trim();
 
   if (trimmed.length < 2) {
     return [];
   }
 
-  return rankItems(trimmed, filterByScope(fileFixtures, scopePath));
+  return rankItems(trimmed, filterByScope(fileFixtures, scopePath), localFilter);
 }
 
-function searchCachedLocal(query: string, scopePath?: string | null) {
+function searchCachedLocal(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
   const trimmed = query.trim();
 
   if (trimmed.length < 2) {
     return [];
   }
 
-  const direct = queryCache.get(cacheKey(trimmed, scopePath));
+  const direct = queryCache.get(cacheKey(trimmed, scopePath, localFilter));
   if (direct) {
     return direct;
   }
 
   for (let length = trimmed.length - 1; length >= 2; length -= 1) {
     const prefix = trimmed.slice(0, length);
-    const prefixResults = queryCache.get(cacheKey(prefix, scopePath));
+    const prefixResults = queryCache.get(cacheKey(prefix, scopePath, localFilter));
 
     if (!prefixResults) {
       continue;
     }
 
-    return rankItems(trimmed, prefixResults);
+    return rankItems(trimmed, prefixResults, localFilter);
   }
 
   return [];
@@ -199,8 +201,8 @@ export const launcherRuntime = {
       callback();
     });
   },
-  getCachedLocal(query: string, scopePath?: string | null) {
-    return searchCachedLocal(query, scopePath);
+  getCachedLocal(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
+    return searchCachedLocal(query, scopePath, localFilter);
   },
   getRecentLocalItems() {
     const merged = new Map<string, LocalSearchItem>();
@@ -224,22 +226,22 @@ export const launcherRuntime = {
       .sort((left, right) => right.score - left.score)
       .slice(0, 8);
   },
-  searchLocal(query: string, scopePath?: string | null) {
+  searchLocal(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
     if (window.launcher?.searchLocal) {
-      return window.launcher.searchLocal(query, scopePath).then((results) => {
-        const ranked = rankItems(query.trim(), filterByScope(results, scopePath));
+      return window.launcher.searchLocal(query, scopePath, localFilter).then((results) => {
+        const ranked = rankItems(query.trim(), filterByScope(results, scopePath), localFilter);
 
         if (ranked.length > 0) {
-          queryCache.set(cacheKey(query, scopePath), ranked);
+          queryCache.set(cacheKey(query, scopePath, localFilter), ranked);
         }
 
         return ranked;
       });
     }
 
-    return searchFixtureIndex(query, scopePath).then((results) => {
+    return searchFixtureIndex(query, scopePath, localFilter).then((results) => {
       if (results.length > 0) {
-        queryCache.set(cacheKey(query, scopePath), results);
+        queryCache.set(cacheKey(query, scopePath, localFilter), results);
       }
       return results;
     });

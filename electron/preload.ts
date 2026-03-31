@@ -2,7 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { LauncherSettings } from '../src/lib/search/types';
 
 const launcherApi = {
-  searchLocal: (query: string, scopePath?: string | null) => ipcRenderer.invoke('launcher:search-local', query, scopePath),
+  searchLocal: (query: string, scopePath?: string | null, localFilter?: { kind?: 'file' | 'folder' | 'app'; extensions?: string[] } | null) =>
+    ipcRenderer.invoke('launcher:search-local', query, scopePath, localFilter),
   getStatus: () => ipcRenderer.invoke('launcher:get-status'),
   getSettings: () => ipcRenderer.invoke('launcher:get-settings'),
   getEffectiveShortcut: () => ipcRenderer.invoke('launcher:get-effective-shortcut'),

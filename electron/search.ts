@@ -4,6 +4,7 @@ import { watch, type FSWatcher } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { baseSearchScore } from '../src/lib/search/scoring';
+import { localIntentFilterKey, matchesLocalIntent, type LocalIntentFilter } from '../src/lib/search/intentParser';
 import type { LauncherStatus, LocalSearchItem, ResultKind } from '../src/lib/search/types';
 import { getLauncherSettings, getLauncherStateSnapshot } from './settings';
 
@@ -144,8 +145,8 @@ function filterByScope<T extends { path: string }>(items: T[], scopePath?: strin
   return items.filter((item) => item.path.startsWith(scopePath.endsWith('/') ? scopePath : `${scopePath}/`) || item.path === scopePath);
 }
 
-function cacheKey(query: string, scopePath?: string | null) {
-  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}`;
+function cacheKey(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
+  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${localIntentFilterKey(localFilter)}`;
 }
 
 async function existingRoots(scopePath?: string | null) {
@@ -254,7 +255,7 @@ async function pruneMissingEntries(paths: string[]) {
   notifyIndexChanged();
 }
 
-function searchFallbackIndex(query: string, scopePath?: string | null) {
+function searchFallbackIndex(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
   const normalizedQuery = query.trim();
 
   if (!fallbackIndexReady || normalizedQuery.length < 2) {
@@ -262,6 +263,7 @@ function searchFallbackIndex(query: string, scopePath?: string | null) {
   }
 
   return filterByScope(fallbackIndex, scopePath)
+    .filter((entry) => matchesLocalIntent(entry, localFilter))
     .map((entry) => ({
       ...entry,
       score: rankItem(normalizedQuery, entry)
@@ -332,7 +334,7 @@ async function walkForIndex(roots: RootConfig[]) {
   return indexed;
 }
 
-async function searchTargetedPaths(query: string, scopePath?: string | null) {
+async function searchTargetedPaths(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
   const roots = await existingRoots(scopePath);
 
   if (roots.length === 0) {
@@ -365,7 +367,7 @@ async function searchTargetedPaths(query: string, scopePath?: string | null) {
       };
       const score = rankItem(query, candidate);
 
-      if (score > 0) {
+      if (score > 0 && matchesLocalIntent(candidate, localFilter)) {
         matches.push({
           ...candidate,
           score
@@ -509,7 +511,7 @@ export function getSearchStatus(appVersion: string): LauncherStatus {
   };
 }
 
-export async function searchIndexedPaths(query: string, scopePath?: string | null): Promise<LocalSearchItem[]> {
+export async function searchIndexedPaths(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null): Promise<LocalSearchItem[]> {
   const trimmed = query.trim();
 
   if (trimmed.length < 2) {
@@ -518,14 +520,14 @@ export async function searchIndexedPaths(query: string, scopePath?: string | nul
 
   await warmSearchIndex();
 
-  const key = cacheKey(trimmed, scopePath);
+  const key = cacheKey(trimmed, scopePath, localFilter);
   const cached = queryCache.get(key);
 
   if (cached) {
     return cached;
   }
 
-  const indexed = searchFallbackIndex(trimmed, scopePath);
+  const indexed = searchFallbackIndex(trimmed, scopePath, localFilter);
   if (indexed.length > 0) {
     const { results: existingIndexed, removedPaths } = await stripMissingResults(indexed);
     if (removedPaths.length > 0) {
@@ -538,7 +540,7 @@ export async function searchIndexedPaths(query: string, scopePath?: string | nul
     }
   }
 
-  const targetedResults = await searchTargetedPaths(trimmed, scopePath);
+  const targetedResults = await searchTargetedPaths(trimmed, scopePath, localFilter);
   if (targetedResults.length > 0) {
     const { results: existingTargeted } = await stripMissingResults(targetedResults);
     if (existingTargeted.length > 0) {

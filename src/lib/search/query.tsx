@@ -1,5 +1,6 @@
 import { IconApps, IconCalculator, IconFolder, IconFileText } from '@tabler/icons-react';
 import { buildDeterministicResult } from './calculations';
+import { parseIntentQuery } from './intentParser';
 import { launcherRuntime } from './runtime';
 import { normalizeSearchText } from './scoring';
 import type { AliasEntry, ClipboardEntry, LauncherResult, LocalSearchItem, SnippetEntry } from './types';
@@ -467,13 +468,18 @@ export function buildConversionResult(query: string): LauncherResult[] {
 }
 
 export function buildImmediateResults(query: string, context: QueryContext = {}): LauncherResult[] {
-  const trimmed = query.trim();
+  const parsedQuery = parseIntentQuery(query);
+  const trimmed = parsedQuery.searchText.trim();
 
   if (!trimmed) {
     return buildLocalResults(launcherRuntime.getRecentLocalItems(), context).sort((a, b) => b.score - a.score);
   }
 
-  const localResults = buildLocalResults(launcherRuntime.getCachedLocal(trimmed, context.scopePath), context);
+  const localResults = buildLocalResults(launcherRuntime.getCachedLocal(trimmed, context.scopePath, parsedQuery.localFilter), context);
+  if (parsedQuery.localFilter) {
+    return localResults.sort((a, b) => b.score - a.score);
+  }
+
   return [
     ...buildAliasResults(trimmed),
     ...buildSettingsCommandResult(trimmed),
@@ -485,14 +491,19 @@ export function buildImmediateResults(query: string, context: QueryContext = {})
 }
 
 export async function buildResults(query: string, context: QueryContext = {}): Promise<LauncherResult[]> {
-  const trimmed = query.trim();
+  const parsedQuery = parseIntentQuery(query);
+  const trimmed = parsedQuery.searchText.trim();
 
   if (!trimmed) {
     return buildLocalResults(launcherRuntime.getRecentLocalItems(), context).sort((a, b) => b.score - a.score);
   }
 
-  const localResults = buildLocalResults(await launcherRuntime.searchLocal(trimmed, context.scopePath), context);
+  const localResults = buildLocalResults(await launcherRuntime.searchLocal(trimmed, context.scopePath, parsedQuery.localFilter), context);
   await launcherRuntime.getClipboardHistory();
+
+  if (parsedQuery.localFilter) {
+    return localResults.sort((a, b) => b.score - a.score);
+  }
 
   return [
     ...buildAliasResults(trimmed),
