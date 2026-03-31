@@ -97,6 +97,7 @@ The settings window is the control center for launcher preferences.
 - Review validation warnings before saving.
 - The scopes view explains the tradeoff: wider roots improve recall, but they increase indexing cost and usually add more low-value results.
 - If you add Home or `~/Library`, Northlight now ignores its own internal support files so broad scopes do not keep retriggering the index on self-writes.
+- Very broad scopes such as Home, `~/Library`, and `/` are still indexed, but Northlight no longer attaches recursive live watchers to them because macOS background churn would keep forcing refresh loops.
 
 ## Deterministic Calculations
 

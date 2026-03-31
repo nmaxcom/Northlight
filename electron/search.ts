@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { isPrivateNorthlightPath } from '../src/lib/search/searchExclusions';
 import { baseSearchScore } from '../src/lib/search/scoring';
 import { localIntentFilterKey, matchesLocalIntent, type LocalIntentFilter } from '../src/lib/search/intentParser';
+import { isWatchableScope } from '../src/lib/search/watchScopePolicy';
 import type { LauncherStatus, LocalSearchItem, ResultKind } from '../src/lib/search/types';
 import { getLauncherSettings, getLauncherStateSnapshot } from './settings';
 
@@ -502,6 +503,10 @@ export async function configureIndexWatchers() {
 
   const roots = await existingRoots();
   for (const root of roots) {
+    if (!isWatchableScope(root.path, homedir())) {
+      continue;
+    }
+
     try {
       const watcher = watch(root.path, { recursive: true }, (_eventType, relativePath) => {
         if (typeof relativePath === 'string' && relativePath.length > 0) {
