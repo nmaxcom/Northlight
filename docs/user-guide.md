@@ -129,6 +129,7 @@ Examples:
 - Search quality improves as the launcher records recency and frequency locally.
 - Search starts from the last good persisted index and refreshes in the background.
 - Background index refreshes keep the current result list visible while new hits resolve, instead of flashing back to the empty `Searching...` state.
+- Keeping a non-empty query open no longer retriggers full background index rebuilds on every local search pass, so steady search sessions stop burning CPU in the main process.
 - When files or folders move, stale persisted paths are pruned from results instead of lingering across relaunches.
 - Filesystem watchers can invalidate local search caches immediately when enabled scopes change on disk.
 - Launcher show/hide avoids async settings reads on the hot path, so shortcut-to-window appearance stays more consistent.

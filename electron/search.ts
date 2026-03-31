@@ -598,11 +598,13 @@ export function warmSearchIndex() {
       });
       scheduleRefresh();
     })();
-  } else if (!refreshPromise) {
-    scheduleRefresh();
   }
 
   return restorePromise;
+}
+
+export function requestSearchRefresh() {
+  scheduleRefresh();
 }
 
 function scheduleWatcherRefresh() {

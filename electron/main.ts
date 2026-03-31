@@ -11,7 +11,7 @@ import type { LocalIntentFilter } from '../src/lib/search/intentParser';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem } from '../src/lib/search/types';
 import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
 import { getIdleTraceSummary, getTraceDump, getTraceState, ingestRendererTrace, recordTrace, setTraceEnabled, traceSpan, writeTraceDumpFile } from './diagnostics';
-import { configureIndexWatchers, getSearchStatus, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
+import { configureIndexWatchers, getSearchStatus, requestSearchRefresh, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
 import {
   ensureLauncherState,
   getClipboardHistory,
@@ -887,13 +887,13 @@ app.whenReady().then(async () => {
         launcherSettingsCache = recoveredSettings;
         registerLauncherShortcut(recoveredSettings.launcherHotkey);
         broadcastSettings(recoveredSettings);
-        void warmSearchIndex();
+        requestSearchRefresh();
         return recoveredSettings;
       }
     }
 
     broadcastSettings(nextSettings);
-    void warmSearchIndex();
+    requestSearchRefresh();
     void configureIndexWatchers();
     return nextSettings;
   });
@@ -953,8 +953,6 @@ app.whenReady().then(async () => {
     if (pendingShow) {
       showLauncher();
     }
-
-    void warmSearchIndex();
   });
 
   app.on('activate', () => {
