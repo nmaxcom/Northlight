@@ -90,8 +90,10 @@ The settings window is the control center for launcher preferences.
 - Create aliases for paths, snippets, or direct settings access.
 - Create reusable text snippets.
 - Enable or disable indexed scope paths.
+- Use scope presets like `~/Library`, Home, or `/` to broaden search coverage without typing full paths by hand.
 - Enable or disable filesystem watchers for live scope invalidation.
 - Review validation warnings before saving.
+- The scopes view explains the tradeoff: wider roots improve recall, but they increase indexing cost and usually add more low-value results.
 
 ## Deterministic Calculations
 

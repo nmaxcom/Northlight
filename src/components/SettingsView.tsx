@@ -89,6 +89,14 @@ function createScope(): ScopeEntry {
   };
 }
 
+function inferHomePath(scopes: ScopeEntry[]) {
+  const match = scopes
+    .map((scope) => scope.path.match(/^\/Users\/[^/]+/))
+    .find((candidate): candidate is RegExpMatchArray => Boolean(candidate));
+
+  return match?.[0] ?? '/Users';
+}
+
 function validate(settings: LauncherSettings): ValidationState {
   const aliasTriggers = new Set<string>();
   const snippetTriggers = new Set<string>();
@@ -199,6 +207,52 @@ export function SettingsView() {
   const displayedShortcut = settings.launcherHotkey || effectiveShortcut;
   const displayTokens = shortcutTokens(displayedShortcut);
   const usesSessionFallback = !settings.launcherHotkey && Boolean(effectiveShortcut);
+  const homePath = inferHomePath(settings.scopes);
+  const scopePresets = [
+    {
+      id: 'library',
+      label: 'Add ~/Library',
+      path: `${homePath}/Library`,
+      tone: 'balanced',
+      note: 'Best next step for app data, preferences, and support files.',
+      cost: 'Medium cost'
+    },
+    {
+      id: 'home',
+      label: 'Add Home',
+      path: homePath,
+      tone: 'warm',
+      note: 'Broader personal search with more noise from Downloads, Library, and hidden files.',
+      cost: 'High cost'
+    },
+    {
+      id: 'root',
+      label: 'Add /',
+      path: '/',
+      tone: 'danger',
+      note: 'Widest coverage, but the slowest and noisiest option. Use only if you really want whole-disk search.',
+      cost: 'Highest cost'
+    }
+  ] as const;
+
+  const addScopePath = (path: string) => {
+    updateSettings((current) => {
+      if (current.scopes.some((scope) => scope.path === path)) {
+        return current;
+      }
+
+      return {
+        ...current,
+        scopes: [
+          ...current.scopes,
+          {
+            ...createScope(),
+            path
+          }
+        ]
+      };
+    });
+  };
 
   return (
     <main className={classes.page}>
@@ -577,15 +631,13 @@ export function SettingsView() {
                 </div>
               </section>
               ) : null}
-            </div>
 
-            <div className={classes.rightColumn}>
               {activeTab === 'scopes' ? (
               <section className={classes.card}>
                 <div className={classes.sectionHeader}>
                   <div>
                     <div className={classes.cardTitle}>Search Scopes</div>
-                    <div className={classes.cardSubtitle}>These folders feed local indexing and targeted fallback search.</div>
+                    <div className={classes.cardSubtitle}>Scopes decide which roots feed local indexing and targeted fallback search.</div>
                   </div>
                   <button
                     className={classes.secondaryButton}
@@ -600,6 +652,39 @@ export function SettingsView() {
                     Add Scope
                   </button>
                 </div>
+
+                <div className={classes.scopeIntro}>
+                  <div className={classes.scopeLead}>
+                    Start narrow, then widen only when you need more coverage. Adding large roots increases indexing time and can flood results with low-value system files.
+                  </div>
+                  <div className={classes.scopePresetGrid}>
+                    {scopePresets.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        className={`${classes.scopePreset} ${preset.tone === 'danger' ? classes.scopePresetDanger : preset.tone === 'warm' ? classes.scopePresetWarm : ''}`}
+                        onClick={() => addScopePath(preset.path)}
+                      >
+                        <span className={classes.scopePresetLabel}>{preset.label}</span>
+                        <span className={classes.scopePresetPath}>{preset.path}</span>
+                        <span className={classes.scopePresetMeta}>{preset.cost}</span>
+                        <span className={classes.scopePresetNote}>{preset.note}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={classes.scopeRules}>
+                  <div className={classes.scopeRule}>
+                    <div className={classes.scopeRuleTitle}>Recommended</div>
+                    <div className={classes.scopeRuleText}>Keep apps, work folders, and `~/Library` enabled for strong recall without indexing the whole machine.</div>
+                  </div>
+                  <div className={classes.scopeRule}>
+                    <div className={classes.scopeRuleTitle}>Use `/` carefully</div>
+                    <div className={classes.scopeRuleText}>Whole-disk search broadens coverage, but it is slower to index and usually adds much more noise from system paths.</div>
+                  </div>
+                </div>
+
                 <div className={classes.toggleRow}>
                   <label className={classes.toggle}>
                     <div className={classes.toggleText}>
@@ -619,11 +704,15 @@ export function SettingsView() {
                     />
                   </label>
                 </div>
-                <div className={classes.list}>
+
+                <div className={classes.scopeList}>
                   {settings.scopes.map((scope, index) => (
-                    <div key={scope.id} className={classes.row}>
+                    <div key={scope.id} className={classes.scopeCard}>
                       <div className={classes.rowHeader}>
-                        <div className={classes.rowTitle}>Scope {index + 1}</div>
+                        <div>
+                          <div className={classes.rowTitle}>Scope {index + 1}</div>
+                          <div className={classes.scopeCardMeta}>{scope.path === '/' ? 'Whole disk' : scope.path.includes('/Library') ? 'Library-heavy scope' : 'Custom scope'}</div>
+                        </div>
                         <button
                           className={classes.iconButton}
                           type="button"
@@ -677,7 +766,9 @@ export function SettingsView() {
                 </div>
               </section>
               ) : null}
+            </div>
 
+            <div className={classes.rightColumn}>
               {activeTab === 'scopes' ? (
               <section className={classes.card}>
                 <div className={classes.cardTitle}>Status</div>
@@ -695,15 +786,14 @@ export function SettingsView() {
 
               {activeTab === 'scopes' ? (
               <section className={classes.card}>
-                <div className={classes.cardTitle}>Notes</div>
-                <div className={classes.cardSubtitle}>A few launcher rules that affect how settings apply.</div>
+                <div className={classes.cardTitle}>Scope Guidance</div>
+                <div className={classes.cardSubtitle}>A few rules that matter when you widen search coverage.</div>
                 <ul className={classes.hintList}>
-                  <li>Aliases outrank fuzzy matches when their trigger matches the query.</li>
-                  <li>Disabled scopes stay in settings but stop feeding the local index.</li>
-                  <li>Clipboard and snippets only appear in launcher results when their toggles are enabled.</li>
-                  <li>Preview and quick-look preferences are applied live when the launcher is already open.</li>
-                  <li>The launcher can be dragged from the header and reopens at its last saved position.</li>
-                  <li>The launcher shortcut is re-registered immediately after a successful settings save.</li>
+                  <li>`~/Library` is usually the highest-value expansion if you want app support files, settings, plugins, or preferences.</li>
+                  <li>Disabled scopes stay in settings but stop feeding the local index until you enable them again.</li>
+                  <li>Larger scopes take longer to index and tend to push more low-value files into results.</li>
+                  <li>Watching filesystem changes helps stale results disappear faster, but it also makes broad scope sets busier.</li>
+                  <li>The `/` scope is a power-user option. It broadens recall, but it is the slowest and noisiest choice.</li>
                 </ul>
               </section>
               ) : null}

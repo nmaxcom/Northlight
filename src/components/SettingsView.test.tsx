@@ -32,6 +32,40 @@ describe('SettingsView', () => {
     expect(screen.getByText(/dev-session fallback shortcut/i)).toBeInTheDocument();
   });
 
+  it('shows scope guidance and adds the library preset without duplicating it', async () => {
+    window.launcher = {
+      getSettings: vi.fn().mockResolvedValue({
+        ...launcherRuntime.getSettingsSnapshot(),
+        scopes: [
+          { id: 'scope-0', path: '/Applications', enabled: true },
+          { id: 'scope-1', path: '/Users/nm4/Documents', enabled: true }
+        ]
+      }),
+      getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
+      saveSettings: vi.fn().mockImplementation(async (settings) => settings),
+      onSettingsChanged: vi.fn().mockReturnValue(() => {})
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <SettingsView />
+      </MantineProvider>
+    );
+
+    await screen.findByText('Northlight Settings');
+    fireEvent.click(screen.getByRole('button', { name: 'Scopes & Status' }));
+
+    expect(screen.getByText(/start narrow, then widen only when you need more coverage/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add ~\/library/i })).toBeInTheDocument();
+    expect(screen.getByText(/whole-disk search broadens coverage, but it is slower to index/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /add ~\/library/i }));
+    expect((screen.getAllByLabelText('Path').at(-1) as HTMLInputElement).value).toBe('/Users/nm4/Library');
+
+    fireEvent.click(screen.getByRole('button', { name: /add ~\/library/i }));
+    expect(screen.getAllByDisplayValue('/Users/nm4/Library')).toHaveLength(1);
+  });
+
   it('renders the filesystem watcher toggle and saves it', async () => {
     const saveSettings = vi.fn().mockImplementation(async (settings) => settings);
 
