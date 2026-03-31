@@ -10,6 +10,7 @@ import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/s
 import type { LocalIntentFilter } from '../src/lib/search/intentParser';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem } from '../src/lib/search/types';
 import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
+import { getIdleTraceSummary, getTraceDump, getTraceState, ingestRendererTrace, recordTrace, setTraceEnabled, traceSpan } from './diagnostics';
 import { configureIndexWatchers, getSearchStatus, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
 import {
   ensureLauncherState,
@@ -42,6 +43,12 @@ const textPreviewExtensions = new Set([
 ]);
 const imagePreviewExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tiff', '.tif', '.svg', '.avif']);
 const pdfPreviewExtensions = new Set(['.pdf']);
+let mainRequestSequence = 0;
+
+function nextRequestId(prefix: string) {
+  mainRequestSequence += 1;
+  return `${prefix}-${mainRequestSequence}`;
+}
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) {
@@ -143,33 +150,55 @@ function bufferToDataUrl(buffer: Buffer, mimeType: string) {
   return `data:${mimeType};base64,${buffer.toString('base64')}`;
 }
 
-async function getImagePreview(path: string) {
-  const imageBuffer = await readFile(path);
-  return {
-    mediaUrl: bufferToDataUrl(imageBuffer, mimeTypeForExtension(extname(path))),
-    mediaKind: 'image' as const,
-    mediaAlt: basename(path)
-  };
+async function getImagePreview(path: string, requestId?: string) {
+  return traceSpan(
+    {
+      subsystem: 'preview',
+      event: 'image-preview',
+      requestId,
+      path,
+      kind: 'image'
+    },
+    async () => {
+      const imageBuffer = await readFile(path);
+      return {
+        mediaUrl: bufferToDataUrl(imageBuffer, mimeTypeForExtension(extname(path))),
+        mediaKind: 'image' as const,
+        mediaAlt: basename(path)
+      };
+    }
+  );
 }
 
-async function getPdfPreview(path: string) {
-  const previewCacheDir = join(app.getPath('userData'), 'preview-cache');
-  const previewHash = createHash('sha1').update(path).digest('hex');
-  const outputDir = join(previewCacheDir, previewHash);
+async function getPdfPreview(path: string, requestId?: string) {
+  return traceSpan(
+    {
+      subsystem: 'preview',
+      event: 'pdf-preview',
+      requestId,
+      path,
+      kind: 'pdf'
+    },
+    async () => {
+      const previewCacheDir = join(app.getPath('userData'), 'preview-cache');
+      const previewHash = createHash('sha1').update(path).digest('hex');
+      const outputDir = join(previewCacheDir, previewHash);
 
-  await mkdir(outputDir, { recursive: true });
-  await runCommand('qlmanage', ['-t', '-s', '900', '-o', outputDir, path]);
-  const generated = (await readdir(outputDir)).find((entry) => entry.endsWith('.png'));
-  if (!generated) {
-    return null;
-  }
+      await mkdir(outputDir, { recursive: true });
+      await runCommand('qlmanage', ['-t', '-s', '900', '-o', outputDir, path]);
+      const generated = (await readdir(outputDir)).find((entry) => entry.endsWith('.png'));
+      if (!generated) {
+        return null;
+      }
 
-  const imageBuffer = await readFile(join(outputDir, generated));
-  return {
-    mediaUrl: bufferToDataUrl(imageBuffer, 'image/png'),
-    mediaKind: 'document' as const,
-    mediaAlt: basename(path)
-  };
+      const imageBuffer = await readFile(join(outputDir, generated));
+      return {
+        mediaUrl: bufferToDataUrl(imageBuffer, 'image/png'),
+        mediaKind: 'document' as const,
+        mediaAlt: basename(path)
+      };
+    }
+  );
 }
 
 function nativeImageToDataUrl(image: NativeImage) {
@@ -384,13 +413,30 @@ function openSettingsWindow() {
   return settingsWindow;
 }
 
-async function getPathPreview(path: string, kind: LocalSearchItem['kind']): Promise<LauncherPreview | null> {
+async function getPathPreview(path: string, kind: LocalSearchItem['kind'], requestId?: string): Promise<LauncherPreview | null> {
   const previewKey = `${kind}:${path}`;
   if (previewCache.has(previewKey)) {
+    recordTrace({
+      subsystem: 'preview',
+      event: 'preview-cache-hit',
+      requestId,
+      path,
+      kind,
+      cacheState: 'hit'
+    });
     return previewCache.get(previewKey) ?? null;
   }
 
   try {
+    const startedAt = Date.now();
+    recordTrace({
+      subsystem: 'preview',
+      event: 'preview-start',
+      requestId,
+      path,
+      kind,
+      cacheState: 'miss'
+    });
     if (kind === 'folder') {
       const entries = await readdir(path, { withFileTypes: true });
       const folders = entries.filter((entry) => entry.isDirectory()).slice(0, 4).map((entry) => entry.name);
@@ -410,6 +456,15 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind']): Prom
         ]
       };
       previewCache.set(previewKey, preview);
+      recordTrace({
+        subsystem: 'preview',
+        event: 'preview-complete',
+        requestId,
+        path,
+        kind,
+        cacheState: 'miss',
+        durationMs: Date.now() - startedAt
+      });
       return preview;
     }
 
@@ -418,7 +473,7 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind']): Prom
       const bundleId = await getPlistValue(plistPath, 'CFBundleIdentifier');
       const version =
         (await getPlistValue(plistPath, 'CFBundleShortVersionString')) || (await getPlistValue(plistPath, 'CFBundleVersion'));
-      const media = await getPathIcon(path);
+      const media = await getPathIcon(path, requestId);
 
       const preview = {
         title: basename(path).replace(/\.app$/i, ''),
@@ -435,6 +490,15 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind']): Prom
         ]
       };
       previewCache.set(previewKey, preview);
+      recordTrace({
+        subsystem: 'preview',
+        event: 'preview-complete',
+        requestId,
+        path,
+        kind,
+        cacheState: 'miss',
+        durationMs: Date.now() - startedAt
+      });
       return preview;
     }
 
@@ -448,7 +512,7 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind']): Prom
     ];
 
     if (imagePreviewExtensions.has(extension)) {
-      const media = await getImagePreview(path);
+      const media = await getImagePreview(path, requestId);
       const preview = {
         title: basename(path),
         subtitle: path,
@@ -458,11 +522,20 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind']): Prom
         sections
       };
       previewCache.set(previewKey, preview);
+      recordTrace({
+        subsystem: 'preview',
+        event: 'preview-complete',
+        requestId,
+        path,
+        kind,
+        cacheState: 'miss',
+        durationMs: Date.now() - startedAt
+      });
       return preview;
     }
 
     if (pdfPreviewExtensions.has(extension)) {
-      const media = await getPdfPreview(path);
+      const media = await getPdfPreview(path, requestId);
       const preview = {
         title: basename(path),
         subtitle: path,
@@ -472,11 +545,29 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind']): Prom
         sections
       };
       previewCache.set(previewKey, preview);
+      recordTrace({
+        subsystem: 'preview',
+        event: 'preview-complete',
+        requestId,
+        path,
+        kind,
+        cacheState: 'miss',
+        durationMs: Date.now() - startedAt
+      });
       return preview;
     }
 
     if (textPreviewExtensions.has(extension)) {
-      const body = (await readFile(path, 'utf8')).slice(0, 12000);
+      const body = await traceSpan(
+        {
+          subsystem: 'preview',
+          event: 'text-preview-read',
+          requestId,
+          path,
+          kind: extension || 'text'
+        },
+        async () => (await readFile(path, 'utf8')).slice(0, 12000)
+      );
       const preview = {
         title: basename(path),
         subtitle: path,
@@ -487,6 +578,15 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind']): Prom
         sections
       };
       previewCache.set(previewKey, preview);
+      recordTrace({
+        subsystem: 'preview',
+        event: 'preview-complete',
+        requestId,
+        path,
+        kind,
+        cacheState: 'miss',
+        durationMs: Date.now() - startedAt
+      });
       return preview;
     }
 
@@ -496,9 +596,27 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind']): Prom
       sections
     };
     previewCache.set(previewKey, preview);
+    recordTrace({
+      subsystem: 'preview',
+      event: 'preview-complete',
+      requestId,
+      path,
+      kind,
+      cacheState: 'miss',
+      durationMs: Date.now() - startedAt
+    });
     return preview;
   } catch {
     previewCache.set(previewKey, null);
+    recordTrace({
+      subsystem: 'preview',
+      event: 'preview-complete',
+      requestId,
+      path,
+      kind,
+      cacheState: 'miss',
+      outcome: 'error'
+    });
     return null;
   }
 }
@@ -576,12 +694,27 @@ function quickLookPath(path: string) {
   child.unref();
 }
 
-async function getPathIcon(path: string) {
+async function getPathIcon(path: string, requestId?: string) {
   if (iconCache.has(path)) {
+    recordTrace({
+      subsystem: 'icon',
+      event: 'icon-cache-hit',
+      requestId,
+      path,
+      cacheState: 'hit'
+    });
     return iconCache.get(path) ?? null;
   }
 
   try {
+    const startedAt = Date.now();
+    recordTrace({
+      subsystem: 'icon',
+      event: 'icon-start',
+      requestId,
+      path,
+      cacheState: 'miss'
+    });
     if (path.endsWith('.app')) {
       const plistPath = join(path, 'Contents', 'Info.plist');
       const iconName = await runCommandOutput('plutil', ['-extract', 'CFBundleIconFile', 'raw', '-o', '-', plistPath]).catch(() => '');
@@ -599,24 +732,66 @@ async function getPathIcon(path: string) {
         try {
           await access(renderedIconPath);
         } catch {
-          await runCommand('sips', ['-s', 'format', 'png', bundleIconPath, '--out', renderedIconPath]);
+          await traceSpan(
+            {
+              subsystem: 'icon',
+              event: 'app-icon-render',
+              requestId,
+              path: bundleIconPath,
+              kind: 'app'
+            },
+            async () => runCommand('sips', ['-s', 'format', 'png', bundleIconPath, '--out', renderedIconPath])
+          );
         }
 
         const renderedIconBuffer = await readFile(renderedIconPath);
         if (renderedIconBuffer.length > 0) {
           const icon = bufferToDataUrl(renderedIconBuffer, 'image/png');
           iconCache.set(path, icon);
+          recordTrace({
+            subsystem: 'icon',
+            event: 'icon-complete',
+            requestId,
+            path,
+            cacheState: 'miss',
+            durationMs: Date.now() - startedAt,
+            kind: 'app'
+          });
           return icon;
         }
       }
     }
 
-    const image = await app.getFileIcon(path, { size: 'normal' });
+    const image = await traceSpan(
+      {
+        subsystem: 'icon',
+        event: 'native-file-icon',
+        requestId,
+        path
+      },
+      async () => app.getFileIcon(path, { size: 'normal' })
+    );
     const icon = nativeImageToDataUrl(image);
     iconCache.set(path, icon);
+    recordTrace({
+      subsystem: 'icon',
+      event: 'icon-complete',
+      requestId,
+      path,
+      cacheState: 'miss',
+      durationMs: Date.now() - startedAt
+    });
     return icon;
   } catch {
     iconCache.set(path, null);
+    recordTrace({
+      subsystem: 'icon',
+      event: 'icon-complete',
+      requestId,
+      path,
+      cacheState: 'miss',
+      outcome: 'error'
+    });
     return null;
   }
 }
@@ -646,13 +821,52 @@ app.whenReady().then(async () => {
     await shell.openPath(path);
   });
 
-  ipcMain.handle('launcher:search-local', async (_event, query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) =>
-    searchIndexedPaths(query, scopePath, localFilter)
+  ipcMain.handle(
+    'launcher:search-local',
+    async (_event, query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null, requestId?: string) => {
+      const traceRequestId = requestId || nextRequestId('search');
+
+      return traceSpan(
+        {
+          subsystem: 'ipc',
+          event: 'search-local',
+          requestId: traceRequestId,
+          query,
+          scopePath,
+          localFilter
+        },
+        async () => searchIndexedPaths(query, scopePath, localFilter, { requestId: traceRequestId })
+      );
+    }
   );
 
-  ipcMain.handle('launcher:get-status', async () => getSearchStatus(packageJson.version));
+  ipcMain.handle('launcher:get-status', async (_event, requestId?: string) => {
+    const traceRequestId = requestId || nextRequestId('status');
+    const startedAt = Date.now();
+    const status = getSearchStatus(packageJson.version);
+    recordTrace({
+      subsystem: 'status',
+      event: 'get-status',
+      requestId: traceRequestId,
+      durationMs: Date.now() - startedAt,
+      details: {
+        ready: status.indexReady,
+        refreshing: status.isRefreshing,
+        restoring: status.isRestoring,
+        count: status.indexEntryCount
+      }
+    });
+    return status;
+  });
   ipcMain.handle('launcher:get-settings', async () => getLauncherSettings());
   ipcMain.handle('launcher:get-effective-shortcut', async () => resolveLauncherShortcut(launcherSettingsCache.launcherHotkey, app.isPackaged));
+  ipcMain.handle('launcher:get-trace-state', async () => getTraceState());
+  ipcMain.handle('launcher:set-trace-enabled', async (_event, enabled: boolean) => setTraceEnabled(enabled));
+  ipcMain.handle('launcher:trace-event', async (_event, event) => {
+    ingestRendererTrace(event);
+  });
+  ipcMain.handle('launcher:get-trace-dump', async () => getTraceDump());
+  ipcMain.handle('launcher:get-idle-trace-summary', async () => getIdleTraceSummary());
   ipcMain.handle('launcher:save-settings', async (_event, settings: LauncherSettings) => {
     const currentSettings = launcherSettingsCache;
     const nextSettings = await saveLauncherSettings(settings);
@@ -686,13 +900,24 @@ app.whenReady().then(async () => {
   ipcMain.handle('launcher:open-settings', async () => {
     openSettingsWindow();
   });
-  ipcMain.handle('launcher:get-path-preview', async (_event, path: string, kind: LocalSearchItem['kind']) =>
-    getPathPreview(path, kind)
+  ipcMain.handle('launcher:get-path-preview', async (_event, path: string, kind: LocalSearchItem['kind'], requestId?: string) =>
+    getPathPreview(path, kind, requestId || nextRequestId('preview'))
   );
-  ipcMain.handle('launcher:get-path-icon', async (_event, path: string) => getPathIcon(path));
-  ipcMain.handle('launcher:get-path-icons', async (_event, paths: string[]) =>
-    Object.fromEntries(await Promise.all(paths.map(async (path) => [path, await getPathIcon(path)] as const)))
+  ipcMain.handle('launcher:get-path-icon', async (_event, path: string, requestId?: string) =>
+    getPathIcon(path, requestId || nextRequestId('icon'))
   );
+  ipcMain.handle('launcher:get-path-icons', async (_event, paths: string[], requestId?: string) => {
+    const traceRequestId = requestId || nextRequestId('icons');
+    return traceSpan(
+      {
+        subsystem: 'icon',
+        event: 'icon-batch',
+        requestId: traceRequestId,
+        resultCount: paths.length
+      },
+      async () => Object.fromEntries(await Promise.all(paths.map(async (path) => [path, await getPathIcon(path, traceRequestId)] as const)))
+    );
+  });
   ipcMain.handle('launcher:quick-look-path', async (_event, path: string) => {
     mainWindow?.hide();
     quickLookPath(path);

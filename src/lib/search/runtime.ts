@@ -5,6 +5,12 @@ import { adaptiveRankBoost } from './adaptiveRanking';
 import { baseSearchScore } from './scoring';
 import { resolveLauncherShortcut } from '../shortcuts';
 import type { ClipboardEntry, LauncherPreview, LauncherSettings, LauncherStatus, LocalSearchItem } from './types';
+import type {
+  LauncherTraceDump,
+  LauncherTraceEvent,
+  LauncherTraceIdleSummary,
+  LauncherTraceState
+} from './types';
 
 const queryCache = new Map<string, LocalSearchItem[]>();
 const defaultSettings: LauncherSettings = {
@@ -43,6 +49,10 @@ const defaultSettings: LauncherSettings = {
 let settingsCache: LauncherSettings = defaultSettings;
 let clipboardCache: ClipboardEntry[] = [];
 const previewCache = new Map<string, LauncherPreview | null>();
+let traceStateCache: LauncherTraceState = {
+  enabled: false,
+  sessionId: ''
+};
 
 function clearTransientCaches() {
   queryCache.clear();
@@ -118,6 +128,62 @@ function searchCachedLocal(query: string, scopePath?: string | null, localFilter
 
 export const launcherRuntime = {
   clearRankStore,
+  getTraceState(force = false): Promise<LauncherTraceState> {
+    if (!force && traceStateCache.sessionId) {
+      return Promise.resolve(traceStateCache);
+    }
+
+    return (
+      window.launcher?.getTraceState?.().then((state) => {
+        traceStateCache = state;
+        return state;
+      }) ??
+      Promise.resolve(traceStateCache)
+    );
+  },
+  setTraceEnabled(enabled: boolean): Promise<LauncherTraceState> {
+    return (
+      window.launcher?.setTraceEnabled?.(enabled).then((state) => {
+        traceStateCache = state;
+        return state;
+      }) ??
+      Promise.resolve({
+        enabled,
+        sessionId: traceStateCache.sessionId
+      })
+    );
+  },
+  traceEvent(event: LauncherTraceEvent) {
+    if (!traceStateCache.enabled || !window.launcher?.traceEvent) {
+      return Promise.resolve();
+    }
+
+    return window.launcher.traceEvent(event);
+  },
+  getTraceDump(): Promise<LauncherTraceDump> {
+    return (
+      window.launcher?.getTraceDump?.() ??
+      Promise.resolve({
+        enabled: traceStateCache.enabled,
+        sessionId: traceStateCache.sessionId,
+        generatedAt: Date.now(),
+        events: []
+      })
+    );
+  },
+  getIdleTraceSummary(): Promise<LauncherTraceIdleSummary> {
+    return (
+      window.launcher?.getIdleTraceSummary?.() ??
+      Promise.resolve({
+        fromTimestamp: Date.now(),
+        toTimestamp: Date.now(),
+        idleMs: 0,
+        totalEvents: 0,
+        uniqueEventCount: 0,
+        topEvents: []
+      })
+    );
+  },
   getSettings() {
     return window.launcher?.getSettings?.().then((settings) => {
       settingsCache = settings;
@@ -152,28 +218,28 @@ export const launcherRuntime = {
   openSettings() {
     return window.launcher?.openSettings?.() ?? Promise.resolve();
   },
-  getPathPreview(path: string, kind: LocalSearchItem['kind']): Promise<LauncherPreview | null> {
+  getPathPreview(path: string, kind: LocalSearchItem['kind'], requestId?: string): Promise<LauncherPreview | null> {
     const cacheEntry = previewCache.get(`${kind}:${path}`);
     if (cacheEntry !== undefined) {
       return Promise.resolve(cacheEntry);
     }
 
     return (
-      window.launcher?.getPathPreview?.(path, kind).then((preview) => {
+      window.launcher?.getPathPreview?.(path, kind, requestId).then((preview) => {
         previewCache.set(`${kind}:${path}`, preview);
         return preview;
       }) ?? Promise.resolve(null)
     );
   },
-  getPathIcon(path: string): Promise<string | null> {
-    return window.launcher?.getPathIcon?.(path) ?? Promise.resolve(null);
+  getPathIcon(path: string, requestId?: string): Promise<string | null> {
+    return window.launcher?.getPathIcon?.(path, requestId) ?? Promise.resolve(null);
   },
-  getPathIcons(paths: string[]) {
+  getPathIcons(paths: string[], requestId?: string) {
     if (window.launcher?.getPathIcons) {
-      return window.launcher.getPathIcons(paths);
+      return window.launcher.getPathIcons(paths, requestId);
     }
 
-    return Promise.all(paths.map(async (path) => [path, await launcherRuntime.getPathIcon(path)] as const)).then((pairs) =>
+    return Promise.all(paths.map(async (path) => [path, await launcherRuntime.getPathIcon(path, requestId)] as const)).then((pairs) =>
       Object.fromEntries(pairs)
     );
   },
@@ -226,9 +292,9 @@ export const launcherRuntime = {
       .sort((left, right) => right.score - left.score)
       .slice(0, 8);
   },
-  searchLocal(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
+  searchLocal(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null, requestId?: string) {
     if (window.launcher?.searchLocal) {
-      return window.launcher.searchLocal(query, scopePath, localFilter).then((results) => {
+      return window.launcher.searchLocal(query, scopePath, localFilter, requestId).then((results) => {
         const ranked = rankItems(query.trim(), filterByScope(results, scopePath), localFilter);
 
         if (ranked.length > 0) {
@@ -246,9 +312,9 @@ export const launcherRuntime = {
       return results;
     });
   },
-  getStatus(): Promise<LauncherStatus> {
+  getStatus(requestId?: string): Promise<LauncherStatus> {
     return (
-      window.launcher?.getStatus?.() ??
+      window.launcher?.getStatus?.(requestId) ??
       Promise.resolve({
         appVersion: '0.7.0',
         indexEntryCount: fileFixtures.length,

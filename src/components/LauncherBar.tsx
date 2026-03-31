@@ -5,6 +5,7 @@ import type {
   LauncherResult,
   LauncherSettings,
   LauncherStatus,
+  LauncherTraceEvent,
   ResultKind
 } from '../lib/search/types';
 import { buildImmediateResults, buildResults } from '../lib/search/query';
@@ -181,9 +182,45 @@ export function LauncherBar() {
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const actionsRef = useRef<HTMLDivElement | null>(null);
   const searchRequestRef = useRef(0);
+  const traceRequestSequenceRef = useRef(0);
   const visibleResultsCountRef = useRef(results.length);
   const previewRequestRef = useRef(0);
   const previewTargetRef = useRef<string | null>(null);
+  const lastStableQueryRef = useRef('');
+  const idleSummaryTimerRef = useRef<number | null>(null);
+
+  const nextTraceRequestId = useCallback((prefix: string) => {
+    traceRequestSequenceRef.current += 1;
+    return `${prefix}-${traceRequestSequenceRef.current}`;
+  }, []);
+
+  const traceEvent = useCallback((event: LauncherTraceEvent) => {
+    return launcherRuntime.traceEvent({
+      timestamp: Date.now(),
+      ...event
+    });
+  }, []);
+
+  const dumpTrace = useCallback(async () => {
+    const [dump, idleSummary] = await Promise.all([launcherRuntime.getTraceDump(), launcherRuntime.getIdleTraceSummary()]);
+
+    console.groupCollapsed(`[trace dump] session=${dump.sessionId} events=${dump.events.length}`);
+    console.log('idle summary', idleSummary);
+    console.table(
+      dump.events.slice(-30).map((event) => ({
+        at: new Date(event.timestamp).toLocaleTimeString(),
+        source: event.source,
+        subsystem: event.subsystem,
+        event: event.event,
+        requestId: event.requestId ?? '',
+        durationMs: event.durationMs ?? '',
+        resultCount: event.resultCount ?? '',
+        cache: event.cacheState ?? '',
+        outcome: event.outcome ?? ''
+      }))
+    );
+    console.groupEnd();
+  }, []);
   const iconClassName = useCallback(
     (result: LauncherResult, extra = '') => {
       const hasNativeIcon = Boolean(result.path && iconUrls[result.path]);
@@ -260,6 +297,18 @@ export function LauncherBar() {
   useEffect(() => {
     let cancelled = false;
 
+    void launcherRuntime.getTraceState(true).then((state) => {
+      if (!cancelled && state.enabled) {
+        void traceEvent({
+          subsystem: 'renderer',
+          event: 'mounted',
+          details: {
+            sessionId: state.sessionId
+          }
+        });
+      }
+    });
+
     void launcherRuntime.getSettings().then((nextSettings) => {
       if (!cancelled) {
         setSettings(nextSettings);
@@ -277,7 +326,7 @@ export function LauncherBar() {
       cancelled = true;
       unsubscribe();
     };
-  }, []);
+  }, [traceEvent]);
 
   useEffect(() => {
     visibleResultsCountRef.current = results.length;
@@ -285,6 +334,14 @@ export function LauncherBar() {
 
   useEffect(() => {
     return launcherRuntime.onIndexChanged(() => {
+      const traceRequestId = nextTraceRequestId('search-index');
+      void traceEvent({
+        subsystem: 'renderer',
+        event: 'index-changed',
+        requestId: traceRequestId,
+        query
+      });
+
       if (!query.trim()) {
         setResults(buildImmediateResults(''));
         setIsResolving(false);
@@ -296,43 +353,97 @@ export function LauncherBar() {
       }
 
       const requestId = ++searchRequestRef.current;
-      void buildResults(query).then((nextResults) => {
+      void traceEvent({
+        subsystem: 'search',
+        event: 'start',
+        requestId: traceRequestId,
+        query,
+        details: {
+          reason: 'index-change'
+        }
+      });
+      const startedAt = Date.now();
+      void buildResults(query, { traceRequestId }).then((nextResults) => {
         if (requestId !== searchRequestRef.current) {
+          void traceEvent({
+            subsystem: 'search',
+            event: 'cancel',
+            requestId: traceRequestId,
+            query,
+            durationMs: Date.now() - startedAt,
+            outcome: 'obsolete'
+          });
           return;
         }
 
         setResults(nextResults);
         setIsResolving(false);
+        void traceEvent({
+          subsystem: 'search',
+          event: 'complete',
+          requestId: traceRequestId,
+          query,
+          durationMs: Date.now() - startedAt,
+          resultCount: nextResults.length
+        });
       });
     });
-  }, [query]);
+  }, [nextTraceRequestId, query, traceEvent]);
 
   useEffect(() => {
     let cancelled = false;
     let timer: number | null = null;
 
-    const refreshStatus = () => {
-      void launcherRuntime.getStatus().then((nextStatus) => {
+    const refreshStatus = (reason: 'mount' | 'poll' | 'index-change' = 'poll') => {
+      const traceRequestId = nextTraceRequestId('status');
+      const startedAt = Date.now();
+      void traceEvent({
+        subsystem: 'status',
+        event: 'start',
+        requestId: traceRequestId,
+        details: {
+          reason
+        }
+      });
+      void launcherRuntime.getStatus(traceRequestId).then((nextStatus) => {
         if (cancelled) {
+          void traceEvent({
+            subsystem: 'status',
+            event: 'cancel',
+            requestId: traceRequestId,
+            durationMs: Date.now() - startedAt,
+            outcome: 'cancelled'
+          });
           return;
         }
 
         setStatus(nextStatus);
+        void traceEvent({
+          subsystem: 'status',
+          event: 'complete',
+          requestId: traceRequestId,
+          durationMs: Date.now() - startedAt,
+          details: {
+            refreshing: nextStatus.isRefreshing,
+            restoring: nextStatus.isRestoring,
+            ready: nextStatus.indexReady
+          }
+        });
 
         if (nextStatus.isRefreshing || nextStatus.isRestoring) {
-          timer = window.setTimeout(refreshStatus, 1500);
+          timer = window.setTimeout(() => refreshStatus('poll'), 1500);
         }
       });
     };
 
-    refreshStatus();
+    refreshStatus('mount');
     const unsubscribe = launcherRuntime.onIndexChanged(() => {
       if (timer) {
         window.clearTimeout(timer);
         timer = null;
       }
 
-      refreshStatus();
+      refreshStatus('index-change');
     });
 
     return () => {
@@ -342,7 +453,7 @@ export function LauncherBar() {
       }
       unsubscribe();
     };
-  }, []);
+  }, [nextTraceRequestId, traceEvent]);
 
   useEffect(() => {
     focusActiveInput();
@@ -377,7 +488,44 @@ export function LauncherBar() {
   }, [closeActions, isActionsOpen, selectedResult]);
 
   useEffect(() => {
+    const previousQuery = lastStableQueryRef.current;
+    if (previousQuery === query) {
+      void traceEvent({
+        subsystem: 'renderer',
+        event: 'query-repeat',
+        query
+      });
+    } else {
+      lastStableQueryRef.current = query;
+      void traceEvent({
+        subsystem: 'renderer',
+        event: 'query-change',
+        query
+      });
+    }
+
+    if (idleSummaryTimerRef.current) {
+      window.clearTimeout(idleSummaryTimerRef.current);
+    }
+
+    idleSummaryTimerRef.current = window.setTimeout(() => {
+      void launcherRuntime.getIdleTraceSummary().then((summary) => {
+        if (summary.totalEvents > 0) {
+          console.log('[trace idle summary]', summary);
+        }
+      });
+    }, 2500);
+
     const immediateResults = buildImmediateResults(query);
+    void traceEvent({
+      subsystem: 'search',
+      event: 'immediate-results',
+      query,
+      resultCount: immediateResults.length,
+      details: {
+        empty: query.trim().length === 0
+      }
+    });
 
     if (!query.trim()) {
       setResults(immediateResults);
@@ -392,7 +540,13 @@ export function LauncherBar() {
     }
 
     setIsResolving((current) => current || visibleResultsCountRef.current === 0);
-  }, [query, settings]);
+    return () => {
+      if (idleSummaryTimerRef.current) {
+        window.clearTimeout(idleSummaryTimerRef.current);
+        idleSummaryTimerRef.current = null;
+      }
+    };
+  }, [query, settings, traceEvent]);
 
   useEffect(() => {
     let canceled = false;
@@ -402,19 +556,48 @@ export function LauncherBar() {
       return;
     }
 
+    const traceRequestId = nextTraceRequestId('search-query');
     const requestId = ++searchRequestRef.current;
+    const startedAt = Date.now();
     setIsResolving((current) => current || visibleResultsCountRef.current === 0);
-    void buildResults(query).then((nextResults) => {
+    void traceEvent({
+      subsystem: 'search',
+      event: 'start',
+      requestId: traceRequestId,
+      query,
+      details: {
+        reason: 'query-change'
+      }
+    });
+    void buildResults(query, { traceRequestId }).then((nextResults) => {
       if (!canceled && requestId === searchRequestRef.current) {
         setResults(nextResults);
         setIsResolving(false);
+        void traceEvent({
+          subsystem: 'search',
+          event: 'complete',
+          requestId: traceRequestId,
+          query,
+          durationMs: Date.now() - startedAt,
+          resultCount: nextResults.length
+        });
+        return;
       }
+
+      void traceEvent({
+        subsystem: 'search',
+        event: 'cancel',
+        requestId: traceRequestId,
+        query,
+        durationMs: Date.now() - startedAt,
+        outcome: 'obsolete'
+      });
     });
 
     return () => {
       canceled = true;
     };
-  }, [query, settings]);
+  }, [nextTraceRequestId, query, settings, traceEvent]);
 
   useEffect(() => {
     let cancelled = false;
@@ -438,11 +621,40 @@ export function LauncherBar() {
     }
 
     if (selectedResult.path && (selectedResult.kind === 'file' || selectedResult.kind === 'folder' || selectedResult.kind === 'app')) {
+      const traceRequestId = nextTraceRequestId('preview');
       const requestId = ++previewRequestRef.current;
-      void launcherRuntime.getPathPreview(selectedResult.path, selectedResult.kind).then((nextPreview) => {
+      const startedAt = Date.now();
+      void traceEvent({
+        subsystem: 'preview',
+        event: 'start',
+        requestId: traceRequestId,
+        path: selectedResult.path,
+        kind: selectedResult.kind
+      });
+      void launcherRuntime.getPathPreview(selectedResult.path, selectedResult.kind, traceRequestId).then((nextPreview) => {
         if (!cancelled && requestId === previewRequestRef.current && nextPreview) {
           setPreview(nextPreview);
+          void traceEvent({
+            subsystem: 'preview',
+            event: 'complete',
+            requestId: traceRequestId,
+            path: selectedResult.path,
+            kind: selectedResult.kind,
+            durationMs: Date.now() - startedAt,
+            outcome: 'applied'
+          });
+          return;
         }
+
+        void traceEvent({
+          subsystem: 'preview',
+          event: 'cancel',
+          requestId: traceRequestId,
+          path: selectedResult.path,
+          kind: selectedResult.kind,
+          durationMs: Date.now() - startedAt,
+          outcome: cancelled ? 'cancelled' : 'obsolete'
+        });
       });
       return () => {
         cancelled = true;
@@ -452,7 +664,7 @@ export function LauncherBar() {
     return () => {
       cancelled = true;
     };
-  }, [previewVisible, selectedResult]);
+  }, [nextTraceRequestId, previewVisible, selectedResult, traceEvent]);
 
   useEffect(() => {
     const iconPaths = Array.from(
@@ -469,9 +681,25 @@ export function LauncherBar() {
     }
 
     let cancelled = false;
+    const traceRequestId = nextTraceRequestId('icons');
+    const startedAt = Date.now();
 
-    void launcherRuntime.getPathIcons(iconPaths).then((iconMap) => {
+    void traceEvent({
+      subsystem: 'icon',
+      event: 'batch-start',
+      requestId: traceRequestId,
+      resultCount: iconPaths.length
+    });
+
+    void launcherRuntime.getPathIcons(iconPaths, traceRequestId).then((iconMap) => {
       if (cancelled) {
+        void traceEvent({
+          subsystem: 'icon',
+          event: 'batch-cancel',
+          requestId: traceRequestId,
+          durationMs: Date.now() - startedAt,
+          outcome: 'cancelled'
+        });
         return;
       }
 
@@ -482,12 +710,19 @@ export function LauncherBar() {
         }
         return next;
       });
+      void traceEvent({
+        subsystem: 'icon',
+        event: 'batch-complete',
+        requestId: traceRequestId,
+        durationMs: Date.now() - startedAt,
+        resultCount: Object.keys(iconMap).length
+      });
     });
 
     return () => {
       cancelled = true;
     };
-  }, [iconUrls, results]);
+  }, [iconUrls, nextTraceRequestId, results, traceEvent]);
 
   useEffect(() => {
     const onKeyDown = async (event: KeyboardEvent) => {
@@ -514,6 +749,12 @@ export function LauncherBar() {
         } else {
           openActions();
         }
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'd' && event.metaKey && event.shiftKey && !event.altKey) {
+        event.preventDefault();
+        await dumpTrace();
         return;
       }
 
@@ -624,6 +865,7 @@ export function LauncherBar() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
     closeActions,
+    dumpTrace,
     filteredActions.length,
     focusActiveInput,
     invokeAction,

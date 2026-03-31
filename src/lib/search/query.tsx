@@ -7,6 +7,7 @@ import type { AliasEntry, ClipboardEntry, LauncherResult, LocalSearchItem, Snipp
 
 export type QueryContext = {
   scopePath?: string | null;
+  traceRequestId?: string;
 };
 
 function iconForKind(kind: LocalSearchItem['kind'] | 'snippet' | 'clipboard' | 'command') {
@@ -498,7 +499,10 @@ export async function buildResults(query: string, context: QueryContext = {}): P
     return buildLocalResults(launcherRuntime.getRecentLocalItems(), context).sort((a, b) => b.score - a.score);
   }
 
-  const localResults = buildLocalResults(await launcherRuntime.searchLocal(trimmed, context.scopePath, parsedQuery.localFilter), context);
+  const localResults = buildLocalResults(
+    await launcherRuntime.searchLocal(trimmed, context.scopePath, parsedQuery.localFilter, context.traceRequestId),
+    context
+  );
   await launcherRuntime.getClipboardHistory();
 
   if (parsedQuery.localFilter) {

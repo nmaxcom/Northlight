@@ -555,4 +555,150 @@ describe('LauncherBar', () => {
       await Promise.resolve();
     });
   });
+
+  it('traces cancelled search requests when a newer query overtakes them', async () => {
+    let resolveFirstSearch: ((items: Array<{ id: string; path: string; name: string; kind: 'file'; score: number }>) => void) | undefined;
+    const traceEvent = vi.fn().mockResolvedValue(undefined);
+    const searchLocal = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirstSearch = resolve;
+          })
+      )
+      .mockResolvedValueOnce([
+        {
+          id: '/Users/nm4/Documents/product-plan.md',
+          path: '/Users/nm4/Documents/product-plan.md',
+          name: 'product-plan.md',
+          kind: 'file',
+          score: 130
+        }
+      ]);
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getTraceState: vi.fn().mockResolvedValue({
+        enabled: true,
+        sessionId: 'trace-session'
+      }),
+      traceEvent,
+      searchLocal,
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.7.10',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      trashPath: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'prod' } });
+    fireEvent.change(input, { target: { value: 'product' } });
+
+    await act(async () => {
+      resolveFirstSearch?.([
+        {
+          id: '/Users/nm4/Documents/prod.md',
+          path: '/Users/nm4/Documents/prod.md',
+          name: 'prod.md',
+          kind: 'file',
+          score: 101
+        }
+      ]);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('product-plan.md').length).toBeGreaterThan(0);
+    });
+
+    expect(
+      traceEvent.mock.calls.some(
+        ([event]) => event.subsystem === 'search' && event.event === 'cancel' && event.outcome === 'obsolete'
+      )
+    ).toBe(true);
+  });
+
+  it('dumps the current trace snapshot with cmd+shift+d', async () => {
+    const groupSpy = vi.spyOn(console, 'groupCollapsed').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
+    const groupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
+    const getTraceDump = vi.fn().mockResolvedValue({
+      enabled: true,
+      sessionId: 'trace-session',
+      generatedAt: Date.now(),
+      events: []
+    });
+    const getIdleTraceSummary = vi.fn().mockResolvedValue({
+      fromTimestamp: Date.now() - 2000,
+      toTimestamp: Date.now(),
+      idleMs: 2000,
+      totalEvents: 0,
+      uniqueEventCount: 0,
+      topEvents: []
+    });
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getTraceState: vi.fn().mockResolvedValue({
+        enabled: true,
+        sessionId: 'trace-session'
+      }),
+      traceEvent: vi.fn().mockResolvedValue(undefined),
+      getTraceDump,
+      getIdleTraceSummary,
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.7.10',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      trashPath: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'D', metaKey: true, shiftKey: true });
+      await Promise.resolve();
+    });
+
+    expect(getTraceDump).toHaveBeenCalled();
+    expect(getIdleTraceSummary).toHaveBeenCalled();
+
+    groupSpy.mockRestore();
+    logSpy.mockRestore();
+    tableSpy.mockRestore();
+    groupEndSpy.mockRestore();
+  });
 });

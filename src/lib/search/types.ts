@@ -95,6 +95,70 @@ export type LauncherStatus = {
   isRefreshing: boolean;
 };
 
+export type LauncherTraceEvent = {
+  subsystem: string;
+  event: string;
+  requestId?: string;
+  query?: string | null;
+  scopePath?: string | null;
+  localFilter?: {
+    kind?: LocalSearchItem['kind'];
+    extensions?: string[];
+  } | null;
+  durationMs?: number;
+  resultCount?: number;
+  cacheState?: 'hit' | 'miss' | 'mixed';
+  path?: string | null;
+  kind?: string;
+  outcome?: string;
+  details?: Record<string, string | number | boolean | null> | null;
+  timestamp?: number;
+};
+
+export type LauncherTraceState = {
+  enabled: boolean;
+  sessionId: string;
+};
+
+export type LauncherTraceIdleSummary = {
+  fromTimestamp: number;
+  toTimestamp: number;
+  idleMs: number;
+  totalEvents: number;
+  uniqueEventCount: number;
+  topEvents: Array<{
+    key: string;
+    count: number;
+    totalDurationMs: number;
+  }>;
+};
+
+export type LauncherTraceDump = {
+  enabled: boolean;
+  sessionId: string;
+  generatedAt: number;
+  events: Array<{
+    id: string;
+    sessionId: string;
+    timestamp: number;
+    source: 'main' | 'renderer';
+    subsystem: string;
+    event: string;
+    requestId?: string;
+    queryHash?: string;
+    queryLength?: number;
+    scopeHash?: string;
+    localFilter?: string;
+    durationMs?: number;
+    resultCount?: number;
+    cacheState?: 'hit' | 'miss' | 'mixed';
+    pathHash?: string;
+    kind?: string;
+    outcome?: string;
+    details?: Record<string, string | number | boolean | null>;
+  }>;
+};
+
 export type LauncherResult = {
   id: string;
   title: string;
@@ -116,17 +180,23 @@ export type LauncherBridge = {
     localFilter?: {
       kind?: LocalSearchItem['kind'];
       extensions?: string[];
-    } | null
+    } | null,
+    requestId?: string
   ) => Promise<LocalSearchItem[]>;
-  getStatus: () => Promise<LauncherStatus>;
+  getStatus: (requestId?: string) => Promise<LauncherStatus>;
   getSettings: () => Promise<LauncherSettings>;
   getEffectiveShortcut?: () => Promise<string>;
   saveSettings: (settings: LauncherSettings) => Promise<LauncherSettings>;
   getClipboardHistory: () => Promise<ClipboardEntry[]>;
   openSettings: () => Promise<void>;
-  getPathPreview: (path: string, kind: LocalSearchItem['kind']) => Promise<LauncherPreview | null>;
-  getPathIcon: (path: string) => Promise<string | null>;
-  getPathIcons?: (paths: string[]) => Promise<Record<string, string | null>>;
+  getPathPreview: (path: string, kind: LocalSearchItem['kind'], requestId?: string) => Promise<LauncherPreview | null>;
+  getPathIcon: (path: string, requestId?: string) => Promise<string | null>;
+  getPathIcons?: (paths: string[], requestId?: string) => Promise<Record<string, string | null>>;
+  getTraceState?: () => Promise<LauncherTraceState>;
+  setTraceEnabled?: (enabled: boolean) => Promise<LauncherTraceState>;
+  traceEvent?: (event: LauncherTraceEvent) => Promise<void>;
+  getTraceDump?: () => Promise<LauncherTraceDump>;
+  getIdleTraceSummary?: () => Promise<LauncherTraceIdleSummary>;
   quickLookPath: (path: string) => Promise<void>;
   onSettingsChanged?: (callback: (settings: LauncherSettings) => void) => () => void;
   onIndexChanged?: (callback: () => void) => () => void;

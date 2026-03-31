@@ -226,6 +226,6 @@ describe('buildResults', () => {
     expect(searchLocal).toHaveBeenCalledWith('snowboard', undefined, {
       kind: 'file',
       extensions: ['jpg', 'jpeg']
-    });
+    }, undefined);
   });
 });

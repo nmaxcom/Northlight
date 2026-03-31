@@ -98,6 +98,8 @@ The settings window is the control center for launcher preferences.
 - The scopes view explains the tradeoff: wider roots improve recall, but they increase indexing cost and usually add more low-value results.
 - If you add Home or `~/Library`, Northlight now ignores its own internal support files so broad scopes do not keep retriggering the index on self-writes.
 - Very broad scopes such as Home, `~/Library`, and `/` are still indexed, but Northlight no longer attaches recursive live watchers to them because macOS background churn would keep forcing refresh loops.
+- In development, you can enable diagnostics tracing with `NORTHLIGHT_TRACE=1 npm run dev` to capture structured search, status, preview, icon, watcher, and clipboard activity.
+- In a traced dev session, `Cmd+Shift+D` dumps the current trace buffer and idle summary to the renderer console so lingering post-search work can be inspected directly.
 
 ## Deterministic Calculations
 
@@ -130,4 +132,5 @@ Examples:
 - When files or folders move, stale persisted paths are pruned from results instead of lingering across relaunches.
 - Filesystem watchers can invalidate local search caches immediately when enabled scopes change on disk.
 - Launcher show/hide avoids async settings reads on the hot path, so shortcut-to-window appearance stays more consistent.
+- Diagnostics traces are development-only and stay off by default, so normal launcher sessions do not pay the extra logging overhead.
 - This guide must be updated whenever visible launcher behavior changes.

@@ -1,18 +1,28 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { LauncherSettings } from '../src/lib/search/types';
+import type { LauncherSettings, LauncherTraceEvent } from '../src/lib/search/types';
 
 const launcherApi = {
-  searchLocal: (query: string, scopePath?: string | null, localFilter?: { kind?: 'file' | 'folder' | 'app'; extensions?: string[] } | null) =>
-    ipcRenderer.invoke('launcher:search-local', query, scopePath, localFilter),
-  getStatus: () => ipcRenderer.invoke('launcher:get-status'),
+  searchLocal: (
+    query: string,
+    scopePath?: string | null,
+    localFilter?: { kind?: 'file' | 'folder' | 'app'; extensions?: string[] } | null,
+    requestId?: string
+  ) => ipcRenderer.invoke('launcher:search-local', query, scopePath, localFilter, requestId),
+  getStatus: (requestId?: string) => ipcRenderer.invoke('launcher:get-status', requestId),
   getSettings: () => ipcRenderer.invoke('launcher:get-settings'),
   getEffectiveShortcut: () => ipcRenderer.invoke('launcher:get-effective-shortcut'),
   saveSettings: (settings: LauncherSettings) => ipcRenderer.invoke('launcher:save-settings', settings),
   getClipboardHistory: () => ipcRenderer.invoke('launcher:get-clipboard-history'),
   openSettings: () => ipcRenderer.invoke('launcher:open-settings'),
-  getPathPreview: (path: string, kind: 'file' | 'folder' | 'app') => ipcRenderer.invoke('launcher:get-path-preview', path, kind),
-  getPathIcon: (path: string) => ipcRenderer.invoke('launcher:get-path-icon', path),
-  getPathIcons: (paths: string[]) => ipcRenderer.invoke('launcher:get-path-icons', paths),
+  getPathPreview: (path: string, kind: 'file' | 'folder' | 'app', requestId?: string) =>
+    ipcRenderer.invoke('launcher:get-path-preview', path, kind, requestId),
+  getPathIcon: (path: string, requestId?: string) => ipcRenderer.invoke('launcher:get-path-icon', path, requestId),
+  getPathIcons: (paths: string[], requestId?: string) => ipcRenderer.invoke('launcher:get-path-icons', paths, requestId),
+  getTraceState: () => ipcRenderer.invoke('launcher:get-trace-state'),
+  setTraceEnabled: (enabled: boolean) => ipcRenderer.invoke('launcher:set-trace-enabled', enabled),
+  traceEvent: (event: LauncherTraceEvent) => ipcRenderer.invoke('launcher:trace-event', event),
+  getTraceDump: () => ipcRenderer.invoke('launcher:get-trace-dump'),
+  getIdleTraceSummary: () => ipcRenderer.invoke('launcher:get-idle-trace-summary'),
   quickLookPath: (path: string) => ipcRenderer.invoke('launcher:quick-look-path', path),
   openPath: (path: string) => ipcRenderer.invoke('launcher:open-path', path),
   revealPath: (path: string) => ipcRenderer.invoke('launcher:reveal-path', path),

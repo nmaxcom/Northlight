@@ -3,6 +3,7 @@ import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { watch, type FSWatcher } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { recordTrace } from './diagnostics';
 import { isPrivateNorthlightPath } from '../src/lib/search/searchExclusions';
 import { baseSearchScore } from '../src/lib/search/scoring';
 import { localIntentFilterKey, matchesLocalIntent, type LocalIntentFilter } from '../src/lib/search/intentParser';
@@ -49,6 +50,10 @@ type WalkNode = {
   maxDepth: number;
 };
 
+type SearchTraceContext = {
+  requestId?: string;
+};
+
 let fallbackIndex: IndexedEntry[] = [];
 let fallbackIndexReady = false;
 let restorePromise: Promise<void> | null = null;
@@ -69,6 +74,10 @@ async function pathExists(path: string) {
 }
 
 function notifyIndexChanged() {
+  recordTrace({
+    subsystem: 'search',
+    event: 'index-changed'
+  });
   indexChangedListener?.();
 }
 
@@ -273,13 +282,27 @@ async function pruneMissingEntries(paths: string[]) {
 }
 
 function searchFallbackIndex(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
+  const startedAt = Date.now();
   const normalizedQuery = query.trim();
 
   if (!fallbackIndexReady || normalizedQuery.length < 2) {
+    recordTrace({
+      subsystem: 'search',
+      event: 'fallback-index-skip',
+      query,
+      scopePath,
+      localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: 0,
+      details: {
+        fallbackReady: fallbackIndexReady,
+        tooShort: normalizedQuery.length < 2
+      }
+    });
     return [];
   }
 
-  return filterByScope(fallbackIndex, scopePath)
+  const results = filterByScope(fallbackIndex, scopePath)
     .filter((entry) => matchesLocalIntent(entry, localFilter))
     .map((entry) => ({
       ...entry,
@@ -288,6 +311,18 @@ function searchFallbackIndex(query: string, scopePath?: string | null, localFilt
     .filter((entry) => entry.score > 0)
     .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name))
     .slice(0, MAX_RESULTS);
+
+  recordTrace({
+    subsystem: 'search',
+    event: 'fallback-index-complete',
+    query,
+    scopePath,
+    localFilter,
+    durationMs: Date.now() - startedAt,
+    resultCount: results.length
+  });
+
+  return results;
 }
 
 async function walkForIndex(roots: RootConfig[]) {
@@ -351,10 +386,29 @@ async function walkForIndex(roots: RootConfig[]) {
   return indexed;
 }
 
-async function searchTargetedPaths(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
+async function searchTargetedPaths(
+  query: string,
+  scopePath?: string | null,
+  localFilter?: LocalIntentFilter | null,
+  traceContext: SearchTraceContext = {}
+) {
+  const startedAt = Date.now();
   const roots = await existingRoots(scopePath);
 
   if (roots.length === 0) {
+    recordTrace({
+      subsystem: 'search',
+      event: 'targeted-search-skip',
+      requestId: traceContext.requestId,
+      query,
+      scopePath,
+      localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: 0,
+      details: {
+        reason: 'no-roots'
+      }
+    });
     return [];
   }
 
@@ -427,22 +481,61 @@ async function searchTargetedPaths(query: string, scopePath?: string | null, loc
     }
   }
 
-  return matches
+  const results = matches
     .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name))
     .slice(0, MAX_RESULTS);
+
+  recordTrace({
+    subsystem: 'search',
+    event: 'targeted-search-complete',
+    requestId: traceContext.requestId,
+    query,
+    scopePath,
+    localFilter,
+    durationMs: Date.now() - startedAt,
+    resultCount: results.length,
+    details: {
+      rootCount: roots.length
+    }
+  });
+
+  return results;
 }
 
 async function refreshIndex() {
+  const startedAt = Date.now();
   const roots = await existingRoots();
 
   if (roots.length === 0) {
+    recordTrace({
+      subsystem: 'search',
+      event: 'refresh-skip',
+      durationMs: Date.now() - startedAt,
+      resultCount: 0,
+      details: {
+        reason: 'no-roots'
+      }
+    });
     return;
   }
 
   try {
+    recordTrace({
+      subsystem: 'search',
+      event: 'refresh-start',
+      details: {
+        rootCount: roots.length
+      }
+    });
     const scanned = await walkForIndex(roots);
 
     if (scanned.length === 0) {
+      recordTrace({
+        subsystem: 'search',
+        event: 'refresh-empty',
+        durationMs: Date.now() - startedAt,
+        resultCount: 0
+      });
       return;
     }
 
@@ -451,12 +544,31 @@ async function refreshIndex() {
     queryCache.clear();
     await persistIndex(fallbackIndex);
     notifyIndexChanged();
+    recordTrace({
+      subsystem: 'search',
+      event: 'refresh-complete',
+      durationMs: Date.now() - startedAt,
+      resultCount: fallbackIndex.length
+    });
   } catch {
     // Keep the last good index on refresh failure.
+    recordTrace({
+      subsystem: 'search',
+      event: 'refresh-error',
+      durationMs: Date.now() - startedAt,
+      outcome: 'error'
+    });
   }
 }
 
 function scheduleRefresh() {
+  recordTrace({
+    subsystem: 'search',
+    event: 'schedule-refresh',
+    details: {
+      inflight: refreshPromise !== null
+    }
+  });
   if (!refreshPromise) {
     refreshPromise = refreshIndex().finally(() => {
       refreshPromise = null;
@@ -467,9 +579,23 @@ function scheduleRefresh() {
 export function warmSearchIndex() {
   if (!restorePromise) {
     restorePromise = (async () => {
+      const startedAt = Date.now();
       isRestoringIndex = true;
+      recordTrace({
+        subsystem: 'search',
+        event: 'restore-start'
+      });
       await loadPersistedIndex();
       isRestoringIndex = false;
+      recordTrace({
+        subsystem: 'search',
+        event: 'restore-complete',
+        durationMs: Date.now() - startedAt,
+        resultCount: fallbackIndex.length,
+        details: {
+          fallbackReady: fallbackIndexReady
+        }
+      });
       scheduleRefresh();
     })();
   } else if (!refreshPromise) {
@@ -480,6 +606,10 @@ export function warmSearchIndex() {
 }
 
 function scheduleWatcherRefresh() {
+  recordTrace({
+    subsystem: 'watcher',
+    event: 'schedule-watcher-refresh'
+  });
   queryCache.clear();
   notifyIndexChanged();
 
@@ -498,12 +628,27 @@ export async function configureIndexWatchers() {
 
   const settings = await getLauncherSettings();
   if (!settings.watchFsChangesEnabled) {
+    recordTrace({
+      subsystem: 'watcher',
+      event: 'configure-skip',
+      details: {
+        reason: 'disabled'
+      }
+    });
     return;
   }
 
   const roots = await existingRoots();
   for (const root of roots) {
     if (!isWatchableScope(root.path, homedir())) {
+      recordTrace({
+        subsystem: 'watcher',
+        event: 'scope-skipped',
+        scopePath: root.path,
+        details: {
+          reason: 'policy'
+        }
+      });
       continue;
     }
 
@@ -512,15 +657,42 @@ export async function configureIndexWatchers() {
         if (typeof relativePath === 'string' && relativePath.length > 0) {
           const changedPath = join(root.path, relativePath);
           if (isExcludedPath(changedPath)) {
+            recordTrace({
+              subsystem: 'watcher',
+              event: 'event-ignored',
+              scopePath: root.path,
+              path: changedPath,
+              details: {
+                reason: 'excluded'
+              }
+            });
             return;
           }
+
+          recordTrace({
+            subsystem: 'watcher',
+            event: 'event-accepted',
+            scopePath: root.path,
+            path: changedPath
+          });
         }
 
         scheduleWatcherRefresh();
       });
       scopeWatchers.push(watcher);
+      recordTrace({
+        subsystem: 'watcher',
+        event: 'scope-attached',
+        scopePath: root.path
+      });
     } catch {
       // Skip scopes that cannot be watched; search still works via refresh and fallback scans.
+      recordTrace({
+        subsystem: 'watcher',
+        event: 'scope-error',
+        scopePath: root.path,
+        outcome: 'error'
+      });
     }
   }
 }
@@ -539,10 +711,29 @@ export function getSearchStatus(appVersion: string): LauncherStatus {
   };
 }
 
-export async function searchIndexedPaths(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null): Promise<LocalSearchItem[]> {
+export async function searchIndexedPaths(
+  query: string,
+  scopePath?: string | null,
+  localFilter?: LocalIntentFilter | null,
+  traceContext: SearchTraceContext = {}
+): Promise<LocalSearchItem[]> {
+  const startedAt = Date.now();
   const trimmed = query.trim();
 
   if (trimmed.length < 2) {
+    recordTrace({
+      subsystem: 'search',
+      event: 'search-skip',
+      requestId: traceContext.requestId,
+      query,
+      scopePath,
+      localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: 0,
+      details: {
+        reason: 'too-short'
+      }
+    });
     return [];
   }
 
@@ -552,6 +743,20 @@ export async function searchIndexedPaths(query: string, scopePath?: string | nul
   const cached = queryCache.get(key);
 
   if (cached) {
+    recordTrace({
+      subsystem: 'search',
+      event: 'search-complete',
+      requestId: traceContext.requestId,
+      query,
+      scopePath,
+      localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: cached.length,
+      cacheState: 'hit',
+      details: {
+        source: 'query-cache'
+      }
+    });
     return cached;
   }
 
@@ -564,18 +769,60 @@ export async function searchIndexedPaths(query: string, scopePath?: string | nul
 
     if (existingIndexed.length > 0) {
       queryCache.set(key, existingIndexed);
+      recordTrace({
+        subsystem: 'search',
+        event: 'search-complete',
+        requestId: traceContext.requestId,
+        query,
+        scopePath,
+        localFilter,
+        durationMs: Date.now() - startedAt,
+        resultCount: existingIndexed.length,
+        cacheState: 'miss',
+        details: {
+          source: 'fallback-index'
+        }
+      });
       return existingIndexed;
     }
   }
 
-  const targetedResults = await searchTargetedPaths(trimmed, scopePath, localFilter);
+  const targetedResults = await searchTargetedPaths(trimmed, scopePath, localFilter, traceContext);
   if (targetedResults.length > 0) {
     const { results: existingTargeted } = await stripMissingResults(targetedResults);
     if (existingTargeted.length > 0) {
       queryCache.set(key, existingTargeted);
+      recordTrace({
+        subsystem: 'search',
+        event: 'search-complete',
+        requestId: traceContext.requestId,
+        query,
+        scopePath,
+        localFilter,
+        durationMs: Date.now() - startedAt,
+        resultCount: existingTargeted.length,
+        cacheState: 'miss',
+        details: {
+          source: 'targeted-search'
+        }
+      });
       return existingTargeted;
     }
   }
 
+  recordTrace({
+    subsystem: 'search',
+    event: 'search-complete',
+    requestId: traceContext.requestId,
+    query,
+    scopePath,
+    localFilter,
+    durationMs: Date.now() - startedAt,
+    resultCount: 0,
+    cacheState: 'miss',
+    details: {
+      source: 'empty'
+    }
+  });
   return [];
 }

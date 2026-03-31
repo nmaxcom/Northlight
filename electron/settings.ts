@@ -3,6 +3,7 @@ import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { ClipboardEntry, LauncherSettings, ScopeEntry, SnippetEntry, AliasEntry } from '../src/lib/search/types';
+import { recordTrace } from './diagnostics';
 
 type LauncherState = {
   settings: LauncherSettings;
@@ -295,17 +296,39 @@ export function startClipboardMonitor() {
   }
 
   clipboardMonitor = setInterval(() => {
+    const startedAt = Date.now();
     void ensureLauncherState().then((state) => {
       if (!state.settings.clipboardHistoryEnabled) {
+        recordTrace({
+          subsystem: 'clipboard',
+          event: 'poll-skip',
+          durationMs: Date.now() - startedAt,
+          details: {
+            reason: 'disabled'
+          }
+        });
         return;
       }
 
       const text = clipboard.readText();
       if (!text || text === lastClipboardText) {
+        recordTrace({
+          subsystem: 'clipboard',
+          event: 'poll-idle',
+          durationMs: Date.now() - startedAt
+        });
         return;
       }
 
       lastClipboardText = text;
+      recordTrace({
+        subsystem: 'clipboard',
+        event: 'poll-change',
+        durationMs: Date.now() - startedAt,
+        details: {
+          textLength: text.length
+        }
+      });
       void pushClipboardText(text);
     });
   }, 2500);
