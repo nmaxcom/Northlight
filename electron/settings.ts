@@ -308,7 +308,7 @@ export function startClipboardMonitor() {
       lastClipboardText = text;
       void pushClipboardText(text);
     });
-  }, 1200);
+  }, 2500);
 }
 
 export function stopClipboardMonitor() {

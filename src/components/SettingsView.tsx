@@ -146,6 +146,7 @@ export function SettingsView() {
   const [settings, setSettings] = useState<LauncherSettings | null>(null);
   const [effectiveShortcut, setEffectiveShortcut] = useState('');
   const [saveState, setSaveState] = useState('Loading settings...');
+  const [isSaving, setIsSaving] = useState(false);
   const [isCapturingShortcut, setIsCapturingShortcut] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'scopes'>('overview');
   const [isAddingScope, setIsAddingScope] = useState(false);
@@ -219,11 +220,18 @@ export function SettingsView() {
       return;
     }
 
-    const nextSettings = await launcherRuntime.saveSettings(settings);
-    const nextEffectiveShortcut = await launcherRuntime.getEffectiveShortcut();
-    setSettings(cloneSettings(nextSettings));
-    setEffectiveShortcut(nextEffectiveShortcut);
-    setSaveState('Saved');
+    setIsSaving(true);
+    setSaveState('Saving…');
+
+    try {
+      const nextSettings = await launcherRuntime.saveSettings(settings);
+      const nextEffectiveShortcut = await launcherRuntime.getEffectiveShortcut();
+      setSettings(cloneSettings(nextSettings));
+      setEffectiveShortcut(nextEffectiveShortcut);
+      setSaveState('Saved');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const displayedShortcut = settings.launcherHotkey || effectiveShortcut;
@@ -307,6 +315,7 @@ export function SettingsView() {
 
   const enabledScopes = settings.scopes.filter((scope) => scope.enabled).length;
   const statusTone = validation.hasErrors ? 'error' : saveState === 'Saved' || saveState === 'Ready' ? 'ready' : 'pending';
+  const hasUnsavedChanges = saveState === 'Unsaved changes';
 
   return (
     <main className={classes.page}>
@@ -322,8 +331,8 @@ export function SettingsView() {
             <button className={classes.secondaryButton} type="button" onClick={() => setSettings(cloneSettings(launcherRuntime.getSettingsSnapshot()))}>
               Revert
             </button>
-            <button className={classes.button} type="button" onClick={() => void save()}>
-              Save Settings
+            <button className={classes.button} type="button" disabled={isSaving || (!hasUnsavedChanges && !validation.hasErrors)} onClick={() => void save()}>
+              {isSaving ? 'Saving…' : 'Save Settings'}
             </button>
           </div>
         </header>
@@ -368,12 +377,13 @@ export function SettingsView() {
                       <input
                         type="checkbox"
                         checked={Boolean(settings[key as keyof LauncherSettings])}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          const checked = event.currentTarget.checked;
                           updateSettings((current) => ({
                             ...current,
-                            [key]: event.currentTarget.checked
-                          }))
-                        }
+                            [key]: checked
+                          }));
+                        }}
                       />
                     </label>
                   ))}
@@ -387,12 +397,13 @@ export function SettingsView() {
                       min={5}
                       max={50}
                       value={settings.maxClipboardItems}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const value = Number(event.currentTarget.value);
                         updateSettings((current) => ({
                           ...current,
-                          maxClipboardItems: Number(event.currentTarget.value) || current.maxClipboardItems
-                        }))
-                      }
+                          maxClipboardItems: value || current.maxClipboardItems
+                        }));
+                      }}
                     />
                   </label>
                 </div>
@@ -529,14 +540,15 @@ export function SettingsView() {
                           <input
                             className={classes.input}
                             value={alias.trigger}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
                               updateSettings((current) => ({
                                 ...current,
                                 aliases: current.aliases.map((entry) =>
-                                  entry.id === alias.id ? { ...entry, trigger: event.currentTarget.value } : entry
+                                  entry.id === alias.id ? { ...entry, trigger: value } : entry
                                 )
-                              }))
-                            }
+                              }));
+                            }}
                           />
                         </label>
                         <label className={classes.field}>
@@ -544,14 +556,15 @@ export function SettingsView() {
                           <select
                             className={classes.select}
                             value={alias.targetType}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const value = event.currentTarget.value as AliasEntry['targetType'];
                               updateSettings((current) => ({
                                 ...current,
                                 aliases: current.aliases.map((entry) =>
-                                  entry.id === alias.id ? { ...entry, targetType: event.currentTarget.value as AliasEntry['targetType'] } : entry
+                                  entry.id === alias.id ? { ...entry, targetType: value } : entry
                                 )
-                              }))
-                            }
+                              }));
+                            }}
                           >
                             <option value="path">Path</option>
                             <option value="snippet">Snippet</option>
@@ -563,14 +576,15 @@ export function SettingsView() {
                           <input
                             className={classes.input}
                             value={alias.target}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
                               updateSettings((current) => ({
                                 ...current,
                                 aliases: current.aliases.map((entry) =>
-                                  entry.id === alias.id ? { ...entry, target: event.currentTarget.value } : entry
+                                  entry.id === alias.id ? { ...entry, target: value } : entry
                                 )
-                              }))
-                            }
+                              }));
+                            }}
                           />
                         </label>
                         <label className={classes.fieldFull}>
@@ -578,14 +592,15 @@ export function SettingsView() {
                           <input
                             className={classes.input}
                             value={alias.note ?? ''}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
                               updateSettings((current) => ({
                                 ...current,
                                 aliases: current.aliases.map((entry) =>
-                                  entry.id === alias.id ? { ...entry, note: event.currentTarget.value } : entry
+                                  entry.id === alias.id ? { ...entry, note: value } : entry
                                 )
-                              }))
-                            }
+                              }));
+                            }}
                           />
                         </label>
                       </div>
@@ -639,14 +654,15 @@ export function SettingsView() {
                           <input
                             className={classes.input}
                             value={snippet.trigger}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
                               updateSettings((current) => ({
                                 ...current,
                                 snippets: current.snippets.map((entry) =>
-                                  entry.id === snippet.id ? { ...entry, trigger: event.currentTarget.value } : entry
+                                  entry.id === snippet.id ? { ...entry, trigger: value } : entry
                                 )
-                              }))
-                            }
+                              }));
+                            }}
                           />
                         </label>
                         <label className={classes.field}>
@@ -654,14 +670,15 @@ export function SettingsView() {
                           <input
                             className={classes.input}
                             value={snippet.note ?? ''}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
                               updateSettings((current) => ({
                                 ...current,
                                 snippets: current.snippets.map((entry) =>
-                                  entry.id === snippet.id ? { ...entry, note: event.currentTarget.value } : entry
+                                  entry.id === snippet.id ? { ...entry, note: value } : entry
                                 )
-                              }))
-                            }
+                              }));
+                            }}
                           />
                         </label>
                         <label className={classes.fieldFull}>
@@ -669,14 +686,15 @@ export function SettingsView() {
                           <textarea
                             className={classes.textarea}
                             value={snippet.content}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
                               updateSettings((current) => ({
                                 ...current,
                                 snippets: current.snippets.map((entry) =>
-                                  entry.id === snippet.id ? { ...entry, content: event.currentTarget.value } : entry
+                                  entry.id === snippet.id ? { ...entry, content: value } : entry
                                 )
-                              }))
-                            }
+                              }));
+                            }}
                           />
                         </label>
                       </div>
@@ -836,14 +854,15 @@ export function SettingsView() {
                             data-scope-path="true"
                             className={classes.input}
                             value={scope.path}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
                               updateSettings((current) => ({
                                 ...current,
                                 scopes: current.scopes.map((entry) =>
-                                  entry.id === scope.id ? { ...entry, path: event.currentTarget.value } : entry
+                                  entry.id === scope.id ? { ...entry, path: value } : entry
                                 )
-                              }))
-                            }
+                              }));
+                            }}
                           />
                         </label>
                         <label className={classes.scopeToggle}>
@@ -852,14 +871,15 @@ export function SettingsView() {
                             <input
                               type="checkbox"
                               checked={scope.enabled}
-                              onChange={(event) =>
+                              onChange={(event) => {
+                                const checked = event.currentTarget.checked;
                                 updateSettings((current) => ({
                                   ...current,
                                   scopes: current.scopes.map((entry) =>
-                                    entry.id === scope.id ? { ...entry, enabled: event.currentTarget.checked } : entry
+                                    entry.id === scope.id ? { ...entry, enabled: checked } : entry
                                   )
-                                }))
-                              }
+                                }));
+                              }}
                             />
                           </div>
                           <div className={classes.toggleHelp}>Disabled scopes stay saved but are ignored by search.</div>

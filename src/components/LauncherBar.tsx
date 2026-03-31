@@ -309,21 +309,38 @@ export function LauncherBar() {
 
   useEffect(() => {
     let cancelled = false;
+    let timer: number | null = null;
 
     const refreshStatus = () => {
       void launcherRuntime.getStatus().then((nextStatus) => {
-        if (!cancelled) {
-          setStatus(nextStatus);
+        if (cancelled) {
+          return;
+        }
+
+        setStatus(nextStatus);
+
+        if (nextStatus.isRefreshing || nextStatus.isRestoring) {
+          timer = window.setTimeout(refreshStatus, 1500);
         }
       });
     };
 
     refreshStatus();
-    const interval = window.setInterval(refreshStatus, 1500);
+    const unsubscribe = launcherRuntime.onIndexChanged(() => {
+      if (timer) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+
+      refreshStatus();
+    });
 
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
+      if (timer) {
+        window.clearTimeout(timer);
+      }
+      unsubscribe();
     };
   }, []);
 

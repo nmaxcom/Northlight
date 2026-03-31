@@ -127,4 +127,43 @@ describe('SettingsView', () => {
 
     expect(saveSettings.mock.calls.at(-1)?.[0].watchFsChangesEnabled).toBe(false);
   });
+
+  it('shows visible saving feedback while settings are being persisted', async () => {
+    let resolveSave: ((settings: ReturnType<typeof launcherRuntime.getSettingsSnapshot>) => void) | undefined;
+    const saveSettings = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        })
+    );
+
+    window.launcher = {
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
+      saveSettings,
+      onSettingsChanged: vi.fn().mockReturnValue(() => {})
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <SettingsView />
+      </MantineProvider>
+    );
+
+    await screen.findByText('Northlight Settings');
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /best match section/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
+
+    expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+
+    resolveSave?.({
+      ...launcherRuntime.getSettingsSnapshot(),
+      bestMatchEnabled: false
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save Settings' })).toBeDisabled();
+    });
+  });
 });

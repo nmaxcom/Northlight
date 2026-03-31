@@ -104,6 +104,41 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.035));
 }
 
+.button:hover,
+.secondaryButton:hover,
+.scopeActionButton:hover,
+.scopePresetButton:hover,
+.scopeComposerAdd:hover,
+.scopeComposerCancel:hover,
+.iconButton:hover,
+.tab:hover {
+  border-color: rgba(170, 192, 214, 0.24);
+}
+
+.button:active,
+.secondaryButton:active,
+.scopeActionButton:active,
+.scopePresetButton:active,
+.scopeComposerAdd:active,
+.scopeComposerCancel:active,
+.iconButton:active,
+.tab:active {
+  transform: translateY(1px);
+  filter: brightness(0.92);
+}
+
+.button:disabled,
+.secondaryButton:disabled,
+.scopeActionButton:disabled,
+.scopePresetButton:disabled,
+.scopeComposerAdd:disabled,
+.scopeComposerCancel:disabled {
+  opacity: 0.52;
+  cursor: default;
+  transform: none;
+  filter: none;
+}
+
 .grid {
   display: grid;
   gap: 18px;
