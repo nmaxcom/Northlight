@@ -201,26 +201,6 @@ export function LauncherBar() {
     });
   }, []);
 
-  const dumpTrace = useCallback(async () => {
-    const [dump, idleSummary] = await Promise.all([launcherRuntime.getTraceDump(), launcherRuntime.getIdleTraceSummary()]);
-
-    console.groupCollapsed(`[trace dump] session=${dump.sessionId} events=${dump.events.length}`);
-    console.log('idle summary', idleSummary);
-    console.table(
-      dump.events.slice(-30).map((event) => ({
-        at: new Date(event.timestamp).toLocaleTimeString(),
-        source: event.source,
-        subsystem: event.subsystem,
-        event: event.event,
-        requestId: event.requestId ?? '',
-        durationMs: event.durationMs ?? '',
-        resultCount: event.resultCount ?? '',
-        cache: event.cacheState ?? '',
-        outcome: event.outcome ?? ''
-      }))
-    );
-    console.groupEnd();
-  }, []);
   const iconClassName = useCallback(
     (result: LauncherResult, extra = '') => {
       const hasNativeIcon = Boolean(result.path && iconUrls[result.path]);
@@ -258,6 +238,18 @@ export function LauncherBar() {
     window.clearTimeout((showFeedback as typeof showFeedback & { timer?: number }).timer);
     (showFeedback as typeof showFeedback & { timer?: number }).timer = window.setTimeout(() => setFeedback(null), 1600);
   }, []);
+
+  const dumpTrace = useCallback(async () => {
+    const dumpFile = await launcherRuntime.writeTraceDump();
+
+    if (dumpFile.path) {
+      console.log(`[trace dump] saved ${dumpFile.eventCount} events to ${dumpFile.path}`);
+      showFeedback('success', 'Trace saved');
+      return;
+    }
+
+    showFeedback('error', 'Trace unavailable');
+  }, [showFeedback]);
 
   const invokeAction = useCallback(
     async (action: LauncherAction | undefined) => {

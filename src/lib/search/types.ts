@@ -159,6 +159,13 @@ export type LauncherTraceDump = {
   }>;
 };
 
+export type LauncherTraceDumpFile = {
+  path: string;
+  sessionId: string;
+  eventCount: number;
+  generatedAt: number;
+};
+
 export type LauncherResult = {
   id: string;
   title: string;
@@ -197,6 +204,7 @@ export type LauncherBridge = {
   traceEvent?: (event: LauncherTraceEvent) => Promise<void>;
   getTraceDump?: () => Promise<LauncherTraceDump>;
   getIdleTraceSummary?: () => Promise<LauncherTraceIdleSummary>;
+  writeTraceDump?: () => Promise<LauncherTraceDumpFile>;
   quickLookPath: (path: string) => Promise<void>;
   onSettingsChanged?: (callback: (settings: LauncherSettings) => void) => () => void;
   onIndexChanged?: (callback: () => void) => () => void;

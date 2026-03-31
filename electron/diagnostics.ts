@@ -10,6 +10,10 @@ import {
   type TraceSource
 } from '../src/lib/search/diagnostics';
 import type { LocalIntentFilter } from '../src/lib/search/intentParser';
+import { app } from 'electron';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import type { LauncherTraceDumpFile } from '../src/lib/search/types';
 
 const TRACE_BUFFER_LIMIT = 500;
 const defaultEnabled = process.env.NORTHLIGHT_TRACE === '1';
@@ -187,4 +191,33 @@ export function getIdleTraceSummary(): TraceIdleSummary {
   }
 
   return summary;
+}
+
+export async function writeTraceDumpFile(): Promise<LauncherTraceDumpFile> {
+  const dump = getTraceDump();
+  const traceDumpDir = join(app.getPath('userData'), 'trace-dumps');
+  const filename = `trace-${dump.sessionId}-${dump.generatedAt}.json`;
+  const outputPath = join(traceDumpDir, filename);
+
+  await mkdir(traceDumpDir, { recursive: true });
+  await writeFile(outputPath, JSON.stringify({
+    ...dump,
+    idleSummary: getIdleTraceSummary()
+  }, null, 2), 'utf8');
+
+  recordTrace({
+    subsystem: 'diagnostics',
+    event: 'dump-written',
+    details: {
+      outputPath,
+      eventCount: dump.events.length
+    }
+  });
+
+  return {
+    path: outputPath,
+    sessionId: dump.sessionId,
+    eventCount: dump.events.length,
+    generatedAt: dump.generatedAt
+  };
 }

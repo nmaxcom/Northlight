@@ -99,7 +99,7 @@ The settings window is the control center for launcher preferences.
 - If you add Home or `~/Library`, Northlight now ignores its own internal support files so broad scopes do not keep retriggering the index on self-writes.
 - Very broad scopes such as Home, `~/Library`, and `/` are still indexed, but Northlight no longer attaches recursive live watchers to them because macOS background churn would keep forcing refresh loops.
 - In development, you can enable diagnostics tracing with `NORTHLIGHT_TRACE=1 npm run dev` to capture structured search, status, preview, icon, watcher, and clipboard activity.
-- In a traced dev session, `Cmd+Shift+D` dumps the current trace buffer and idle summary to the renderer console so lingering post-search work can be inspected directly.
+- In a traced dev session, `Cmd+Shift+D` writes the current trace buffer and idle summary to `~/Library/Application Support/Northlight/trace-dumps/` and shows a confirmation in the launcher.
 
 ## Deterministic Calculations
 

@@ -7,6 +7,7 @@ import { resolveLauncherShortcut } from '../shortcuts';
 import type { ClipboardEntry, LauncherPreview, LauncherSettings, LauncherStatus, LocalSearchItem } from './types';
 import type {
   LauncherTraceDump,
+  LauncherTraceDumpFile,
   LauncherTraceEvent,
   LauncherTraceIdleSummary,
   LauncherTraceState
@@ -181,6 +182,17 @@ export const launcherRuntime = {
         totalEvents: 0,
         uniqueEventCount: 0,
         topEvents: []
+      })
+    );
+  },
+  writeTraceDump(): Promise<LauncherTraceDumpFile> {
+    return (
+      window.launcher?.writeTraceDump?.() ??
+      Promise.resolve({
+        path: '',
+        sessionId: traceStateCache.sessionId,
+        eventCount: 0,
+        generatedAt: Date.now()
       })
     );
   },

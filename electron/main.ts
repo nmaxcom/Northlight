@@ -10,7 +10,7 @@ import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/s
 import type { LocalIntentFilter } from '../src/lib/search/intentParser';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem } from '../src/lib/search/types';
 import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
-import { getIdleTraceSummary, getTraceDump, getTraceState, ingestRendererTrace, recordTrace, setTraceEnabled, traceSpan } from './diagnostics';
+import { getIdleTraceSummary, getTraceDump, getTraceState, ingestRendererTrace, recordTrace, setTraceEnabled, traceSpan, writeTraceDumpFile } from './diagnostics';
 import { configureIndexWatchers, getSearchStatus, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
 import {
   ensureLauncherState,
@@ -867,6 +867,7 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle('launcher:get-trace-dump', async () => getTraceDump());
   ipcMain.handle('launcher:get-idle-trace-summary', async () => getIdleTraceSummary());
+  ipcMain.handle('launcher:write-trace-dump', async () => writeTraceDumpFile());
   ipcMain.handle('launcher:save-settings', async (_event, settings: LauncherSettings) => {
     const currentSettings = launcherSettingsCache;
     const nextSettings = await saveLauncherSettings(settings);

@@ -637,23 +637,12 @@ describe('LauncherBar', () => {
   });
 
   it('dumps the current trace snapshot with cmd+shift+d', async () => {
-    const groupSpy = vi.spyOn(console, 'groupCollapsed').mockImplementation(() => {});
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
-    const groupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
-    const getTraceDump = vi.fn().mockResolvedValue({
-      enabled: true,
+    const writeTraceDump = vi.fn().mockResolvedValue({
+      path: '/Users/nm4/Library/Application Support/Northlight/trace-dumps/trace-session.json',
       sessionId: 'trace-session',
       generatedAt: Date.now(),
-      events: []
-    });
-    const getIdleTraceSummary = vi.fn().mockResolvedValue({
-      fromTimestamp: Date.now() - 2000,
-      toTimestamp: Date.now(),
-      idleMs: 2000,
-      totalEvents: 0,
-      uniqueEventCount: 0,
-      topEvents: []
+      eventCount: 12
     });
 
     window.launcher = {
@@ -663,8 +652,7 @@ describe('LauncherBar', () => {
         sessionId: 'trace-session'
       }),
       traceEvent: vi.fn().mockResolvedValue(undefined),
-      getTraceDump,
-      getIdleTraceSummary,
+      writeTraceDump,
       getStatus: vi.fn().mockResolvedValue({
         appVersion: '0.7.10',
         indexEntryCount: 10,
@@ -693,12 +681,12 @@ describe('LauncherBar', () => {
       await Promise.resolve();
     });
 
-    expect(getTraceDump).toHaveBeenCalled();
-    expect(getIdleTraceSummary).toHaveBeenCalled();
+    expect(writeTraceDump).toHaveBeenCalled();
+    expect(screen.getByText('Trace saved')).toBeInTheDocument();
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining('/Users/nm4/Library/Application Support/Northlight/trace-dumps/trace-session.json')
+    );
 
-    groupSpy.mockRestore();
     logSpy.mockRestore();
-    tableSpy.mockRestore();
-    groupEndSpy.mockRestore();
   });
 });

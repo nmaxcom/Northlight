@@ -23,6 +23,7 @@ const launcherApi = {
   traceEvent: (event: LauncherTraceEvent) => ipcRenderer.invoke('launcher:trace-event', event),
   getTraceDump: () => ipcRenderer.invoke('launcher:get-trace-dump'),
   getIdleTraceSummary: () => ipcRenderer.invoke('launcher:get-idle-trace-summary'),
+  writeTraceDump: () => ipcRenderer.invoke('launcher:write-trace-dump'),
   quickLookPath: (path: string) => ipcRenderer.invoke('launcher:quick-look-path', path),
   openPath: (path: string) => ipcRenderer.invoke('launcher:open-path', path),
   revealPath: (path: string) => ipcRenderer.invoke('launcher:reveal-path', path),
