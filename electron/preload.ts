@@ -5,6 +5,7 @@ const launcherApi = {
   searchLocal: (query: string, scopePath?: string | null) => ipcRenderer.invoke('launcher:search-local', query, scopePath),
   getStatus: () => ipcRenderer.invoke('launcher:get-status'),
   getSettings: () => ipcRenderer.invoke('launcher:get-settings'),
+  getEffectiveShortcut: () => ipcRenderer.invoke('launcher:get-effective-shortcut'),
   saveSettings: (settings: LauncherSettings) => ipcRenderer.invoke('launcher:save-settings', settings),
   getClipboardHistory: () => ipcRenderer.invoke('launcher:get-clipboard-history'),
   openSettings: () => ipcRenderer.invoke('launcher:open-settings'),

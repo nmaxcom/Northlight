@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import { shortcutTokens } from '../lib/shortcuts';
 import type { AliasEntry, LauncherSettings, ScopeEntry, SnippetEntry } from '../lib/search/types';
 import { launcherRuntime } from '../lib/search/runtime';
 import classes from './SettingsView.module.css';
@@ -135,6 +136,7 @@ function validate(settings: LauncherSettings): ValidationState {
 
 export function SettingsView() {
   const [settings, setSettings] = useState<LauncherSettings | null>(null);
+  const [effectiveShortcut, setEffectiveShortcut] = useState('');
   const [saveState, setSaveState] = useState('Loading settings...');
   const [isCapturingShortcut, setIsCapturingShortcut] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'scopes'>('overview');
@@ -148,10 +150,20 @@ export function SettingsView() {
         setSaveState('Ready');
       }
     });
+    void launcherRuntime.getEffectiveShortcut().then((nextShortcut) => {
+      if (!cancelled) {
+        setEffectiveShortcut(nextShortcut);
+      }
+    });
 
     const unsubscribe = launcherRuntime.onSettingsChanged((nextSettings) => {
       setSettings(cloneSettings(nextSettings));
       setSaveState('Updated from another window');
+      void launcherRuntime.getEffectiveShortcut().then((nextShortcut) => {
+        if (!cancelled) {
+          setEffectiveShortcut(nextShortcut);
+        }
+      });
     });
 
     return () => {
@@ -178,9 +190,15 @@ export function SettingsView() {
     }
 
     const nextSettings = await launcherRuntime.saveSettings(settings);
+    const nextEffectiveShortcut = await launcherRuntime.getEffectiveShortcut();
     setSettings(cloneSettings(nextSettings));
+    setEffectiveShortcut(nextEffectiveShortcut);
     setSaveState('Saved');
   };
+
+  const displayedShortcut = settings.launcherHotkey || effectiveShortcut;
+  const displayTokens = shortcutTokens(displayedShortcut);
+  const usesSessionFallback = !settings.launcherHotkey && Boolean(effectiveShortcut);
 
   return (
     <main className={classes.page}>
@@ -281,12 +299,10 @@ export function SettingsView() {
                   <label className={classes.field}>
                     <span className={classes.label}>Launcher shortcut</span>
                     <div className={classes.shortcutField}>
-                      <input
+                      <button
                         aria-label="Launcher shortcut"
-                        className={classes.input}
-                        readOnly
-                        value={isCapturingShortcut ? 'Press a shortcut…' : settings.launcherHotkey}
-                        placeholder="Disabled"
+                        className={`${classes.shortcutButton} ${isCapturingShortcut ? classes.shortcutButtonCapturing : ''}`}
+                        type="button"
                         onFocus={() => setIsCapturingShortcut(true)}
                         onBlur={() => setIsCapturingShortcut(false)}
                         onKeyDown={(event) => {
@@ -324,7 +340,22 @@ export function SettingsView() {
                           setIsCapturingShortcut(false);
                           event.currentTarget.blur();
                         }}
-                      />
+                      >
+                        {isCapturingShortcut ? (
+                          <span className={classes.shortcutPlaceholder}>Press a shortcut…</span>
+                        ) : displayTokens.length > 0 ? (
+                          <span className={classes.shortcutTokens} aria-hidden="true">
+                            {displayTokens.map((token) => (
+                              <span key={token.id} className={classes.shortcutToken}>
+                                <span className={classes.shortcutTokenSymbol}>{token.symbol ?? token.label}</span>
+                                {token.symbol ? <span className={classes.shortcutTokenLabel}>{token.label}</span> : null}
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          <span className={classes.shortcutPlaceholder}>Disabled</span>
+                        )}
+                      </button>
                       <button
                         className={classes.secondaryButton}
                         type="button"
@@ -338,6 +369,9 @@ export function SettingsView() {
                         Clear
                       </button>
                     </div>
+                    {usesSessionFallback ? (
+                      <span className={classes.shortcutHint}>Using the dev-session fallback shortcut until you save a new one.</span>
+                    ) : null}
                   </label>
                 </div>
               </section>

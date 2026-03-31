@@ -6,8 +6,9 @@ import { createHash } from 'node:crypto';
 import { basename, extname, join } from 'node:path';
 import { platform } from 'node:process';
 import packageJson from '../package.json';
+import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/shortcuts';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem } from '../src/lib/search/types';
-import { createBlurSuppressionDeadline, DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
+import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
 import { configureIndexWatchers, getSearchStatus, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
 import {
   ensureLauncherState,
@@ -650,6 +651,7 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('launcher:get-status', async () => getSearchStatus(packageJson.version));
   ipcMain.handle('launcher:get-settings', async () => getLauncherSettings());
+  ipcMain.handle('launcher:get-effective-shortcut', async () => resolveLauncherShortcut(launcherSettingsCache.launcherHotkey, app.isPackaged));
   ipcMain.handle('launcher:save-settings', async (_event, settings: LauncherSettings) => {
     const currentSettings = launcherSettingsCache;
     const nextSettings = await saveLauncherSettings(settings);

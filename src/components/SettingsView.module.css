@@ -170,8 +170,69 @@
   align-items: stretch;
 }
 
-.shortcutField .input {
+.shortcutButton {
   flex: 1;
+  min-height: 46px;
+  border-radius: 12px;
+  border: 1px solid rgba(170, 192, 214, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025)),
+    rgba(8, 13, 18, 0.82);
+  color: #f5f7fa;
+  padding: 8px 12px;
+  text-align: left;
+  cursor: text;
+}
+
+.shortcutButtonCapturing {
+  border-color: rgba(156, 190, 224, 0.42);
+  box-shadow: 0 0 0 1px rgba(156, 190, 224, 0.2);
+}
+
+.shortcutTokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.shortcutToken {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(210, 223, 236, 0.14);
+  background: linear-gradient(180deg, rgba(234, 240, 247, 0.08), rgba(140, 164, 187, 0.04));
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.shortcutTokenSymbol {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.shortcutTokenLabel {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 247, 250, 0.58);
+}
+
+.shortcutPlaceholder,
+.shortcutHint {
+  color: rgba(245, 247, 250, 0.52);
+}
+
+.shortcutPlaceholder {
+  font-size: 0.9rem;
+}
+
+.shortcutHint {
+  margin-top: 8px;
+  font-size: 0.8rem;
 }
 
 .fieldFull {

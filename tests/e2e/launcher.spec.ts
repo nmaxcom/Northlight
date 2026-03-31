@@ -67,7 +67,9 @@ test('shows the settings view route', async ({ page }) => {
   await expect(page.getByRole('button', { name: /save settings/i })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Overview' })).toBeVisible();
   await expect(page.getByText('Search And Ranking')).toBeVisible();
-  await expect(page.getByLabel('Launcher shortcut')).toHaveValue('CommandOrControl+Shift+Space');
+  await expect(page.getByRole('button', { name: 'Launcher shortcut' })).toBeVisible();
+  await expect(page.getByText('⌘')).toBeVisible();
+  await expect(page.getByText('⇧')).toBeVisible();
   await page.getByRole('button', { name: 'Scopes & Status' }).click();
   await expect(page.getByRole('checkbox', { name: /watch filesystem changes/i })).toBeChecked();
 });

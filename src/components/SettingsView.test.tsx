@@ -4,8 +4,34 @@ import { describe, expect, it, vi } from 'vitest';
 import { SettingsView } from './SettingsView';
 import { theme } from '../theme';
 import { launcherRuntime } from '../lib/search/runtime';
+import { DEFAULT_LAUNCHER_SHORTCUT } from '../lib/shortcuts';
 
 describe('SettingsView', () => {
+  it('renders the effective launcher shortcut with Apple-style keycaps', async () => {
+    window.launcher = {
+      getSettings: vi.fn().mockResolvedValue({
+        ...launcherRuntime.getSettingsSnapshot(),
+        launcherHotkey: ''
+      }),
+      getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
+      saveSettings: vi.fn().mockImplementation(async (settings) => settings),
+      onSettingsChanged: vi.fn().mockReturnValue(() => {})
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <SettingsView />
+      </MantineProvider>
+    );
+
+    await screen.findByText('Northlight Settings');
+    expect(screen.getByRole('button', { name: 'Launcher shortcut' })).toBeInTheDocument();
+    expect(screen.getByText('⌘')).toBeInTheDocument();
+    expect(screen.getByText('⇧')).toBeInTheDocument();
+    expect(screen.getByText('␣')).toBeInTheDocument();
+    expect(screen.getByText(/dev-session fallback shortcut/i)).toBeInTheDocument();
+  });
+
   it('renders the filesystem watcher toggle and saves it', async () => {
     const saveSettings = vi.fn().mockImplementation(async (settings) => settings);
 
@@ -14,6 +40,7 @@ describe('SettingsView', () => {
         ...launcherRuntime.getSettingsSnapshot(),
         watchFsChangesEnabled: true
       }),
+      getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
       saveSettings,
       onSettingsChanged: vi.fn().mockReturnValue(() => {})
     } as never;

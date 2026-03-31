@@ -81,6 +81,7 @@ The settings window is the control center for launcher preferences.
 - Toggle best match, app-first ranking, preview, quick look, snippets, and clipboard history.
 - Capture a new global launcher shortcut directly by pressing the combination in settings, or clear it entirely to disable the launcher hotkey.
 - During `npm run dev`, a cleared launcher shortcut still falls back to `Cmd+Shift+Space` for that session so the launcher cannot strand itself hidden while you are iterating.
+- The shortcut field in settings renders Apple-style keycaps and still shows the active session shortcut when development fallback is in effect.
 - Set how many clipboard items to retain.
 - Create aliases for paths, snippets, or direct settings access.
 - Create reusable text snippets.
@@ -115,6 +116,7 @@ Examples:
 
 - Search quality improves as the launcher records recency and frequency locally.
 - Search starts from the last good persisted index and refreshes in the background.
+- Background index refreshes keep the current result list visible while new hits resolve, instead of flashing back to the empty `Searching...` state.
 - When files or folders move, stale persisted paths are pruned from results instead of lingering across relaunches.
 - Filesystem watchers can invalidate local search caches immediately when enabled scopes change on disk.
 - Launcher show/hide avoids async settings reads on the hot path, so shortcut-to-window appearance stays more consistent.

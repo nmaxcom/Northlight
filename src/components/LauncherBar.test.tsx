@@ -383,4 +383,83 @@ describe('LauncherBar', () => {
 
     expect(quickLookPath).not.toHaveBeenCalled();
   });
+
+  it('keeps existing results visible while an index refresh is resolving', async () => {
+    let onIndexChanged: (() => void) | undefined;
+    let resolveRefresh: ((items: Array<{ id: string; path: string; name: string; kind: 'file'; score: number }>) => void) | undefined;
+    const searchLocal = vi
+      .fn()
+      .mockResolvedValueOnce([
+        {
+          id: '/Users/nm4/Documents/product-brief.md',
+          path: '/Users/nm4/Documents/product-brief.md',
+          name: 'product-brief.md',
+          kind: 'file',
+          score: 140
+        }
+      ])
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveRefresh = resolve;
+          })
+      );
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      searchLocal,
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.7.0',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      onIndexChanged: vi.fn().mockImplementation((callback) => {
+        onIndexChanged = callback;
+        return () => {};
+      }),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      trashPath: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'product' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('product-brief.md').length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      onIndexChanged?.();
+    });
+
+    expect(screen.getAllByText('product-brief.md').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Searching...')).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveRefresh?.([
+        {
+          id: '/Users/nm4/Documents/product-brief.md',
+          path: '/Users/nm4/Documents/product-brief.md',
+          name: 'product-brief.md',
+          kind: 'file',
+          score: 140
+        }
+      ]);
+      await Promise.resolve();
+    });
+  });
 });

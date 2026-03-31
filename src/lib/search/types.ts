@@ -113,6 +113,7 @@ export type LauncherBridge = {
   searchLocal: (query: string, scopePath?: string | null) => Promise<LocalSearchItem[]>;
   getStatus: () => Promise<LauncherStatus>;
   getSettings: () => Promise<LauncherSettings>;
+  getEffectiveShortcut?: () => Promise<string>;
   saveSettings: (settings: LauncherSettings) => Promise<LauncherSettings>;
   getClipboardHistory: () => Promise<ClipboardEntry[]>;
   openSettings: () => Promise<void>;

@@ -2,6 +2,7 @@ import { clearRankStore, recordSelection } from './adaptiveRanking';
 import { fileFixtures } from './mockData';
 import { adaptiveRankBoost } from './adaptiveRanking';
 import { baseSearchScore } from './scoring';
+import { resolveLauncherShortcut } from '../shortcuts';
 import type { ClipboardEntry, LauncherPreview, LauncherSettings, LauncherStatus, LocalSearchItem } from './types';
 
 const queryCache = new Map<string, LocalSearchItem[]>();
@@ -123,6 +124,9 @@ export const launcherRuntime = {
   },
   getSettingsSnapshot() {
     return settingsCache;
+  },
+  getEffectiveShortcut() {
+    return window.launcher?.getEffectiveShortcut?.() ?? Promise.resolve(resolveLauncherShortcut(settingsCache.launcherHotkey, false));
   },
   saveSettings(settings: LauncherSettings) {
     settingsCache = settings;

@@ -180,6 +180,8 @@ export function LauncherBar() {
   const actionInputRef = useRef<HTMLInputElement | null>(null);
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const actionsRef = useRef<HTMLDivElement | null>(null);
+  const searchRequestRef = useRef(0);
+  const visibleResultsCountRef = useRef(results.length);
   const iconClassName = useCallback(
     (result: LauncherResult, extra = '') => {
       const hasNativeIcon = Boolean(result.path && iconUrls[result.path]);
@@ -276,15 +278,27 @@ export function LauncherBar() {
   }, []);
 
   useEffect(() => {
-    return launcherRuntime.onIndexChanged(() => {
-      setResults(buildImmediateResults(query));
+    visibleResultsCountRef.current = results.length;
+  }, [results.length]);
 
+  useEffect(() => {
+    return launcherRuntime.onIndexChanged(() => {
       if (!query.trim()) {
+        setResults(buildImmediateResults(''));
+        setIsResolving(false);
         return;
       }
 
-      setIsResolving(true);
+      if (visibleResultsCountRef.current === 0) {
+        setIsResolving(true);
+      }
+
+      const requestId = ++searchRequestRef.current;
       void buildResults(query).then((nextResults) => {
+        if (requestId !== searchRequestRef.current) {
+          return;
+        }
+
         setResults(nextResults);
         setIsResolving(false);
       });
@@ -345,8 +359,20 @@ export function LauncherBar() {
 
   useEffect(() => {
     const immediateResults = buildImmediateResults(query);
-    setResults(immediateResults);
-    setIsResolving(Boolean(query.trim()) && immediateResults.length === 0);
+
+    if (!query.trim()) {
+      setResults(immediateResults);
+      setIsResolving(false);
+      return;
+    }
+
+    if (immediateResults.length > 0) {
+      setResults(immediateResults);
+      setIsResolving(false);
+      return;
+    }
+
+    setIsResolving((current) => current || visibleResultsCountRef.current === 0);
   }, [query, settings]);
 
   useEffect(() => {
@@ -357,9 +383,10 @@ export function LauncherBar() {
       return;
     }
 
-    setIsResolving(true);
+    const requestId = ++searchRequestRef.current;
+    setIsResolving((current) => current || visibleResultsCountRef.current === 0);
     void buildResults(query).then((nextResults) => {
-      if (!canceled) {
+      if (!canceled && requestId === searchRequestRef.current) {
         setResults(nextResults);
         setIsResolving(false);
       }
