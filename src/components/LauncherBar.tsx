@@ -182,6 +182,8 @@ export function LauncherBar() {
   const actionsRef = useRef<HTMLDivElement | null>(null);
   const searchRequestRef = useRef(0);
   const visibleResultsCountRef = useRef(results.length);
+  const previewRequestRef = useRef(0);
+  const previewTargetRef = useRef<string | null>(null);
   const iconClassName = useCallback(
     (result: LauncherResult, extra = '') => {
       const hasNativeIcon = Boolean(result.path && iconUrls[result.path]);
@@ -402,18 +404,32 @@ export function LauncherBar() {
 
     if (!selectedResult || !previewVisible) {
       setPreview(null);
+      previewTargetRef.current = null;
       return;
     }
 
+    const previewTarget =
+      selectedResult.path && (selectedResult.kind === 'file' || selectedResult.kind === 'folder' || selectedResult.kind === 'app')
+        ? `${selectedResult.kind}:${selectedResult.path}`
+        : `inline:${selectedResult.id}`;
     const fallback = buildPreviewFallback(selectedResult);
-    setPreview(fallback);
+    const shouldResetPreview = previewTargetRef.current !== previewTarget;
+
+    if (shouldResetPreview) {
+      setPreview(fallback);
+      previewTargetRef.current = previewTarget;
+    }
 
     if (selectedResult.path && (selectedResult.kind === 'file' || selectedResult.kind === 'folder' || selectedResult.kind === 'app')) {
+      const requestId = ++previewRequestRef.current;
       void launcherRuntime.getPathPreview(selectedResult.path, selectedResult.kind).then((nextPreview) => {
-        if (!cancelled && nextPreview) {
+        if (!cancelled && requestId === previewRequestRef.current && nextPreview) {
           setPreview(nextPreview);
         }
       });
+      return () => {
+        cancelled = true;
+      };
     }
 
     return () => {

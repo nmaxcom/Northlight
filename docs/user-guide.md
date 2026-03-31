@@ -72,6 +72,7 @@ Current built-in capabilities:
 - The `Actions` panel opens above the bottom bar, lists all actions for the selected result, shows shortcuts when an action has one, and filters live as you type.
 - The preview pane can show real image previews, PDF page thumbnails, plain-text/code contents for text-like files, folder contents, app bundle info, clipboard contents, and deterministic calculation details.
 - Native app icons and image previews are loaded from real macOS assets so they render consistently inside the launcher.
+- When the selected result stays the same across background refreshes, the preview remains pinned instead of flashing back to a fallback state.
 - Result rows and the bottom action bar are intentionally compact so more hits fit on screen at once.
 
 ## Settings Window

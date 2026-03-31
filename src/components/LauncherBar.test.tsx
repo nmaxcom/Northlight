@@ -462,4 +462,97 @@ describe('LauncherBar', () => {
       await Promise.resolve();
     });
   });
+
+  it('keeps the resolved preview visible while the same result refreshes', async () => {
+    let onIndexChanged: (() => void) | undefined;
+    let resolveRefresh: ((items: Array<{ id: string; path: string; name: string; kind: 'file'; score: number }>) => void) | undefined;
+    const getPathPreview = vi
+      .fn()
+      .mockResolvedValueOnce({
+        title: 'product-brief.md',
+        subtitle: '/Users/nm4/Documents/product-brief.md',
+        mediaUrl: 'data:image/png;base64,stable',
+        mediaAlt: 'product-brief.md',
+        sections: [{ label: 'Type', value: 'PNG' }]
+      })
+      .mockResolvedValueOnce({
+        title: 'product-brief.md',
+        subtitle: '/Users/nm4/Documents/product-brief.md',
+        mediaUrl: 'data:image/png;base64,stable',
+        mediaAlt: 'product-brief.md',
+        sections: [{ label: 'Type', value: 'PNG' }]
+      });
+    const searchLocal = vi
+      .fn()
+      .mockResolvedValueOnce([
+        {
+          id: '/Users/nm4/Documents/product-brief.md',
+          path: '/Users/nm4/Documents/product-brief.md',
+          name: 'product-brief.md',
+          kind: 'file',
+          score: 140
+        }
+      ])
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveRefresh = resolve;
+          })
+      );
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      searchLocal,
+      getPathPreview,
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.7.0',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      onIndexChanged: vi.fn().mockImplementation((callback) => {
+        onIndexChanged = callback;
+        return () => {};
+      }),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      trashPath: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Launcher query'), { target: { value: 'product' } });
+
+    const image = await screen.findByAltText('product-brief.md');
+    expect(image).toHaveAttribute('src', 'data:image/png;base64,stable');
+
+    act(() => {
+      onIndexChanged?.();
+    });
+
+    expect(screen.getByAltText('product-brief.md')).toHaveAttribute('src', 'data:image/png;base64,stable');
+
+    await act(async () => {
+      resolveRefresh?.([
+        {
+          id: '/Users/nm4/Documents/product-brief.md',
+          path: '/Users/nm4/Documents/product-brief.md',
+          name: 'product-brief.md',
+          kind: 'file',
+          score: 140
+        }
+      ]);
+      await Promise.resolve();
+    });
+  });
 });
