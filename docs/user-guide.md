@@ -31,6 +31,7 @@ Current built-in capabilities:
 - The launcher uses a single edge-to-edge shell inside its frameless utility window.
 - The header acts as a drag region, so you can reposition the launcher like a native utility window.
 - The launcher remembers its last moved position and reopens there.
+- Dragging the launcher no longer streams live settings updates back into the renderer, so the interface stays visually stable while you reposition it.
 - On macOS, Northlight runs as an accessory utility window: it stays out of the Dock, app switcher, and Mission Control window set, and it shows across Spaces instead of pulling you back to the desktop where it launched.
 - On macOS, opening the launcher from the global shortcut now explicitly re-activates the app and ignores the first transient blur, so the window stays visible instead of flickering closed.
 - The top-right status area shows the app version, indexed item count, and current index state.

@@ -33,6 +33,7 @@ let pendingShow = false;
 let registeredLauncherShortcut: string | null = null;
 let launcherSettingsCache = getLauncherStateSnapshot().settings;
 let blurSuppressionDeadline = 0;
+let pendingLauncherPositionSave: ReturnType<typeof setTimeout> | null = null;
 const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 const textPreviewExtensions = new Set([
@@ -44,6 +45,40 @@ const textPreviewExtensions = new Set([
 const imagePreviewExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tiff', '.tif', '.svg', '.avif']);
 const pdfPreviewExtensions = new Set(['.pdf']);
 let mainRequestSequence = 0;
+const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
+
+function clearPendingLauncherPositionSave() {
+  if (!pendingLauncherPositionSave) {
+    return;
+  }
+
+  clearTimeout(pendingLauncherPositionSave);
+  pendingLauncherPositionSave = null;
+}
+
+function persistLauncherPosition() {
+  clearPendingLauncherPositionSave();
+
+  const launcherPosition = launcherSettingsCache.launcherPosition;
+  if (!launcherPosition) {
+    return;
+  }
+
+  void saveLauncherSettings(launcherSettingsCache)
+    .then((savedSettings) => {
+      launcherSettingsCache = savedSettings;
+    })
+    .catch(() => {
+      // Keep the latest in-memory position even if persistence fails.
+    });
+}
+
+function scheduleLauncherPositionSave() {
+  clearPendingLauncherPositionSave();
+  pendingLauncherPositionSave = setTimeout(() => {
+    persistLauncherPosition();
+  }, LAUNCHER_POSITION_SAVE_DEBOUNCE_MS);
+}
 
 function nextRequestId(prefix: string) {
   mainRequestSequence += 1;
@@ -341,6 +376,8 @@ async function createWindow() {
   positionLauncherWindow();
 
   mainWindow.on('blur', () => {
+    persistLauncherPosition();
+
     if (!mainWindow || !shouldHideLauncherOnBlur(mainWindow.isVisible(), Date.now(), blurSuppressionDeadline)) {
       return;
     }
@@ -354,23 +391,19 @@ async function createWindow() {
       return;
     }
 
-    const nextSettings = {
+    const previousPosition = launcherSettingsCache.launcherPosition;
+    if (previousPosition?.x === bounds.x && previousPosition?.y === bounds.y) {
+      return;
+    }
+
+    launcherSettingsCache = {
       ...launcherSettingsCache,
       launcherPosition: {
         x: bounds.x,
         y: bounds.y
       }
     };
-    launcherSettingsCache = nextSettings;
-
-    void saveLauncherSettings(nextSettings)
-      .then((savedSettings) => {
-        launcherSettingsCache = savedSettings;
-        broadcastSettings(savedSettings);
-      })
-      .catch(() => {
-        // Keep last known in-memory position even if persistence fails.
-      });
+    scheduleLauncherPositionSave();
   });
 
   loadRenderer(mainWindow, 'launcher');
