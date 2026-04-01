@@ -7,12 +7,10 @@
     <style>
       :root {
         color-scheme: dark;
-        font-family: "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
-        --bg-top: #10161d;
-        --bg-bottom: #0a0f14;
-        --frame-line: rgba(171, 190, 208, 0.18);
-        --text-0: #f3f6fa;
-        --text-1: rgba(243, 246, 250, 0.66);
+        font-family: Inter, "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+        --page-top: #10161d;
+        --page-bottom: #0a0f14;
+        --window-text: #f5f7fa;
       }
 
       * {
@@ -33,15 +31,15 @@
         padding: 32px;
         background:
           radial-gradient(circle at top left, rgba(115, 142, 168, 0.16), transparent 28%),
-          linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
-        color: var(--text-0);
+          linear-gradient(180deg, var(--page-top), var(--page-bottom));
+        color: var(--window-text);
       }
 
       .meta {
         width: 1120px;
         display: flex;
-        align-items: baseline;
         justify-content: space-between;
+        align-items: baseline;
         gap: 20px;
       }
 
@@ -53,36 +51,302 @@
       }
 
       .note {
-        color: var(--text-1);
+        color: rgba(243, 246, 250, 0.66);
         font-size: 0.86rem;
       }
 
-      .frame {
+      .window {
+        position: relative;
         width: 1120px;
         height: 760px;
         overflow: hidden;
         border-radius: 10px;
-        border: 1px solid var(--frame-line);
+        border: 1px solid rgba(170, 192, 214, 0.26);
         box-shadow:
           inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-          0 24px 70px rgba(0, 0, 0, 0.35);
-        background: #0b1016;
+          0 18px 50px rgba(0, 0, 0, 0.34);
+        background:
+          radial-gradient(circle at top left, rgba(115, 142, 168, 0.16), transparent 32%),
+          linear-gradient(180deg, rgba(11, 17, 23, 0.98), rgba(7, 10, 14, 0.995));
       }
 
-      img {
-        display: block;
-        width: 1120px;
-        height: 760px;
+      .shell {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        color: var(--window-text);
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 14px 8px;
+      }
+
+      .brand {
+        font-size: 0.9rem;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 30px;
+        padding: 0 14px;
+        border-radius: 8px;
+        background: #1d2732;
+        color: #d9e2ea;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .ready-badge {
+        background: #163722;
+        color: #8ade92;
+      }
+
+      .search {
+        margin: 0 14px 10px;
+        height: 35px;
+        border-radius: 10px;
+        border: 1px solid rgba(128, 151, 176, 0.3);
+        background: rgba(255, 255, 255, 0.042);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.02),
+          0 0 0 1px rgba(0, 0, 0, 0.16);
+        display: grid;
+        grid-template-columns: 27px 1fr 27px;
+        align-items: center;
+        padding: 0 6px;
+      }
+
+      .search-icon,
+      .search-arrow {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 27px;
+        line-height: 1;
+        user-select: none;
+      }
+
+      .search-input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #f5f7fa;
+        font-size: 0.94rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      .body {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 12px;
+        padding: 0 14px;
+      }
+
+      .results-column {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .empty-state {
+        flex: 1;
+        min-height: 220px;
+        display: grid;
+        place-items: center;
+        border-radius: 22px;
+        border: 1px dashed rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.028);
+        text-align: center;
+      }
+
+      .empty-state h2 {
+        margin: 0 0 12px;
+        font-size: 1.1rem;
+      }
+
+      .empty-state p {
+        margin: 0;
+        color: rgba(245, 247, 250, 0.46);
+        font-size: 0.98rem;
+        line-height: 1.45;
+        max-width: 520px;
+      }
+
+      .preview-pane {
+        min-height: 0;
+        border-radius: 20px;
+        border: 1px solid rgba(170, 192, 214, 0.14);
+        background: rgba(255, 255, 255, 0.03);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .preview-header {
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .preview-eyebrow {
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(245, 247, 250, 0.54);
+      }
+
+      .preview-placeholder {
+        min-height: 100%;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        text-align: center;
+        color: rgba(245, 247, 250, 0.46);
+        font-size: 0.98rem;
+      }
+
+      .footer {
+        min-height: 48px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 10px 14px 12px;
+      }
+
+      .footer-left,
+      .footer-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .footer-text {
+        font-size: 0.9rem;
+      }
+
+      .footer-text-strong {
+        font-weight: 700;
+      }
+
+      .trigger {
+        min-height: 32px;
+        padding: 0 10px;
+        border-radius: 14px;
+        border: 1px solid rgba(170, 192, 214, 0.12);
+        background: rgba(255, 255, 255, 0.04);
+        color: inherit;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .shortcut {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .kbd {
+        min-width: 34px;
+        height: 28px;
+        padding: 0 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(170, 192, 214, 0.14);
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(245, 247, 250, 0.7);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.78rem;
+        font-weight: 700;
       }
     </style>
   </head>
   <body>
     <header class="meta">
       <div class="title">Launcher Mockup</div>
-      <div class="note">Calibrated to the native launcher content size: 1120×760.</div>
+      <div class="note">Editable HTML/CSS mockup calibrated to the native launcher content size: 1120×760.</div>
     </header>
-    <main class="frame">
-      <img src="./assets/launcher-current-view.png" alt="Northlight launcher current live view" />
+    <main class="window">
+      <section class="shell">
+        <header class="header">
+          <div class="brand">Northlight</div>
+          <div class="status">
+            <div class="badge">v0.7.15</div>
+            <div class="badge">30,000 indexed</div>
+            <div class="badge ready-badge">Ready</div>
+          </div>
+        </header>
+
+        <section class="search">
+          <div class="search-icon">⌕</div>
+          <input class="search-input" type="text" value="" placeholder="Search files, folders, apps, or type 30mph to kmh" />
+          <div class="search-arrow">→</div>
+        </section>
+
+        <section class="body">
+          <div class="results-column">
+            <section class="empty-state">
+              <div>
+                <h2>Start from recent context</h2>
+                <p>Recent launcher choices, clipboard items, and configured snippets can appear here as you build history.</p>
+              </div>
+            </section>
+          </div>
+
+          <aside class="preview-pane">
+            <div class="preview-header">
+              <div class="preview-eyebrow">Preview</div>
+            </div>
+            <div class="preview-placeholder">Select a result to inspect it here.</div>
+          </aside>
+        </section>
+
+        <footer class="footer">
+          <div class="footer-left">
+            <span class="footer-text footer-text-strong">Start typing or use recent results</span>
+            <span class="shortcut"><span class="kbd">Enter</span></span>
+          </div>
+
+          <div class="footer-right">
+            <div class="trigger">
+              <span class="footer-text footer-text-strong">Settings</span>
+              <span class="shortcut"><span class="kbd">Cmd</span><span class="kbd">,</span></span>
+            </div>
+            <div class="trigger">
+              <span class="footer-text footer-text-strong">Actions</span>
+              <span class="shortcut"><span class="kbd">Cmd</span><span class="kbd">K</span></span>
+            </div>
+          </div>
+        </footer>
+      </section>
     </main>
   </body>
 </html>
