@@ -224,8 +224,32 @@ describe('buildResults', () => {
     await buildResults('snowboard jpg');
 
     expect(searchLocal).toHaveBeenCalledWith('snowboard', undefined, {
-      kind: 'file',
-      extensions: ['jpg', 'jpeg']
+      localFilter: {
+        kind: 'file',
+        extensions: ['jpg', 'jpeg']
+      },
+      matchedTokens: ['jpg']
+    }, undefined);
+  });
+
+  it('passes scope and time refiners into the local search call as structured intent', async () => {
+    const searchLocal = vi.fn().mockResolvedValue([]);
+
+    window.launcher = {
+      searchLocal,
+      getClipboardHistory: vi.fn().mockResolvedValue([])
+    } as never;
+
+    await buildResults('config json in:library today');
+
+    expect(searchLocal).toHaveBeenCalledWith('config', undefined, {
+      localFilter: {
+        kind: 'file',
+        extensions: ['json', 'jsonc']
+      },
+      scopeToken: 'library',
+      timeToken: 'today',
+      matchedTokens: ['json', 'in:library', 'today']
     }, undefined);
   });
 });

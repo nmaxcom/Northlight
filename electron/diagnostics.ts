@@ -9,11 +9,10 @@ import {
   type TraceIdleSummary,
   type TraceSource
 } from '../src/lib/search/diagnostics';
-import type { LocalIntentFilter } from '../src/lib/search/intentParser';
 import { app } from 'electron';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { LauncherTraceDumpFile } from '../src/lib/search/types';
+import type { LauncherTraceDumpFile, LocalIntentFilter } from '../src/lib/search/types';
 
 const TRACE_BUFFER_LIMIT = 500;
 const defaultEnabled = process.env.NORTHLIGHT_TRACE === '1';

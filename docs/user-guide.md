@@ -7,7 +7,8 @@ Northlight is a keyboard-first macOS launcher for fast local search, determinist
 Current built-in capabilities:
 
 - Search local files, folders, and apps by name.
-- Refine a broad query with trailing intent hints such as `project/`, `snowboard img`, `snowboard jpg`, `figma app`, or `notes md`.
+- Search through a hybrid local backbone: Spotlight brings broad macOS recall, and Northlight's local catalog lifts recent and repeated choices.
+- Refine a broad query with trailing intent hints such as `project/`, `snowboard img`, `snowboard jpg`, `figma app`, `notes md`, `config json in:library`, or `report today`.
 - Highlight each result type with a distinct color only in the left icon tile, so folders, apps, files, calculations, snippets, clipboard items, aliases, and commands are easier to scan.
 - Match abbreviations and fuzzy app names such as `btt` and `fig`.
 - Learn from repeated selections so important results rise to the top.
@@ -46,10 +47,13 @@ Current built-in capabilities:
 - Type at least 2 characters for local file, folder, and app search.
 - Exact and prefix matches rank above loose path matches.
 - Apps are ranked above low-value system matches when names compete.
+- macOS local recall is hybrid: Spotlight supplies broad candidates, then Northlight reranks them with personal signals from its local catalog.
 - Aliases rank above generic fuzzy matches when the trigger matches exactly.
 - Snippets and clipboard items can participate in search without overriding stronger file or app matches for broad queries.
 - Search is local-first and favors common personal locations such as `/Applications`, `~/Desktop`, `~/Documents`, `~/Downloads`, and `~/STUFF/Coding`.
 - Trailing intent refiners stay optional: Northlight first searches broadly, then lets you tighten the result type with suffixes like `/`, `img`, `jpg`, `pdf`, `md`, `app`, `file`, or `folder`.
+- Scope refiners let you narrow broad queries with `in:downloads`, `in:documents`, `in:desktop`, `in:library`, or `in:home`.
+- Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
 - Intent refiners are only recognized as trailing standalone terms, so literal names like `img-tools` keep searching as plain text.
 
 ## Keyboard Controls
@@ -75,6 +79,7 @@ Current built-in capabilities:
 - The launcher shell and the native utility window now share the same `10px` corner radius, and the search box is intentionally compressed to a very low-profile `35px` field.
 - The search input uses a fully neutralized native appearance, so the text sits cleanly inside the field without extra WebKit capsules or clipping.
 - The `Actions` panel opens above the bottom bar, lists all actions for the selected result, shows shortcuts when an action has one, and filters live as you type.
+- File results now expose stronger default actions such as `Quick Look` and `Copy Markdown Link` in addition to open, reveal, and copy-path flows.
 - The preview pane can show real image previews, PDF page thumbnails, plain-text/code contents for text-like files, folder contents, app bundle info, clipboard contents, and deterministic calculation details.
 - Native app icons and image previews are loaded from real macOS assets so they render consistently inside the launcher.
 - When the selected result stays the same across background refreshes, the preview remains pinned instead of flashing back to a fallback state.
@@ -98,7 +103,7 @@ The settings window is the control center for launcher preferences.
 - Save actions now show an explicit `Saving…` state, and settings buttons have visible pressed/disabled feedback.
 - Enable or disable filesystem watchers for live scope invalidation.
 - Review validation warnings before saving.
-- The scopes view explains the tradeoff: wider roots improve recall, but they increase indexing cost and usually add more low-value results.
+- The scopes view explains the hybrid model: wider roots help the local catalog and scoped fallback search, but they increase hydration cost and usually add more low-value results.
 - If you add Home or `~/Library`, Northlight now ignores its own internal support files so broad scopes do not keep retriggering the index on self-writes.
 - Very broad scopes such as Home, `~/Library`, and `/` are still indexed, but Northlight no longer attaches recursive live watchers to them because macOS background churn would keep forcing refresh loops.
 - In development, you can enable diagnostics tracing with `NORTHLIGHT_TRACE=1 npm run dev` to capture structured search, status, preview, icon, watcher, and clipboard activity.
@@ -130,7 +135,8 @@ Examples:
 ## Notes
 
 - Search quality improves as the launcher records recency and frequency locally.
-- Search starts from the last good persisted index and refreshes in the background.
+- Search starts from the last good persisted catalog and hydrates it in the background.
+- Spotlight recall remains available even while the local catalog is still restoring or hydrating.
 - Background index refreshes keep the current result list visible while new hits resolve, instead of flashing back to the empty `Searching...` state.
 - Keeping a non-empty query open no longer retriggers full background index rebuilds on every local search pass, so steady search sessions stop burning CPU in the main process.
 - When files or folders move, stale persisted paths are pruned from results instead of lingering across relaunches.

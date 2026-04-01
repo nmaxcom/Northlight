@@ -1,13 +1,9 @@
-import type { LocalSearchItem } from './types';
-
-export type LocalIntentFilter = {
-  kind?: LocalSearchItem['kind'];
-  extensions?: string[];
-};
+import type { LocalIntentFilter, LocalSearchItem, SearchIntent, SearchScopeToken, SearchTimeToken } from './types';
 
 export type ParsedIntentQuery = {
   rawQuery: string;
   searchText: string;
+  intent: SearchIntent | null;
   localFilter: LocalIntentFilter | null;
   matchedTokens: string[];
 };
@@ -53,6 +49,18 @@ const TOKEN_FILTERS: Record<string, LocalIntentFilter> = {
   yml: { kind: 'file', extensions: ['yaml', 'yml'] },
   toml: { kind: 'file', extensions: ['toml'] }
 };
+const SCOPE_TOKENS: Record<string, SearchScopeToken> = {
+  'in:downloads': 'downloads',
+  'in:documents': 'documents',
+  'in:desktop': 'desktop',
+  'in:library': 'library',
+  'in:home': 'home'
+};
+const TIME_TOKENS: Record<string, SearchTimeToken> = {
+  today: 'today',
+  yesterday: 'yesterday',
+  recent: 'recent'
+};
 
 function mergeIntentFilters(current: LocalIntentFilter | null, next: LocalIntentFilter) {
   if (!current) {
@@ -97,6 +105,18 @@ export function localIntentFilterKey(filter: LocalIntentFilter | null | undefine
   return `${filter.kind ?? 'any'}::${extensions}`;
 }
 
+export function searchIntentKey(intent: SearchIntent | null | undefined) {
+  if (!intent) {
+    return 'all';
+  }
+
+  return [
+    localIntentFilterKey(intent.localFilter),
+    intent.scopeToken ?? 'any-scope',
+    intent.timeToken ?? 'any-time'
+  ].join('::');
+}
+
 export function matchesLocalIntent(item: Pick<LocalSearchItem, 'kind' | 'path'>, filter: LocalIntentFilter | null | undefined) {
   if (!filter) {
     return true;
@@ -129,6 +149,8 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
 
   let working = trimmed;
   let localFilter: LocalIntentFilter | null = null;
+  let scopeToken: SearchScopeToken | undefined;
+  let timeToken: SearchTimeToken | undefined;
   const matchedTokens: string[] = [];
 
   if (working.endsWith('/') && !working.endsWith('//')) {
@@ -143,8 +165,45 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
   const tokens = working.split(/\s+/);
   while (tokens.length > 1) {
     const candidate = tokens.at(-1)?.toLowerCase();
-    const candidateFilter = candidate ? TOKEN_FILTERS[candidate] : null;
+    if (!candidate) {
+      break;
+    }
 
+    const candidateScope = SCOPE_TOKENS[candidate];
+    if (candidateScope) {
+      if (scopeToken && scopeToken !== candidateScope) {
+        return {
+          rawQuery,
+          searchText: trimmed,
+          intent: null,
+          localFilter: null,
+          matchedTokens: []
+        };
+      }
+
+      scopeToken = candidateScope;
+      matchedTokens.unshift(tokens.pop()!);
+      continue;
+    }
+
+    const candidateTime = TIME_TOKENS[candidate];
+    if (candidateTime) {
+      if (timeToken && timeToken !== candidateTime) {
+        return {
+          rawQuery,
+          searchText: trimmed,
+          intent: null,
+          localFilter: null,
+          matchedTokens: []
+        };
+      }
+
+      timeToken = candidateTime;
+      matchedTokens.unshift(tokens.pop()!);
+      continue;
+    }
+
+    const candidateFilter = TOKEN_FILTERS[candidate];
     if (!candidateFilter) {
       break;
     }
@@ -154,6 +213,7 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
       return {
         rawQuery,
         searchText: trimmed,
+        intent: null,
         localFilter: null,
         matchedTokens: []
       };
@@ -164,10 +224,13 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
   }
 
   const searchText = tokens.join(' ').trim();
-  if (!searchText || !localFilter) {
+  const intent = localFilter || scopeToken || timeToken ? { localFilter, scopeToken, timeToken, matchedTokens: [...matchedTokens] } : null;
+
+  if (!searchText || !intent) {
     return {
       rawQuery,
       searchText: trimmed,
+      intent: null,
       localFilter: null,
       matchedTokens: []
     };
@@ -176,6 +239,7 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
   return {
     rawQuery,
     searchText,
+    intent,
     localFilter,
     matchedTokens
   };

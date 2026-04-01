@@ -55,7 +55,7 @@ describe('SettingsView', () => {
     await screen.findByText('Northlight Settings');
     fireEvent.click(screen.getByRole('button', { name: 'Scopes & Status' }));
 
-    expect(screen.getByText(/choose which roots northlight indexes/i)).toBeInTheDocument();
+    expect(screen.getByText(/choose which roots northlight hydrates and prefers/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add ~\/library/i })).toBeInTheDocument();
     expect(screen.getByText(/widest coverage, but the slowest and noisiest option/i)).toBeInTheDocument();
 

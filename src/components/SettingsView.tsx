@@ -709,7 +709,7 @@ export function SettingsView() {
                 <div className={classes.sectionHeader}>
                   <div>
                     <div className={classes.cardTitle}>Search Scopes</div>
-                    <div className={classes.cardSubtitle}>Scopes decide which roots feed local indexing and targeted fallback search.</div>
+                    <div className={classes.cardSubtitle}>Scopes feed the local catalog, narrow Spotlight coverage, and define safe fallback search roots.</div>
                   </div>
                   <button
                     className={classes.scopeActionButton}
@@ -726,9 +726,9 @@ export function SettingsView() {
 
                 <div className={classes.scopeHero}>
                   <div className={classes.scopeHeroCopy}>
-                    <div className={classes.scopeLead}>Choose which roots Northlight indexes.</div>
+                    <div className={classes.scopeLead}>Choose which roots Northlight hydrates and prefers.</div>
                     <div className={classes.scopeLeadText}>
-                      Start narrow. Add `~/Library` when you need app support files and preferences. Add Home or `/` only when broader recall matters more than speed and result cleanliness.
+                      Northlight now uses hybrid search: Spotlight supplies broad recall on macOS, while the local catalog improves ranking, recents, and resilience. Start narrow. Add `~/Library` when you need app support files and preferences. Add Home or `/` only when broader recall matters more than speed and result cleanliness.
                     </div>
                   </div>
                   <div className={classes.scopeMetrics}>
@@ -915,11 +915,11 @@ export function SettingsView() {
               {activeTab === 'scopes' ? (
               <section className={classes.card}>
                 <div className={classes.cardTitle}>Scope Guidance</div>
-                <div className={classes.cardSubtitle}>A few rules that matter when you widen search coverage.</div>
+                <div className={classes.cardSubtitle}>A few rules that matter when you widen hybrid search coverage.</div>
                 <ul className={classes.hintList}>
                   <li>`~/Library` is usually the highest-value expansion if you want app support files, settings, plugins, or preferences.</li>
-                  <li>Disabled scopes stay in settings but stop feeding the local index until you enable them again.</li>
-                  <li>Larger scopes take longer to index and tend to push more low-value files into results.</li>
+                  <li>Disabled scopes stay in settings but stop feeding the local catalog and scoped fallback search until you enable them again.</li>
+                  <li>Larger scopes take longer to hydrate and tend to push more low-value files into results, even when Spotlight recall is available.</li>
                   <li>Watching filesystem changes helps stale results disappear faster, but it also makes broad scope sets busier.</li>
                   <li>The `/` scope is a power-user option. It broadens recall, but it is the slowest and noisiest choice.</li>
                 </ul>

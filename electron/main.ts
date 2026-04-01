@@ -7,11 +7,10 @@ import { basename, extname, join } from 'node:path';
 import { platform } from 'node:process';
 import packageJson from '../package.json';
 import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/shortcuts';
-import type { LocalIntentFilter } from '../src/lib/search/intentParser';
-import type { LauncherPreview, LauncherSettings, LocalSearchItem } from '../src/lib/search/types';
+import type { LauncherPreview, LauncherSettings, LocalSearchItem, SearchIntent } from '../src/lib/search/types';
 import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
 import { getIdleTraceSummary, getTraceDump, getTraceState, ingestRendererTrace, recordTrace, setTraceEnabled, traceSpan, writeTraceDumpFile } from './diagnostics';
-import { configureIndexWatchers, getSearchStatus, requestSearchRefresh, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
+import { configureIndexWatchers, getSearchStatus, recordLocalSelection, requestSearchRefresh, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
 import {
   ensureLauncherState,
   getClipboardHistory,
@@ -858,7 +857,7 @@ app.whenReady().then(async () => {
 
   ipcMain.handle(
     'launcher:search-local',
-    async (_event, query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null, requestId?: string) => {
+    async (_event, query: string, scopePath?: string | null, intent?: SearchIntent | null, requestId?: string) => {
       const traceRequestId = requestId || nextRequestId('search');
 
       return traceSpan(
@@ -868,12 +867,15 @@ app.whenReady().then(async () => {
           requestId: traceRequestId,
           query,
           scopePath,
-          localFilter
+          localFilter: intent?.localFilter
         },
-        async () => searchIndexedPaths(query, scopePath, localFilter, { requestId: traceRequestId })
+        async () => searchIndexedPaths(query, scopePath, intent, { requestId: traceRequestId })
       );
     }
   );
+  ipcMain.handle('launcher:record-local-selection', async (_event, item: Pick<LocalSearchItem, 'path' | 'name' | 'kind'>) => {
+    await recordLocalSelection(item);
+  });
 
   ipcMain.handle('launcher:get-status', async (_event, requestId?: string) => {
     const traceRequestId = requestId || nextRequestId('status');

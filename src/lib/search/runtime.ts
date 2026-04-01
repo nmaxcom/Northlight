@@ -1,10 +1,11 @@
 import { clearRankStore, recordSelection } from './adaptiveRanking';
-import { localIntentFilterKey, matchesLocalIntent, type LocalIntentFilter } from './intentParser';
+import { matchesLocalIntent, searchIntentKey } from './intentParser';
 import { fileFixtures } from './mockData';
 import { adaptiveRankBoost } from './adaptiveRanking';
 import { baseSearchScore } from './scoring';
 import { resolveLauncherShortcut } from '../shortcuts';
-import type { ClipboardEntry, LauncherPreview, LauncherSettings, LauncherStatus, LocalSearchItem } from './types';
+import { modifiedAtMatchesIntentTime, pathMatchesIntentScope } from './intentScope';
+import type { ClipboardEntry, LauncherPreview, LauncherSettings, LauncherStatus, LocalSearchItem, SearchIntent } from './types';
 import type {
   LauncherTraceDump,
   LauncherTraceDumpFile,
@@ -60,8 +61,8 @@ function clearTransientCaches() {
   previewCache.clear();
 }
 
-function cacheKey(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
-  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${localIntentFilterKey(localFilter)}`;
+function cacheKey(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
+  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${searchIntentKey(intent)}`;
 }
 
 function filterByScope(items: LocalSearchItem[], scopePath?: string | null) {
@@ -72,9 +73,11 @@ function filterByScope(items: LocalSearchItem[], scopePath?: string | null) {
   return items.filter((item) => item.path.startsWith(`${scopePath}/`) || item.path === scopePath);
 }
 
-function rankItems(query: string, items: LocalSearchItem[], localFilter?: LocalIntentFilter | null) {
+function rankItems(query: string, items: LocalSearchItem[], intent?: SearchIntent | null) {
   return items
-    .filter((item) => matchesLocalIntent(item, localFilter))
+    .filter((item) => matchesLocalIntent(item, intent?.localFilter))
+    .filter((item) => pathMatchesIntentScope(item.path, intent?.scopeToken, settingsCache.scopes))
+    .filter((item) => modifiedAtMatchesIntentTime(item.modifiedAt, intent?.timeToken))
     .map((item) => ({
       ...item,
       score:
@@ -91,37 +94,37 @@ async function copyText(text: string) {
   await navigator.clipboard.writeText(text);
 }
 
-async function searchFixtureIndex(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null): Promise<LocalSearchItem[]> {
+async function searchFixtureIndex(query: string, scopePath?: string | null, intent?: SearchIntent | null): Promise<LocalSearchItem[]> {
   const trimmed = query.trim();
 
   if (trimmed.length < 2) {
     return [];
   }
 
-  return rankItems(trimmed, filterByScope(fileFixtures, scopePath), localFilter);
+  return rankItems(trimmed, filterByScope(fileFixtures, scopePath), intent);
 }
 
-function searchCachedLocal(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
+function searchCachedLocal(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
   const trimmed = query.trim();
 
   if (trimmed.length < 2) {
     return [];
   }
 
-  const direct = queryCache.get(cacheKey(trimmed, scopePath, localFilter));
+  const direct = queryCache.get(cacheKey(trimmed, scopePath, intent));
   if (direct) {
     return direct;
   }
 
   for (let length = trimmed.length - 1; length >= 2; length -= 1) {
     const prefix = trimmed.slice(0, length);
-    const prefixResults = queryCache.get(cacheKey(prefix, scopePath, localFilter));
+    const prefixResults = queryCache.get(cacheKey(prefix, scopePath, intent));
 
     if (!prefixResults) {
       continue;
     }
 
-    return rankItems(trimmed, prefixResults, localFilter);
+    return rankItems(trimmed, prefixResults, intent);
   }
 
   return [];
@@ -279,8 +282,8 @@ export const launcherRuntime = {
       callback();
     });
   },
-  getCachedLocal(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
-    return searchCachedLocal(query, scopePath, localFilter);
+  getCachedLocal(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
+    return searchCachedLocal(query, scopePath, intent);
   },
   getRecentLocalItems() {
     const merged = new Map<string, LocalSearchItem>();
@@ -304,22 +307,22 @@ export const launcherRuntime = {
       .sort((left, right) => right.score - left.score)
       .slice(0, 8);
   },
-  searchLocal(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null, requestId?: string) {
+  searchLocal(query: string, scopePath?: string | null, intent?: SearchIntent | null, requestId?: string) {
     if (window.launcher?.searchLocal) {
-      return window.launcher.searchLocal(query, scopePath, localFilter, requestId).then((results) => {
-        const ranked = rankItems(query.trim(), filterByScope(results, scopePath), localFilter);
+      return window.launcher.searchLocal(query, scopePath, intent, requestId).then((results) => {
+        const ranked = rankItems(query.trim(), filterByScope(results, scopePath), intent);
 
         if (ranked.length > 0) {
-          queryCache.set(cacheKey(query, scopePath, localFilter), ranked);
+          queryCache.set(cacheKey(query, scopePath, intent), ranked);
         }
 
         return ranked;
       });
     }
 
-    return searchFixtureIndex(query, scopePath, localFilter).then((results) => {
+    return searchFixtureIndex(query, scopePath, intent).then((results) => {
       if (results.length > 0) {
-        queryCache.set(cacheKey(query, scopePath, localFilter), results);
+        queryCache.set(cacheKey(query, scopePath, intent), results);
       }
       return results;
     });
@@ -328,7 +331,9 @@ export const launcherRuntime = {
     return (
       window.launcher?.getStatus?.(requestId) ??
       Promise.resolve({
-        appVersion: '0.7.0',
+        appVersion: '0.8.0',
+        searchMode: 'hybrid',
+        catalogState: 'ready',
         indexEntryCount: fileFixtures.length,
         indexReady: true,
         isRestoring: false,
@@ -336,8 +341,17 @@ export const launcherRuntime = {
       })
     );
   },
-  recordSelection(path: string) {
-    recordSelection(path);
+  recordSelection(item: string | Pick<LocalSearchItem, 'path' | 'name' | 'kind'>) {
+    const normalized =
+      typeof item === 'string'
+        ? {
+            path: item,
+            name: item.split('/').at(-1) ?? item,
+            kind: (item.endsWith('.app') ? 'app' : 'file') as const
+          }
+        : item;
+    recordSelection(normalized.path);
+    void window.launcher?.recordLocalSelection?.(normalized);
     queryCache.clear();
   },
   openPath(path: string) {

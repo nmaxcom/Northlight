@@ -1,4 +1,5 @@
 import { IconApps, IconCalculator, IconFolder, IconFileText } from '@tabler/icons-react';
+import { buildCopyActionDescriptor, buildLocalActionDescriptors, buildOpenSettingsActionDescriptor, resolveActionDescriptor } from './actions';
 import { buildDeterministicResult } from './calculations';
 import { parseIntentQuery } from './intentParser';
 import { launcherRuntime } from './runtime';
@@ -36,91 +37,7 @@ function scopedSubtitle(path: string, scopePath?: string | null) {
 }
 
 function buildLocalResult(item: LocalSearchItem, context: QueryContext = {}): LauncherResult {
-  const actions = [
-    {
-      id: 'open',
-      label: item.kind === 'app' ? 'Launch App' : item.kind === 'folder' ? 'Open Folder' : 'Open File',
-      hint: 'Enter',
-      group: 'Open',
-      dismissOnRun: true,
-      feedbackLabel: item.kind === 'app' ? 'Launched app' : item.kind === 'folder' ? 'Opened folder' : 'Opened file',
-      run: async () => {
-        launcherRuntime.recordSelection(item.path);
-        await launcherRuntime.openPath(item.path);
-      }
-    },
-    {
-      id: 'reveal',
-      label: item.kind === 'folder' ? 'Show Folder In Finder' : 'Reveal in Finder',
-      hint: 'Cmd+Enter',
-      group: 'Open',
-      dismissOnRun: true,
-      feedbackLabel: 'Revealed in Finder',
-      run: async () => {
-        launcherRuntime.recordSelection(item.path);
-        await launcherRuntime.revealPath(item.path);
-      }
-    },
-    {
-      id: 'copy-path',
-      label: 'Copy Path',
-      hint: 'Cmd+Shift+C',
-      group: 'Copy',
-      dismissOnRun: true,
-      feedbackLabel: 'Copied path',
-      run: () => launcherRuntime.copyText(item.path)
-    }
-  ];
-
-  if (item.kind === 'folder') {
-    actions.push({
-      id: 'open-terminal',
-      label: 'Open In Terminal',
-      hint: 'Alt+Enter',
-      group: 'Open',
-      dismissOnRun: true,
-      feedbackLabel: 'Opened in Terminal',
-      run: async () => {
-        launcherRuntime.recordSelection(item.path);
-        await launcherRuntime.openInTerminal(item.path);
-      }
-    });
-  }
-
-  if (item.kind === 'file') {
-    actions.push({
-      id: 'open-with-text-edit',
-      label: 'Open With TextEdit',
-      hint: 'Alt+Enter',
-      group: 'Open',
-      dismissOnRun: true,
-      feedbackLabel: 'Opened in TextEdit',
-      run: async () => {
-        launcherRuntime.recordSelection(item.path);
-        await launcherRuntime.openWithTextEdit(item.path);
-      }
-    });
-  }
-
-  actions.push({
-    id: 'copy-name',
-    label: 'Copy Name',
-    hint: 'Cmd+Shift+N',
-    group: 'Copy',
-    dismissOnRun: true,
-    feedbackLabel: 'Copied name',
-    run: () => launcherRuntime.copyText(item.name)
-  });
-
-  actions.push({
-    id: 'trash',
-    label: 'Move To Trash',
-    hint: 'Cmd+Backspace',
-    group: 'Manage',
-    dismissOnRun: true,
-    feedbackLabel: 'Moved to Trash',
-    run: () => launcherRuntime.trashPath(item.path)
-  });
+  const actions = buildLocalActionDescriptors(item).map(resolveActionDescriptor);
 
   return {
     id: item.id,
@@ -162,27 +79,13 @@ function buildCalculationResults(query: string): LauncherResult[] {
       ]
     },
     source: 'conversion',
-    actions: [
-      {
-        id: 'copy',
-        label: 'Copy Result',
-        hint: 'Enter',
-        group: 'Copy',
-        dismissOnRun: true,
-        feedbackLabel: 'Copied result',
-        run: () => launcherRuntime.copyText(result.value ?? result.title)
-      },
-      {
-        id: 'copy-label',
-        label: 'Copy Full Expression',
-        hint: 'Cmd+Shift+C',
-        group: 'Copy',
-        dismissOnRun: true,
-        feedbackLabel: 'Copied full expression',
-        run: () => launcherRuntime.copyText(result.title)
-      }
-    ]
-  }));
+      actions: [
+        resolveActionDescriptor(buildCopyActionDescriptor('copy-result', 'Copy Result', result.value ?? result.title, 'Enter', 'Copied result')),
+        resolveActionDescriptor(
+          buildCopyActionDescriptor('copy-full-expression', 'Copy Full Expression', result.title, 'Cmd+Shift+C', 'Copied full expression')
+        )
+      ]
+    }));
 }
 
 function queryMatches(value: string, query: string) {
@@ -263,14 +166,7 @@ function buildSettingsCommandResult(query: string): LauncherResult[] {
         ]
       },
       actions: [
-        {
-          id: 'open-settings',
-          label: 'Open Settings',
-          hint: 'Enter',
-          group: 'Open',
-          feedbackLabel: 'Opened settings',
-          run: () => launcherRuntime.openSettings()
-        }
+        resolveActionDescriptor(buildOpenSettingsActionDescriptor())
       ]
     }
   ];
@@ -296,15 +192,7 @@ function buildSnippetResult(snippet: SnippetEntry, score: number): LauncherResul
       ]
     },
     actions: [
-      {
-        id: `copy-snippet:${snippet.id}`,
-        label: 'Copy Snippet',
-        hint: 'Enter',
-        group: 'Copy',
-        dismissOnRun: true,
-        feedbackLabel: 'Copied snippet',
-        run: () => launcherRuntime.copyText(snippet.content)
-      }
+      resolveActionDescriptor(buildCopyActionDescriptor('copy-snippet', 'Copy Snippet', snippet.content, 'Enter', 'Copied snippet'))
     ]
   };
 }
@@ -360,15 +248,7 @@ function buildClipboardResult(entry: ClipboardEntry, score: number): LauncherRes
       ]
     },
     actions: [
-      {
-        id: `copy-clipboard:${entry.id}`,
-        label: 'Copy Clipboard Item',
-        hint: 'Enter',
-        group: 'Copy',
-        dismissOnRun: true,
-        feedbackLabel: 'Copied clipboard item',
-        run: () => launcherRuntime.copyText(entry.text)
-      }
+      resolveActionDescriptor(buildCopyActionDescriptor('copy-clipboard', 'Copy Clipboard Item', entry.text, 'Enter', 'Copied clipboard item'))
     ]
   };
 }
@@ -394,14 +274,7 @@ function buildAliasResult(alias: AliasEntry, score: number): LauncherResult | nu
         ]
       },
       actions: [
-        {
-          id: `open-alias-settings:${alias.id}`,
-          label: 'Open Settings',
-          hint: 'Enter',
-          group: 'Open',
-          feedbackLabel: 'Opened settings',
-          run: () => launcherRuntime.openSettings()
-        }
+        resolveActionDescriptor(buildOpenSettingsActionDescriptor())
       ]
     };
   }
@@ -476,8 +349,8 @@ export function buildImmediateResults(query: string, context: QueryContext = {})
     return buildLocalResults(launcherRuntime.getRecentLocalItems(), context).sort((a, b) => b.score - a.score);
   }
 
-  const localResults = buildLocalResults(launcherRuntime.getCachedLocal(trimmed, context.scopePath, parsedQuery.localFilter), context);
-  if (parsedQuery.localFilter) {
+  const localResults = buildLocalResults(launcherRuntime.getCachedLocal(trimmed, context.scopePath, parsedQuery.intent), context);
+  if (parsedQuery.intent) {
     return localResults.sort((a, b) => b.score - a.score);
   }
 
@@ -500,12 +373,12 @@ export async function buildResults(query: string, context: QueryContext = {}): P
   }
 
   const localResults = buildLocalResults(
-    await launcherRuntime.searchLocal(trimmed, context.scopePath, parsedQuery.localFilter, context.traceRequestId),
+    await launcherRuntime.searchLocal(trimmed, context.scopePath, parsedQuery.intent, context.traceRequestId),
     context
   );
   await launcherRuntime.getClipboardHistory();
 
-  if (parsedQuery.localFilter) {
+  if (parsedQuery.intent) {
     return localResults.sort((a, b) => b.score - a.score);
   }
 

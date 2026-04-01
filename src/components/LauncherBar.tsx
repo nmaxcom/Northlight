@@ -158,11 +158,13 @@ export function LauncherBar() {
   const [settings, setSettings] = useState<LauncherSettings>(launcherRuntime.getSettingsSnapshot());
   const [isPreviewOpen, setIsPreviewOpen] = useState(settings.quickLookStartsOpen);
   const [status, setStatus] = useState<LauncherStatus>({
-    appVersion: '0.7.0',
+    appVersion: '0.8.0',
     indexEntryCount: 0,
     indexReady: false,
     isRestoring: true,
-    isRefreshing: false
+    isRefreshing: false,
+    searchMode: 'hybrid',
+    catalogState: 'restoring'
   });
   const [iconUrls, setIconUrls] = useState<Record<string, string | null>>({});
 
@@ -902,7 +904,17 @@ export function LauncherBar() {
           <div className={classes.brand}>Northlight</div>
           <div className={classes.status}>
             <div className={classes.badge}>v{status.appVersion}</div>
+            <div className={classes.badge}>{status.searchMode === 'hybrid' ? 'hybrid' : status.searchMode ?? 'catalog'}</div>
             <div className={classes.badge}>{status.indexEntryCount.toLocaleString()} indexed</div>
+            <div className={classes.badge}>
+              {status.catalogState === 'hydrating'
+                ? 'catalog hydrating'
+                : status.catalogState === 'restoring'
+                  ? 'catalog restoring'
+                  : status.catalogState === 'ready'
+                    ? 'catalog ready'
+                    : 'catalog cold'}
+            </div>
             <div className={`${classes.badge} ${classes.readyBadge}`}>
               {status.isRestoring ? 'Restoring' : status.isRefreshing ? 'Refreshing' : status.indexReady ? 'Ready' : 'Cold'}
             </div>

@@ -22,7 +22,7 @@ describe('LauncherBar', () => {
     expect(screen.getByLabelText('Launcher query')).toBeInTheDocument();
     expect(screen.getByText('Start from recent context')).toBeInTheDocument();
     await screen.findByText('10 indexed');
-    expect(screen.getByText('v0.7.0')).toBeInTheDocument();
+    expect(screen.getByText('v0.8.0')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /actions/i })).toBeDisabled();
   });
 
@@ -93,7 +93,7 @@ describe('LauncherBar', () => {
       ready: vi.fn().mockResolvedValue(undefined),
       getPathPreview,
       getStatus: vi.fn().mockResolvedValue({
-        appVersion: '0.7.0',
+        appVersion: '0.8.0',
         indexEntryCount: 10,
         indexReady: true,
         isRestoring: false,
@@ -409,7 +409,7 @@ describe('LauncherBar', () => {
       ready: vi.fn().mockResolvedValue(undefined),
       searchLocal,
       getStatus: vi.fn().mockResolvedValue({
-        appVersion: '0.7.0',
+        appVersion: '0.8.0',
         indexEntryCount: 10,
         indexReady: true,
         isRestoring: false,
@@ -505,7 +505,7 @@ describe('LauncherBar', () => {
       searchLocal,
       getPathPreview,
       getStatus: vi.fn().mockResolvedValue({
-        appVersion: '0.7.0',
+        appVersion: '0.8.0',
         indexEntryCount: 10,
         indexReady: true,
         isRestoring: false,

@@ -1,13 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { LauncherSettings, LauncherTraceEvent } from '../src/lib/search/types';
+import type { LauncherSettings, LauncherTraceEvent, LocalSearchItem, SearchIntent } from '../src/lib/search/types';
 
 const launcherApi = {
   searchLocal: (
     query: string,
     scopePath?: string | null,
-    localFilter?: { kind?: 'file' | 'folder' | 'app'; extensions?: string[] } | null,
+    intent?: SearchIntent | null,
     requestId?: string
-  ) => ipcRenderer.invoke('launcher:search-local', query, scopePath, localFilter, requestId),
+  ) => ipcRenderer.invoke('launcher:search-local', query, scopePath, intent, requestId),
   getStatus: (requestId?: string) => ipcRenderer.invoke('launcher:get-status', requestId),
   getSettings: () => ipcRenderer.invoke('launcher:get-settings'),
   getEffectiveShortcut: () => ipcRenderer.invoke('launcher:get-effective-shortcut'),
@@ -24,6 +24,7 @@ const launcherApi = {
   getTraceDump: () => ipcRenderer.invoke('launcher:get-trace-dump'),
   getIdleTraceSummary: () => ipcRenderer.invoke('launcher:get-idle-trace-summary'),
   writeTraceDump: () => ipcRenderer.invoke('launcher:write-trace-dump'),
+  recordLocalSelection: (item: Pick<LocalSearchItem, 'path' | 'name' | 'kind'>) => ipcRenderer.invoke('launcher:record-local-selection', item),
   quickLookPath: (path: string) => ipcRenderer.invoke('launcher:quick-look-path', path),
   openPath: (path: string) => ipcRenderer.invoke('launcher:open-path', path),
   revealPath: (path: string) => ipcRenderer.invoke('launcher:reveal-path', path),

@@ -1,19 +1,25 @@
 import { app } from 'electron';
-import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { access, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { watch, type FSWatcher } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 import { recordTrace } from './diagnostics';
+import { modifiedAtMatchesIntentTime, resolveIntentScopePath } from '../src/lib/search/intentScope';
 import { isPrivateNorthlightPath } from '../src/lib/search/searchExclusions';
 import { baseSearchScore } from '../src/lib/search/scoring';
-import { localIntentFilterKey, matchesLocalIntent, type LocalIntentFilter } from '../src/lib/search/intentParser';
+import { matchesLocalIntent, searchIntentKey } from '../src/lib/search/intentParser';
 import { isWatchableScope } from '../src/lib/search/watchScopePolicy';
-import type { LauncherStatus, LocalSearchItem, ResultKind } from '../src/lib/search/types';
+import type { LauncherStatus, LocalSearchItem, ResultKind, SearchContext, SearchIntent, SearchProvider, SearchProviderResult } from '../src/lib/search/types';
 import { getLauncherSettings, getLauncherStateSnapshot } from './settings';
 
 const MAX_RESULTS = 12;
 const MAX_INDEX_ENTRIES = 30_000;
-const INDEX_CACHE_FILENAME = 'local-search-index.json';
+const CATALOG_CACHE_FILENAME = 'local-search-catalog.json';
+const LEGACY_INDEX_CACHE_FILENAME = 'local-search-index.json';
+const SPOTLIGHT_TIMEOUT_MS = 1200;
+const MAX_SPOTLIGHT_CANDIDATES = 120;
 const FALLBACK_ROOTS = [
   { path: '/Applications', maxDepth: 2 },
   { path: join(homedir(), 'Applications'), maxDepth: 2 },
@@ -42,7 +48,15 @@ const PREFERRED_SEGMENTS = [
 ];
 let appPrivateRootsCache: string[] | null = null;
 
+const execFileAsync = promisify(execFile);
+
 type IndexedEntry = Omit<LocalSearchItem, 'score'>;
+type CatalogEntry = IndexedEntry & {
+  modifiedAt?: number | null;
+  selectionCount?: number;
+  lastSelectedAt?: number | null;
+  providerId?: 'catalog';
+};
 type RootConfig = (typeof FALLBACK_ROOTS)[number];
 type WalkNode = {
   path: string;
@@ -54,7 +68,7 @@ type SearchTraceContext = {
   requestId?: string;
 };
 
-let fallbackIndex: IndexedEntry[] = [];
+let fallbackIndex: CatalogEntry[] = [];
 let fallbackIndexReady = false;
 let restorePromise: Promise<void> | null = null;
 let refreshPromise: Promise<void> | null = null;
@@ -94,8 +108,8 @@ function clearScopeWatchers() {
   }
 }
 
-function cacheFilePath() {
-  return join(app.getPath('userData'), INDEX_CACHE_FILENAME);
+function cacheFilePath(filename = CATALOG_CACHE_FILENAME) {
+  return join(app.getPath('userData'), filename);
 }
 
 function basename(path: string) {
@@ -151,7 +165,14 @@ function systemPenalty(path: string) {
   return 0;
 }
 
-function rankItem(query: string, entry: IndexedEntry) {
+function selectionBoost(entry: CatalogEntry | SearchProviderResult) {
+  const selectionCount = ('metadata' in entry ? entry.metadata?.selectionCount : entry.selectionCount) ?? 0;
+  const lastSelectedAt = ('metadata' in entry ? entry.metadata?.lastSelectedAt : entry.lastSelectedAt) ?? null;
+  const recencyBoost = lastSelectedAt ? Math.max(0, 18 - Math.floor((Date.now() - lastSelectedAt) / (12 * 60 * 60 * 1000))) : 0;
+  return Math.min(selectionCount * 8, 32) + recencyBoost;
+}
+
+function rankItem(query: string, entry: CatalogEntry | SearchProviderResult) {
   const settings = getLauncherStateSnapshot().settings;
   const baseScore = baseSearchScore(query, entry);
 
@@ -160,7 +181,16 @@ function rankItem(query: string, entry: IndexedEntry) {
   }
 
   const appBoost = settings.appFirstEnabled && entry.kind === 'app' ? 18 : 0;
-  return baseScore + preferredBoost(entry.path) + appBoost - systemPenalty(entry.path) - Math.min(entry.path.split('/').length, 12);
+  const providerBoost = entry.providerId === 'spotlight' ? 10 : entry.providerId === 'catalog' ? 6 : 0;
+  return (
+    baseScore +
+    preferredBoost(entry.path) +
+    appBoost +
+    providerBoost +
+    selectionBoost(entry) -
+    systemPenalty(entry.path) -
+    Math.min(entry.path.split('/').length, 12)
+  );
 }
 
 function filterByScope<T extends { path: string }>(items: T[], scopePath?: string | null) {
@@ -171,8 +201,8 @@ function filterByScope<T extends { path: string }>(items: T[], scopePath?: strin
   return items.filter((item) => item.path.startsWith(scopePath.endsWith('/') ? scopePath : `${scopePath}/`) || item.path === scopePath);
 }
 
-function cacheKey(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
-  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${localIntentFilterKey(localFilter)}`;
+function cacheKey(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
+  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${searchIntentKey(intent)}`;
 }
 
 async function existingRoots(scopePath?: string | null) {
@@ -221,21 +251,40 @@ async function existingRoots(scopePath?: string | null) {
 async function loadPersistedIndex() {
   try {
     const raw = await readFile(cacheFilePath(), 'utf8');
-    const parsed = JSON.parse(raw) as IndexedEntry[];
+    const parsed = JSON.parse(raw) as CatalogEntry[];
 
     if (!Array.isArray(parsed) || parsed.length === 0) {
-      return false;
+      throw new Error('empty-catalog');
     }
 
-    fallbackIndex = parsed.slice(0, MAX_INDEX_ENTRIES);
+    fallbackIndex = parsed.slice(0, MAX_INDEX_ENTRIES).map((entry) => ({
+      ...entry,
+      providerId: 'catalog'
+    }));
     fallbackIndexReady = true;
     return true;
   } catch {
-    return false;
+    try {
+      const raw = await readFile(cacheFilePath(LEGACY_INDEX_CACHE_FILENAME), 'utf8');
+      const parsed = JSON.parse(raw) as IndexedEntry[];
+
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        return false;
+      }
+
+      fallbackIndex = parsed.slice(0, MAX_INDEX_ENTRIES).map((entry) => ({
+        ...entry,
+        providerId: 'catalog'
+      }));
+      fallbackIndexReady = true;
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
-async function persistIndex(nextIndex: IndexedEntry[]) {
+async function persistIndex(nextIndex: CatalogEntry[]) {
   if (nextIndex.length === 0) {
     return;
   }
@@ -281,7 +330,7 @@ async function pruneMissingEntries(paths: string[]) {
   notifyIndexChanged();
 }
 
-function searchFallbackIndex(query: string, scopePath?: string | null, localFilter?: LocalIntentFilter | null) {
+function searchFallbackIndex(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
   const startedAt = Date.now();
   const normalizedQuery = query.trim();
 
@@ -291,7 +340,7 @@ function searchFallbackIndex(query: string, scopePath?: string | null, localFilt
       event: 'fallback-index-skip',
       query,
       scopePath,
-      localFilter,
+      localFilter: intent?.localFilter,
       durationMs: Date.now() - startedAt,
       resultCount: 0,
       details: {
@@ -303,9 +352,11 @@ function searchFallbackIndex(query: string, scopePath?: string | null, localFilt
   }
 
   const results = filterByScope(fallbackIndex, scopePath)
-    .filter((entry) => matchesLocalIntent(entry, localFilter))
+    .filter((entry) => matchesLocalIntent(entry, intent?.localFilter))
+    .filter((entry) => modifiedAtMatchesIntentTime(entry.modifiedAt, intent?.timeToken))
     .map((entry) => ({
       ...entry,
+      providerId: 'catalog' as const,
       score: rankItem(normalizedQuery, entry)
     }))
     .filter((entry) => entry.score > 0)
@@ -317,7 +368,7 @@ function searchFallbackIndex(query: string, scopePath?: string | null, localFilt
     event: 'fallback-index-complete',
     query,
     scopePath,
-    localFilter,
+    localFilter: intent?.localFilter,
     durationMs: Date.now() - startedAt,
     resultCount: results.length
   });
@@ -344,11 +395,14 @@ async function walkForIndex(roots: RootConfig[]) {
     const looksLikeDirectory = !currentName.includes('.') || current.path.endsWith('.app');
 
     if (current.depth > 0) {
+      const modifiedAt = await safeModifiedAt(current.path);
       indexed.push({
         id: current.path,
         path: current.path,
         name: currentName,
-        kind: classifyPath(current.path, looksLikeDirectory)
+        kind: classifyPath(current.path, looksLikeDirectory),
+        modifiedAt,
+        providerId: 'catalog'
       });
     }
 
@@ -386,14 +440,167 @@ async function walkForIndex(roots: RootConfig[]) {
   return indexed;
 }
 
+async function safeModifiedAt(path: string) {
+  try {
+    const stats = await stat(path);
+    return stats.mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
+function resolveSearchScopePath(scopePath?: string | null, intent?: SearchIntent | null) {
+  if (scopePath) {
+    return scopePath;
+  }
+
+  const tokenScope = resolveIntentScopePath(intent?.scopeToken, getLauncherStateSnapshot().settings.scopes);
+  return tokenScope ?? scopePath ?? null;
+}
+
+async function searchSpotlightProvider(context: SearchContext): Promise<SearchProviderResult[]> {
+  const startedAt = Date.now();
+  const scopePath = resolveSearchScopePath(context.scopePath, context.intent);
+  const roots = await existingRoots(scopePath);
+  const uniquePaths = new Set<string>();
+
+  if (roots.length === 0) {
+    recordTrace({
+      subsystem: 'provider',
+      event: 'spotlight-skip',
+      requestId: context.requestId,
+      query: context.query,
+      scopePath,
+      localFilter: context.intent?.localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: 0,
+      details: {
+        reason: 'no-roots'
+      }
+    });
+    return [];
+  }
+
+  try {
+    for (const root of roots) {
+      const { stdout } = await execFileAsync('/usr/bin/mdfind', ['-onlyin', root.path, '-name', context.query], {
+        timeout: SPOTLIGHT_TIMEOUT_MS,
+        maxBuffer: 1024 * 1024 * 6
+      });
+      const lines = stdout
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .slice(0, MAX_SPOTLIGHT_CANDIDATES);
+
+      for (const line of lines) {
+        uniquePaths.add(line);
+      }
+    }
+
+    const candidates = await Promise.all(
+      Array.from(uniquePaths)
+        .slice(0, MAX_SPOTLIGHT_CANDIDATES)
+        .map(async (path) => {
+          if (isExcludedPath(path)) {
+            return null;
+          }
+
+          const name = basename(path);
+          const kind = classifyPath(path, !name.includes('.') || path.endsWith('.app'));
+          const candidate: SearchProviderResult = {
+            id: path,
+            path,
+            name,
+            kind,
+            providerId: 'spotlight',
+            modifiedAt: await safeModifiedAt(path),
+            metadata: {
+              extension: path.split('.').at(-1)?.toLowerCase() ?? null
+            },
+            score: 0
+          };
+
+          if (!matchesLocalIntent(candidate, context.intent?.localFilter)) {
+            return null;
+          }
+
+          if (!modifiedAtMatchesIntentTime(candidate.modifiedAt, context.intent?.timeToken)) {
+            return null;
+          }
+
+          candidate.score = rankItem(context.query, candidate);
+          return candidate.score > 0 ? candidate : null;
+        })
+    );
+
+    const results = candidates
+      .filter((candidate): candidate is SearchProviderResult => Boolean(candidate))
+      .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name))
+      .slice(0, MAX_RESULTS * 2);
+
+    recordTrace({
+      subsystem: 'provider',
+      event: 'spotlight-complete',
+      requestId: context.requestId,
+      query: context.query,
+      scopePath,
+      localFilter: context.intent?.localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: results.length
+    });
+    return results;
+  } catch (error) {
+    recordTrace({
+      subsystem: 'provider',
+      event: 'spotlight-error',
+      requestId: context.requestId,
+      query: context.query,
+      scopePath,
+      localFilter: context.intent?.localFilter,
+      durationMs: Date.now() - startedAt,
+      outcome: 'error',
+      details: {
+        message: error instanceof Error ? error.message : String(error)
+      }
+    });
+    return [];
+  }
+}
+
+async function searchCatalogProvider(context: SearchContext): Promise<SearchProviderResult[]> {
+  return searchFallbackIndex(context.query, resolveSearchScopePath(context.scopePath, context.intent), context.intent);
+}
+
+function mergeProviderResults(query: string, resultsByProvider: SearchProviderResult[][]) {
+  const merged = new Map<string, SearchProviderResult>();
+
+  for (const providerResults of resultsByProvider) {
+    for (const result of providerResults) {
+      const existing = merged.get(result.path);
+      if (!existing || result.score > existing.score || (result.providerId === 'catalog' && existing.providerId !== 'catalog')) {
+        merged.set(result.path, result);
+      }
+    }
+  }
+
+  return Array.from(merged.values())
+    .map((result) => ({
+      ...result,
+      score: rankItem(query, result)
+    }))
+    .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name))
+    .slice(0, MAX_RESULTS);
+}
+
 async function searchTargetedPaths(
   query: string,
   scopePath?: string | null,
-  localFilter?: LocalIntentFilter | null,
+  intent?: SearchIntent | null,
   traceContext: SearchTraceContext = {}
 ) {
   const startedAt = Date.now();
-  const roots = await existingRoots(scopePath);
+  const roots = await existingRoots(resolveSearchScopePath(scopePath, intent));
 
   if (roots.length === 0) {
     recordTrace({
@@ -402,7 +609,7 @@ async function searchTargetedPaths(
       requestId: traceContext.requestId,
       query,
       scopePath,
-      localFilter,
+      localFilter: intent?.localFilter,
       durationMs: Date.now() - startedAt,
       resultCount: 0,
       details: {
@@ -438,9 +645,15 @@ async function searchTargetedPaths(
       };
       const score = rankItem(query, candidate);
 
-      if (score > 0 && matchesLocalIntent(candidate, localFilter)) {
+      if (score > 0 && matchesLocalIntent(candidate, intent?.localFilter)) {
+        const modifiedAt = await safeModifiedAt(candidate.path);
+        if (!modifiedAtMatchesIntentTime(modifiedAt, intent?.timeToken)) {
+          continue;
+        }
         matches.push({
           ...candidate,
+          providerId: 'targeted',
+          modifiedAt,
           score
         });
       }
@@ -491,7 +704,7 @@ async function searchTargetedPaths(
     requestId: traceContext.requestId,
     query,
     scopePath,
-    localFilter,
+    localFilter: intent?.localFilter,
     durationMs: Date.now() - startedAt,
     resultCount: results.length,
     details: {
@@ -607,6 +820,33 @@ export function requestSearchRefresh() {
   scheduleRefresh();
 }
 
+export async function recordLocalSelection(item: Pick<LocalSearchItem, 'path' | 'name' | 'kind'>) {
+  const existing = fallbackIndex.find((entry) => entry.path === item.path);
+  const now = Date.now();
+
+  if (existing) {
+    existing.selectionCount = (existing.selectionCount ?? 0) + 1;
+    existing.lastSelectedAt = now;
+    existing.name = item.name;
+    existing.kind = item.kind;
+  } else {
+    fallbackIndex.unshift({
+      id: item.path,
+      path: item.path,
+      name: item.name,
+      kind: item.kind,
+      modifiedAt: await safeModifiedAt(item.path),
+      selectionCount: 1,
+      lastSelectedAt: now,
+      providerId: 'catalog'
+    });
+    fallbackIndex = fallbackIndex.slice(0, MAX_INDEX_ENTRIES);
+    fallbackIndexReady = true;
+  }
+
+  await persistIndex(fallbackIndex);
+}
+
 function scheduleWatcherRefresh() {
   recordTrace({
     subsystem: 'watcher',
@@ -709,14 +949,16 @@ export function getSearchStatus(appVersion: string): LauncherStatus {
     indexEntryCount: fallbackIndex.length,
     indexReady: fallbackIndexReady,
     isRestoring: isRestoringIndex,
-    isRefreshing: refreshPromise !== null
+    isRefreshing: refreshPromise !== null,
+    searchMode: 'hybrid',
+    catalogState: isRestoringIndex ? 'restoring' : refreshPromise ? 'hydrating' : fallbackIndexReady ? 'ready' : 'cold'
   };
 }
 
 export async function searchIndexedPaths(
   query: string,
   scopePath?: string | null,
-  localFilter?: LocalIntentFilter | null,
+  intent?: SearchIntent | null,
   traceContext: SearchTraceContext = {}
 ): Promise<LocalSearchItem[]> {
   const startedAt = Date.now();
@@ -729,7 +971,7 @@ export async function searchIndexedPaths(
       requestId: traceContext.requestId,
       query,
       scopePath,
-      localFilter,
+      localFilter: intent?.localFilter,
       durationMs: Date.now() - startedAt,
       resultCount: 0,
       details: {
@@ -741,7 +983,7 @@ export async function searchIndexedPaths(
 
   await warmSearchIndex();
 
-  const key = cacheKey(trimmed, scopePath, localFilter);
+  const key = cacheKey(trimmed, scopePath, intent);
   const cached = queryCache.get(key);
 
   if (cached) {
@@ -751,7 +993,7 @@ export async function searchIndexedPaths(
       requestId: traceContext.requestId,
       query,
       scopePath,
-      localFilter,
+      localFilter: intent?.localFilter,
       durationMs: Date.now() - startedAt,
       resultCount: cached.length,
       cacheState: 'hit',
@@ -762,34 +1004,54 @@ export async function searchIndexedPaths(
     return cached;
   }
 
-  const indexed = searchFallbackIndex(trimmed, scopePath, localFilter);
-  if (indexed.length > 0) {
-    const { results: existingIndexed, removedPaths } = await stripMissingResults(indexed);
-    if (removedPaths.length > 0) {
-      await pruneMissingEntries(removedPaths);
+  const context: SearchContext = {
+    query: trimmed,
+    scopePath,
+    intent,
+    requestId: traceContext.requestId
+  };
+  const providers: SearchProvider[] = [
+    {
+      id: 'catalog',
+      kind: 'catalog',
+      supports: () => fallbackIndexReady,
+      search: searchCatalogProvider
+    },
+    {
+      id: 'spotlight',
+      kind: 'spotlight',
+      supports: () => process.platform === 'darwin',
+      search: searchSpotlightProvider
     }
+  ];
+  const providerResults = await Promise.all(providers.filter((provider) => provider.supports(context)).map((provider) => provider.search(context)));
+  const mergedResults = mergeProviderResults(trimmed, providerResults);
+  const { results: existingMerged, removedPaths } = await stripMissingResults(mergedResults);
 
-    if (existingIndexed.length > 0) {
-      queryCache.set(key, existingIndexed);
-      recordTrace({
-        subsystem: 'search',
-        event: 'search-complete',
-        requestId: traceContext.requestId,
-        query,
-        scopePath,
-        localFilter,
-        durationMs: Date.now() - startedAt,
-        resultCount: existingIndexed.length,
-        cacheState: 'miss',
-        details: {
-          source: 'fallback-index'
-        }
-      });
-      return existingIndexed;
-    }
+  if (removedPaths.length > 0) {
+    await pruneMissingEntries(removedPaths);
   }
 
-  const targetedResults = await searchTargetedPaths(trimmed, scopePath, localFilter, traceContext);
+  if (existingMerged.length > 0) {
+    queryCache.set(key, existingMerged);
+    recordTrace({
+      subsystem: 'search',
+      event: 'search-complete',
+      requestId: traceContext.requestId,
+      query,
+      scopePath,
+      localFilter: intent?.localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: existingMerged.length,
+      cacheState: 'miss',
+      details: {
+        source: 'hybrid-provider'
+      }
+    });
+    return existingMerged;
+  }
+
+  const targetedResults = await searchTargetedPaths(trimmed, scopePath, intent, traceContext);
   if (targetedResults.length > 0) {
     const { results: existingTargeted } = await stripMissingResults(targetedResults);
     if (existingTargeted.length > 0) {
@@ -800,7 +1062,7 @@ export async function searchIndexedPaths(
         requestId: traceContext.requestId,
         query,
         scopePath,
-        localFilter,
+        localFilter: intent?.localFilter,
         durationMs: Date.now() - startedAt,
         resultCount: existingTargeted.length,
         cacheState: 'miss',
@@ -818,7 +1080,7 @@ export async function searchIndexedPaths(
     requestId: traceContext.requestId,
     query,
     scopePath,
-    localFilter,
+    localFilter: intent?.localFilter,
     durationMs: Date.now() - startedAt,
     resultCount: 0,
     cacheState: 'miss',

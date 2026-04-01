@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 
 export type ResultKind = 'file' | 'folder' | 'conversion' | 'app' | 'command' | 'clipboard' | 'snippet' | 'alias';
+export type SearchProviderKind = 'spotlight' | 'catalog' | 'deterministic' | 'targeted';
+export type SearchScopeToken = 'downloads' | 'documents' | 'desktop' | 'library' | 'home';
+export type SearchTimeToken = 'today' | 'yesterday' | 'recent';
 
 export type AliasTargetType = 'path' | 'snippet' | 'settings';
 
@@ -75,6 +78,45 @@ export type LocalSearchItem = {
   name: string;
   kind: Extract<ResultKind, 'file' | 'folder' | 'app'>;
   score: number;
+  providerId?: SearchProviderKind;
+  modifiedAt?: number | null;
+  metadata?: {
+    extension?: string | null;
+    selectionCount?: number;
+    lastSelectedAt?: number | null;
+    primaryActionId?: string | null;
+  };
+};
+
+export type LocalIntentFilter = {
+  kind?: LocalSearchItem['kind'];
+  extensions?: string[];
+};
+
+export type SearchIntent = {
+  localFilter: LocalIntentFilter | null;
+  scopeToken?: SearchScopeToken;
+  timeToken?: SearchTimeToken;
+  matchedTokens: string[];
+};
+
+export type SearchContext = {
+  query: string;
+  scopePath?: string | null;
+  intent: SearchIntent | null;
+  requestId?: string;
+};
+
+export type SearchProviderResult = Omit<LocalSearchItem, 'score'> & {
+  providerId: SearchProviderKind;
+  score: number;
+};
+
+export type SearchProvider = {
+  id: SearchProviderKind;
+  kind: SearchProviderKind;
+  supports: (context: SearchContext) => boolean;
+  search: (context: SearchContext) => Promise<SearchProviderResult[]>;
 };
 
 export type LauncherAction = {
@@ -87,12 +129,88 @@ export type LauncherAction = {
   run: () => Promise<void> | void;
 };
 
+export type ActionDescriptor =
+  | {
+      id: 'open';
+      label: string;
+      hint: string;
+      group?: string;
+      feedbackLabel?: string;
+      dismissOnRun?: boolean;
+      targetPath: string;
+      resultKind: Extract<ResultKind, 'file' | 'folder' | 'app'>;
+    }
+  | {
+      id: 'reveal';
+      label: string;
+      hint: string;
+      group?: string;
+      feedbackLabel?: string;
+      dismissOnRun?: boolean;
+      targetPath: string;
+    }
+  | {
+      id: 'open-terminal';
+      label: string;
+      hint: string;
+      group?: string;
+      feedbackLabel?: string;
+      dismissOnRun?: boolean;
+      targetPath: string;
+    }
+  | {
+      id: 'open-with-text-edit';
+      label: string;
+      hint: string;
+      group?: string;
+      feedbackLabel?: string;
+      dismissOnRun?: boolean;
+      targetPath: string;
+    }
+  | {
+      id: 'quick-look';
+      label: string;
+      hint: string;
+      group?: string;
+      feedbackLabel?: string;
+      dismissOnRun?: boolean;
+      targetPath: string;
+    }
+  | {
+      id: 'copy-path' | 'copy-name' | 'copy-markdown-link' | 'copy-result' | 'copy-full-expression' | 'copy-snippet' | 'copy-clipboard';
+      label: string;
+      hint: string;
+      group?: string;
+      feedbackLabel?: string;
+      dismissOnRun?: boolean;
+      text: string;
+    }
+  | {
+      id: 'trash';
+      label: string;
+      hint: string;
+      group?: string;
+      feedbackLabel?: string;
+      dismissOnRun?: boolean;
+      targetPath: string;
+    }
+  | {
+      id: 'open-settings';
+      label: string;
+      hint: string;
+      group?: string;
+      feedbackLabel?: string;
+      dismissOnRun?: boolean;
+    };
+
 export type LauncherStatus = {
   appVersion: string;
   indexEntryCount: number;
   indexReady: boolean;
   isRestoring: boolean;
   isRefreshing: boolean;
+  searchMode?: 'hybrid' | 'catalog' | 'fallback';
+  catalogState?: 'cold' | 'restoring' | 'hydrating' | 'ready';
 };
 
 export type LauncherTraceEvent = {
@@ -184,10 +302,7 @@ export type LauncherBridge = {
   searchLocal: (
     query: string,
     scopePath?: string | null,
-    localFilter?: {
-      kind?: LocalSearchItem['kind'];
-      extensions?: string[];
-    } | null,
+    intent?: SearchIntent | null,
     requestId?: string
   ) => Promise<LocalSearchItem[]>;
   getStatus: (requestId?: string) => Promise<LauncherStatus>;
@@ -205,6 +320,7 @@ export type LauncherBridge = {
   getTraceDump?: () => Promise<LauncherTraceDump>;
   getIdleTraceSummary?: () => Promise<LauncherTraceIdleSummary>;
   writeTraceDump?: () => Promise<LauncherTraceDumpFile>;
+  recordLocalSelection?: (item: Pick<LocalSearchItem, 'path' | 'name' | 'kind'>) => Promise<void>;
   quickLookPath: (path: string) => Promise<void>;
   onSettingsChanged?: (callback: (settings: LauncherSettings) => void) => () => void;
   onIndexChanged?: (callback: () => void) => () => void;
