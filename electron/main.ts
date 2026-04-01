@@ -327,6 +327,7 @@ async function createWindow() {
   mainWindow = new BrowserWindow({
     width: WINDOW_WIDTH,
     height: WINDOW_HEIGHT,
+    useContentSize: true,
     show: false,
     frame: false,
     transparent: true,
@@ -419,6 +420,7 @@ function openSettingsWindow() {
   settingsWindow = new BrowserWindow({
     width: SETTINGS_WINDOW_WIDTH,
     height: SETTINGS_WINDOW_HEIGHT,
+    useContentSize: true,
     show: false,
     resizable: true,
     minimizable: false,

@@ -39,6 +39,7 @@ Current built-in capabilities:
 - A persistent bottom bar always shows the primary action for the current result and an `Actions` trigger.
 - `Cmd+,` opens the Northlight settings window.
 - Clicking away from the launcher hides it again.
+- The launcher mockup in `design/launcher-current-view.html` is calibrated to the native launcher content size of `1120×760` for visual design checks.
 
 ## Search Behavior
 
@@ -87,6 +88,7 @@ The settings window is the control center for launcher preferences.
 - Capture a new global launcher shortcut directly by pressing the combination in settings, or clear it entirely to disable the launcher hotkey.
 - During `npm run dev`, a cleared launcher shortcut still falls back to `Cmd+Shift+Space` for that session so the launcher cannot strand itself hidden while you are iterating.
 - The shortcut field in settings renders Apple-style keycaps and still shows the active session shortcut when development fallback is in effect.
+- The settings mockup in `design/settings-current-view.html` is calibrated to the native settings content size of `980×760` for visual design checks.
 - Set how many clipboard items to retain.
 - Create aliases for paths, snippets, or direct settings access.
 - Create reusable text snippets.
