@@ -55,6 +55,7 @@ Current built-in capabilities:
 - Scope refiners let you narrow broad queries with `in:downloads`, `in:documents`, `in:desktop`, `in:library`, or `in:home`.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
 - Intent refiners are only recognized as trailing standalone terms, so literal names like `img-tools` keep searching as plain text.
+- For a full user guide to search refiners, examples, and combinations, see `docs/search-refiners-guide.md`.
 
 ## Keyboard Controls
 
