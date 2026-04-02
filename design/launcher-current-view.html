@@ -10,7 +10,8 @@
         font-family: Inter, "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
         --page-top: #10161d;
         --page-bottom: #0a0f14;
-        --window-text: #f5f7fa;
+        --text: #f5f7fa;
+        --muted: rgba(245, 247, 250, 0.54);
       }
 
       * {
@@ -32,7 +33,12 @@
         background:
           radial-gradient(circle at top left, rgba(115, 142, 168, 0.16), transparent 28%),
           linear-gradient(180deg, var(--page-top), var(--page-bottom));
-        color: var(--window-text);
+        color: var(--text);
+      }
+
+      button,
+      input {
+        font: inherit;
       }
 
       .meta {
@@ -75,7 +81,7 @@
         height: 100%;
         display: grid;
         grid-template-rows: auto auto minmax(0, 1fr) auto;
-        color: var(--window-text);
+        color: var(--text);
       }
 
       .header {
@@ -155,10 +161,6 @@
         line-height: 1;
       }
 
-      .search-input::placeholder {
-        color: rgba(255, 255, 255, 0.4);
-      }
-
       .body {
         min-height: 0;
         display: grid;
@@ -174,28 +176,240 @@
         gap: 10px;
       }
 
-      .empty-state {
-        flex: 1;
-        min-height: 220px;
+      .best-match {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: start;
+        min-height: 118px;
+        padding: 24px 28px 28px;
+        border-radius: 20px;
+        background: linear-gradient(180deg, rgba(50, 66, 84, 0.38), rgba(19, 26, 34, 0.66));
+        border: 1px solid rgba(141, 167, 191, 0.34);
+        box-shadow: inset 0 0 0 1px rgba(206, 222, 237, 0.08);
+      }
+
+      .best-icon {
+        width: 64px;
+        height: 64px;
+        margin-top: 4px;
+        border-radius: 18px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)),
+          #2a3340;
+        border: 1px solid rgba(255, 255, 255, 0.06);
         display: grid;
         place-items: center;
-        border-radius: 22px;
-        border: 1px dashed rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.028);
-        text-align: center;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
       }
 
-      .empty-state h2 {
-        margin: 0 0 12px;
-        font-size: 1.1rem;
+      .stremio-icon {
+        position: relative;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #8f68ff, #2f4ec8);
+        transform: rotate(45deg);
+        box-shadow:
+          inset 0 0 0 2px rgba(255, 255, 255, 0.16),
+          0 6px 18px rgba(67, 88, 223, 0.35);
       }
 
-      .empty-state p {
-        margin: 0;
+      .stremio-icon::before {
+        content: "";
+        position: absolute;
+        top: 9px;
+        left: 13px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-left: 13px solid rgba(255, 255, 255, 0.92);
+        transform: rotate(-45deg);
+      }
+
+      .best-copy {
+        min-width: 0;
+      }
+
+      .best-eyebrow {
+        color: rgba(245, 247, 250, 0.54);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+
+      .best-title {
+        margin-top: 10px;
+        font-size: 1.22rem;
+        font-weight: 800;
+      }
+
+      .best-subtitle {
+        margin-top: 6px;
+        color: rgba(245, 247, 250, 0.54);
+        font-size: 0.88rem;
+      }
+
+      .inline-actions {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .inline-chip {
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(170, 192, 214, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 0.78rem;
+      }
+
+      .inline-chip .hint {
+        color: rgba(245, 247, 250, 0.54);
+      }
+
+      .result-kind {
+        align-self: start;
+        min-height: 28px;
+        padding: 0 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.06);
+        color: #c8d3de;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .results-list {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: auto;
+        padding-right: 6px;
+      }
+
+      .results-list::-webkit-scrollbar,
+      .preview-content::-webkit-scrollbar,
+      .action-list::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      .results-list::-webkit-scrollbar-thumb,
+      .preview-content::-webkit-scrollbar-thumb,
+      .action-list::-webkit-scrollbar-thumb {
+        background: rgba(171, 190, 208, 0.22);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+      }
+
+      .result {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 18px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid transparent;
+      }
+
+      .result.selected {
+        background: linear-gradient(180deg, rgba(54, 69, 84, 0.28), rgba(22, 29, 37, 0.5));
+        border-color: rgba(143, 165, 189, 0.32);
+      }
+
+      .result-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        color: #d9e2ea;
+        font-size: 1rem;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .icon-app {
+        background: linear-gradient(180deg, rgba(66, 156, 120, 0.34), rgba(31, 97, 72, 0.56));
+      }
+
+      .icon-file {
+        background: linear-gradient(180deg, rgba(130, 140, 152, 0.3), rgba(72, 81, 90, 0.48));
+      }
+
+      .icon-folder {
+        background: linear-gradient(180deg, rgba(84, 141, 206, 0.34), rgba(53, 87, 123, 0.54));
+      }
+
+      .icon-clipboard {
+        background: linear-gradient(180deg, rgba(135, 107, 184, 0.36), rgba(76, 57, 124, 0.54));
+      }
+
+      .mini-file {
+        width: 25px;
+        height: 31px;
+        border-radius: 6px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(223, 230, 238, 0.92));
+        color: #2d3640;
+        display: grid;
+        place-items: center;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .folder-shape {
+        width: 28px;
+        height: 22px;
+        border-radius: 6px;
+        background: linear-gradient(180deg, #7ac4ff, #4d8bcd);
+        position: relative;
+      }
+
+      .folder-shape::before {
+        content: "";
+        position: absolute;
+        left: 2px;
+        top: -4px;
+        width: 12px;
+        height: 7px;
+        border-radius: 5px 5px 0 0;
+        background: #6cb1ea;
+      }
+
+      .clip-glyph {
+        font-size: 0.94rem;
+      }
+
+      .result-copy {
+        min-width: 0;
+      }
+
+      .result-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        line-height: 1.15;
+      }
+
+      .result-subtitle {
+        margin-top: 4px;
         color: rgba(245, 247, 250, 0.46);
-        font-size: 0.98rem;
-        line-height: 1.45;
-        max-width: 520px;
+        font-size: 0.74rem;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .preview-pane {
@@ -221,50 +435,163 @@
         color: rgba(245, 247, 250, 0.54);
       }
 
-      .preview-placeholder {
-        min-height: 100%;
+      .preview-content {
+        min-height: 0;
+        padding: 14px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: auto;
+      }
+
+      .preview-title {
+        font-size: 1.02rem;
+        font-weight: 800;
+      }
+
+      .preview-subtitle {
+        color: rgba(245, 247, 250, 0.54);
+        font-size: 0.82rem;
+      }
+
+      .preview-media {
+        min-height: 180px;
+        border-radius: 14px;
+        border: 1px solid rgba(170, 192, 214, 0.12);
+        background:
+          radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.03), transparent 38%),
+          rgba(255, 255, 255, 0.028);
         display: grid;
         place-items: center;
         padding: 20px;
-        text-align: center;
-        color: rgba(245, 247, 250, 0.46);
-        font-size: 0.98rem;
+      }
+
+      .preview-icon-wrap {
+        width: 180px;
+        height: 180px;
+        border-radius: 42px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(16, 19, 24, 0.96));
+        display: grid;
+        place-items: center;
+        box-shadow:
+          inset 0 2px 0 rgba(255, 255, 255, 0.18),
+          0 10px 24px rgba(0, 0, 0, 0.28);
+      }
+
+      .preview-icon {
+        width: 104px;
+        height: 104px;
+        border-radius: 24px;
+        background: linear-gradient(180deg, #8f68ff, #2f4ec8);
+        transform: rotate(45deg);
+        position: relative;
+        box-shadow:
+          inset 0 0 0 3px rgba(255, 255, 255, 0.16),
+          0 10px 28px rgba(67, 88, 223, 0.38);
+      }
+
+      .preview-icon::before {
+        content: "";
+        position: absolute;
+        top: 26px;
+        left: 36px;
+        width: 0;
+        height: 0;
+        border-top: 21px solid transparent;
+        border-bottom: 21px solid transparent;
+        border-left: 34px solid rgba(255, 255, 255, 0.94);
+        transform: rotate(-45deg);
+      }
+
+      .preview-body {
+        min-height: 120px;
+        border-radius: 14px;
+        border: 1px solid rgba(170, 192, 214, 0.12);
+        background: rgba(255, 255, 255, 0.028);
+        padding: 16px;
+        color: rgba(245, 247, 250, 0.78);
+        white-space: pre-wrap;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        font-family:
+          ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Monaco,
+          Consolas,
+          "Liberation Mono",
+          "Courier New",
+          monospace;
+      }
+
+      .preview-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .preview-meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 34px;
+        align-items: center;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 0 12px;
+      }
+
+      .preview-meta-label {
+        color: rgba(245, 247, 250, 0.54);
+        font-size: 0.8rem;
+      }
+
+      .preview-meta-value {
+        font-size: 0.84rem;
+        font-weight: 600;
+        text-align: right;
       }
 
       .footer {
+        position: relative;
         min-height: 48px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 16px;
-        padding: 10px 14px 12px;
+        padding: 8px 14px 12px;
       }
 
       .footer-left,
       .footer-right {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
       }
 
       .footer-text {
-        font-size: 0.9rem;
+        font-size: 0.84rem;
+        color: rgba(245, 247, 250, 0.76);
       }
 
       .footer-text-strong {
+        color: #f5f7fa;
         font-weight: 700;
       }
 
-      .trigger {
-        min-height: 32px;
-        padding: 0 10px;
-        border-radius: 14px;
-        border: 1px solid rgba(170, 192, 214, 0.12);
-        background: rgba(255, 255, 255, 0.04);
-        color: inherit;
+      .kbd {
+        min-width: 28px;
+        min-height: 28px;
+        padding: 0 8px;
+        border-radius: 6px;
         display: inline-flex;
         align-items: center;
-        gap: 10px;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.06);
+        color: #ddd;
+        font-size: 0.8rem;
+        font-weight: 700;
       }
 
       .shortcut {
@@ -273,50 +600,243 @@
         gap: 6px;
       }
 
-      .kbd {
-        min-width: 34px;
-        height: 28px;
+      .actions-trigger {
+        appearance: none;
+        -webkit-appearance: none;
+        min-height: 34px;
         padding: 0 10px;
-        border-radius: 8px;
-        border: 1px solid rgba(170, 192, 214, 0.14);
-        background: rgba(255, 255, 255, 0.05);
-        color: rgba(245, 247, 250, 0.7);
+        border-radius: 10px;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        font-size: 0.78rem;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: inherit;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+      }
+
+      .actions-trigger:hover {
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(158, 181, 204, 0.18);
+      }
+
+      .actions-trigger:active,
+      .actions-trigger.is-open {
+        transform: translateY(1px);
+        background: rgba(255, 255, 255, 0.11);
+      }
+
+      .actions-panel {
+        position: absolute;
+        right: 14px;
+        bottom: calc(100% + 12px);
+        width: 420px;
+        border-radius: 20px;
+        border: 1px solid rgba(158, 181, 204, 0.18);
+        background:
+          linear-gradient(180deg, rgba(36, 44, 53, 0.98), rgba(20, 25, 31, 0.99)),
+          rgba(12, 15, 18, 0.98);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.03),
+          0 24px 46px rgba(0, 0, 0, 0.34);
+        overflow: hidden;
+        display: none;
+      }
+
+      .actions-panel.is-open {
+        display: block;
+      }
+
+      .action-header {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .action-header-title {
+        font-size: 1rem;
         font-weight: 700;
+      }
+
+      .action-header-subtitle {
+        margin-top: 4px;
+        font-size: 0.82rem;
+        color: rgba(245, 247, 250, 0.46);
+      }
+
+      .action-list {
+        max-height: 220px;
+        overflow: auto;
+        padding: 8px;
+      }
+
+      .action-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .action-group + .action-group {
+        margin-top: 10px;
+      }
+
+      .action-group-label {
+        padding: 0 8px;
+        color: rgba(245, 247, 250, 0.44);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .action-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid transparent;
+        background: transparent;
+      }
+
+      .action-row.selected {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(158, 181, 204, 0.18);
+      }
+
+      .action-copy {
+        min-width: 0;
+        display: inline-flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .action-label {
+        font-size: 0.98rem;
+        font-weight: 600;
+      }
+
+      .action-hint {
+        margin-top: 3px;
+        color: rgba(245, 247, 250, 0.44);
+        font-size: 0.78rem;
+      }
+
+      .action-search {
+        padding: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .action-search-input {
+        width: 100%;
+        min-height: 42px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.05);
+        color: #f5f7fa;
+        padding: 0 16px;
+        font-size: 1rem;
       }
     </style>
   </head>
   <body>
     <header class="meta">
       <div class="title">Launcher Mockup</div>
-      <div class="note">Editable HTML/CSS mockup calibrated to the native launcher content size: 1120×760.</div>
+      <div class="note">Editable launcher state calibrated to the native content size: 1120×760.</div>
     </header>
     <main class="window">
       <section class="shell">
         <header class="header">
           <div class="brand">Northlight</div>
           <div class="status">
-            <div class="badge">v0.7.15</div>
+            <div class="badge">v0.8.0</div>
+            <div class="badge">Hybrid</div>
             <div class="badge">30,000 indexed</div>
+            <div class="badge">Catalog ready</div>
             <div class="badge ready-badge">Ready</div>
           </div>
         </header>
 
         <section class="search">
           <div class="search-icon">⌕</div>
-          <input class="search-input" type="text" value="" placeholder="Search files, folders, apps, or type 30mph to kmh" />
+          <input class="search-input" type="text" value="str" />
           <div class="search-arrow">→</div>
         </section>
 
         <section class="body">
           <div class="results-column">
-            <section class="empty-state">
-              <div>
-                <h2>Start from recent context</h2>
-                <p>Recent launcher choices, clipboard items, and configured snippets can appear here as you build history.</p>
+            <section class="best-match">
+              <div class="best-icon">
+                <div class="stremio-icon"></div>
+              </div>
+              <div class="best-copy">
+                <div class="best-eyebrow">Best Match</div>
+                <div class="best-title">Stremio.app</div>
+                <div class="best-subtitle">/Applications/Stremio.app</div>
+                <div class="inline-actions">
+                  <div class="inline-chip"><span>Launch App</span><span class="hint">Enter</span></div>
+                  <div class="inline-chip"><span>Reveal in Finder</span><span class="hint">Cmd+Enter</span></div>
+                  <div class="inline-chip"><span>Copy Path</span><span class="hint">Cmd+Shift+C</span></div>
+                </div>
+              </div>
+              <div class="result-kind">Application</div>
+            </section>
+
+            <section class="results-list">
+              <div class="result selected">
+                <div class="result-icon icon-app">⌘</div>
+                <div class="result-copy">
+                  <div class="result-title">Keyboard Maestro.app</div>
+                  <div class="result-subtitle">/Applications/Keyboard Maestro.app</div>
+                </div>
+                <div class="result-kind">Application</div>
+              </div>
+
+              <div class="result">
+                <div class="result-icon icon-file"><div class="mini-file">fx</div></div>
+                <div class="result-copy">
+                  <div class="result-title">Strong Contrast (RGB).acv</div>
+                  <div class="result-subtitle">/Applications/Adobe Photoshop 2026/Presets/Curves/Strong Contrast (RGB).acv</div>
+                </div>
+                <div class="result-kind">File</div>
+              </div>
+
+              <div class="result">
+                <div class="result-icon icon-file"><div class="mini-file">fx</div></div>
+                <div class="result-copy">
+                  <div class="result-title">Strong Saturation.ahu</div>
+                  <div class="result-subtitle">/Applications/Adobe Photoshop 2026/Presets/Hue and Saturation/Strong Saturation.ahu</div>
+                </div>
+                <div class="result-kind">File</div>
+              </div>
+
+              <div class="result">
+                <div class="result-icon icon-folder"><div class="folder-shape"></div></div>
+                <div class="result-copy">
+                  <div class="result-title">stripe.com</div>
+                  <div class="result-subtitle">/Users/nm4/STUFF/Coding/tmp/stripe.com</div>
+                </div>
+                <div class="result-kind">File</div>
+              </div>
+
+              <div class="result">
+                <div class="result-icon icon-clipboard"><div class="clip-glyph">⎘</div></div>
+                <div class="result-copy">
+                  <div class="result-title">/Users/nm4/Library/Application Support/Northlight/trace-dumps/trace-mnf8</div>
+                  <div class="result-subtitle">4/1/2026, 1:06:55 AM</div>
+                </div>
+                <div class="result-kind">Clipboard</div>
+              </div>
+
+              <div class="result">
+                <div class="result-icon icon-clipboard"><div class="clip-glyph">⎘</div></div>
+                <div class="result-copy">
+                  <div class="result-title">[renderer] [trace dump] saved 402 events to /Users/nm4/Library/Application...</div>
+                  <div class="result-subtitle">4/1/2026, 1:04:20 AM</div>
+                </div>
+                <div class="result-kind">Clipboard</div>
               </div>
             </section>
           </div>
@@ -325,28 +845,89 @@
             <div class="preview-header">
               <div class="preview-eyebrow">Preview</div>
             </div>
-            <div class="preview-placeholder">Select a result to inspect it here.</div>
+            <div class="preview-content">
+              <div class="preview-title">Stremio</div>
+              <div class="preview-subtitle">/Applications/Stremio.app</div>
+              <div class="preview-media">
+                <div class="preview-icon-wrap">
+                  <div class="preview-icon"></div>
+                </div>
+              </div>
+              <div class="preview-body">macOS application bundle</div>
+              <div class="preview-meta">
+                <div class="preview-meta-row"><span class="preview-meta-label">Type</span><span class="preview-meta-value">Application</span></div>
+                <div class="preview-meta-row"><span class="preview-meta-label">Bundle</span><span class="preview-meta-value">Stremio.app</span></div>
+                <div class="preview-meta-row"><span class="preview-meta-label">Version</span><span class="preview-meta-value">5.1.14</span></div>
+                <div class="preview-meta-row"><span class="preview-meta-label">Bundle ID</span><span class="preview-meta-value">com.stremio.stremio-shell</span></div>
+              </div>
+            </div>
           </aside>
         </section>
 
         <footer class="footer">
           <div class="footer-left">
-            <span class="footer-text footer-text-strong">Start typing or use recent results</span>
+            <span class="footer-text footer-text-strong">Launch App</span>
             <span class="shortcut"><span class="kbd">Enter</span></span>
           </div>
-
           <div class="footer-right">
-            <div class="trigger">
+            <button class="actions-trigger" type="button">
               <span class="footer-text footer-text-strong">Settings</span>
               <span class="shortcut"><span class="kbd">Cmd</span><span class="kbd">,</span></span>
-            </div>
-            <div class="trigger">
+            </button>
+            <button class="actions-trigger is-open" id="actions-trigger" type="button" aria-expanded="true">
               <span class="footer-text footer-text-strong">Actions</span>
               <span class="shortcut"><span class="kbd">Cmd</span><span class="kbd">K</span></span>
+            </button>
+          </div>
+
+          <div class="actions-panel is-open" id="actions-panel">
+            <div class="action-header">
+              <div class="action-header-title">Stremio.app</div>
+              <div class="action-header-subtitle">Application</div>
+            </div>
+            <div class="action-list">
+              <section class="action-group">
+                <div class="action-group-label">Primary</div>
+                <div class="action-row selected">
+                  <div class="action-copy">
+                    <div class="action-label">Launch App</div>
+                    <div class="action-hint">Opens the selected application.</div>
+                  </div>
+                  <div class="shortcut"><span class="kbd">Enter</span></div>
+                </div>
+                <div class="action-row">
+                  <div class="action-copy">
+                    <div class="action-label">Reveal in Finder</div>
+                    <div class="action-hint">Show the app bundle in Finder.</div>
+                  </div>
+                  <div class="shortcut"><span class="kbd">Cmd</span><span class="kbd">↩</span></div>
+                </div>
+                <div class="action-row">
+                  <div class="action-copy">
+                    <div class="action-label">Copy Path</div>
+                    <div class="action-hint">Copies /Applications/Stremio.app</div>
+                  </div>
+                  <div class="shortcut"><span class="kbd">Cmd</span><span class="kbd">⇧</span><span class="kbd">C</span></div>
+                </div>
+              </section>
+            </div>
+            <div class="action-search">
+              <input class="action-search-input" type="text" value="app" />
             </div>
           </div>
         </footer>
       </section>
     </main>
+
+    <script>
+      const trigger = document.getElementById('actions-trigger');
+      const panel = document.getElementById('actions-panel');
+
+      trigger.addEventListener('click', () => {
+        const isOpen = panel.classList.toggle('is-open');
+        trigger.classList.toggle('is-open', isOpen);
+        trigger.setAttribute('aria-expanded', String(isOpen));
+      });
+    </script>
   </body>
 </html>

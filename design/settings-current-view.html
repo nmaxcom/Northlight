@@ -34,6 +34,11 @@
         color: #f5f7fa;
       }
 
+      button,
+      input {
+        font: inherit;
+      }
+
       .meta {
         width: 980px;
         display: flex;
@@ -106,14 +111,20 @@
         align-items: center;
       }
 
+      .button,
+      .tab {
+        appearance: none;
+        -webkit-appearance: none;
+        border: 1px solid rgba(170, 192, 214, 0.16);
+        color: #f5f7fa;
+        cursor: pointer;
+        transition: border-color 120ms ease, background 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+      }
+
       .button {
         min-height: 36px;
         padding: 0 14px;
         border-radius: 11px;
-        border: 1px solid rgba(170, 192, 214, 0.16);
-        color: #f5f7fa;
-        display: inline-flex;
-        align-items: center;
         background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.035));
       }
 
@@ -121,10 +132,46 @@
         background: linear-gradient(180deg, #314559, #22313f);
       }
 
+      .button:hover,
+      .tab:hover {
+        border-color: rgba(170, 192, 214, 0.28);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.05));
+      }
+
+      .button.primary:hover {
+        background: linear-gradient(180deg, #3b5370, #294052);
+      }
+
+      .button:active,
+      .tab:active,
+      .button.is-active {
+        transform: translateY(1px);
+        filter: brightness(0.92);
+      }
+
+      .button:focus-visible,
+      .tab:focus-visible,
+      .toggle input:focus-visible,
+      .input:focus-visible {
+        outline: 0;
+        box-shadow: 0 0 0 2px rgba(143, 184, 255, 0.26);
+      }
+
       .content {
         min-height: 0;
         overflow: auto;
         padding: 4px 8px 8px;
+      }
+
+      .content::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      .content::-webkit-scrollbar-thumb {
+        background: rgba(171, 190, 208, 0.22);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
       }
 
       .tabs {
@@ -137,17 +184,22 @@
         min-height: 34px;
         padding: 0 13px;
         border-radius: 999px;
-        border: 1px solid rgba(170, 192, 214, 0.08);
         background: rgba(255, 255, 255, 0.03);
         color: rgba(245, 247, 250, 0.72);
-        display: inline-flex;
-        align-items: center;
       }
 
-      .tab.active {
+      .tab.is-active {
         background: linear-gradient(180deg, rgba(51, 72, 94, 0.9), rgba(30, 42, 55, 0.96));
         color: #f5f7fa;
         border-color: rgba(170, 192, 214, 0.2);
+      }
+
+      .panel {
+        display: none;
+      }
+
+      .panel.is-active {
+        display: block;
       }
 
       .card {
@@ -155,6 +207,10 @@
         border: 1px solid rgba(170, 192, 214, 0.06);
         background: rgba(255, 255, 255, 0.015);
         padding: 14px 16px 16px;
+      }
+
+      .card + .card {
+        margin-top: 14px;
       }
 
       .card-title {
@@ -206,22 +262,11 @@
         color: rgba(245, 247, 250, 0.5);
       }
 
-      .checkbox {
+      .toggle input {
         width: 16px;
         height: 16px;
-        border-radius: 4px;
-        background: #8fb8ff;
-        box-shadow: inset 0 0 0 2px rgba(143, 184, 255, 0.8);
-        position: relative;
-      }
-
-      .checkbox::after {
-        content: "✓";
-        position: absolute;
-        inset: -2px 0 0 2px;
-        font-size: 14px;
-        font-weight: 700;
-        color: #0b1117;
+        accent-color: #8fb8ff;
+        cursor: pointer;
       }
 
       .field-grid {
@@ -254,12 +299,47 @@
         color: #f5f7fa;
         padding: 8px 11px;
       }
+
+      .row {
+        padding: 12px 0 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .row-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 11px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        background: rgba(46, 125, 81, 0.2);
+        color: #9ce5bb;
+      }
+
+      .hint-list {
+        margin: 12px 0 0;
+        padding-left: 18px;
+        color: rgba(245, 247, 250, 0.65);
+        line-height: 1.48;
+      }
     </style>
   </head>
   <body>
     <header class="meta">
       <div class="title">Settings Mockup</div>
-      <div class="note">Editable HTML/CSS mockup calibrated to the native settings content size: 980×760.</div>
+      <div class="note">Interactive settings mockup calibrated to the native content size: 980×760.</div>
     </header>
     <main class="page">
       <div class="shell">
@@ -269,76 +349,148 @@
             <div class="subtitle">Control ranking, preview, clipboard history, snippets, aliases, scopes, and launcher utility-window behavior in one place.</div>
           </div>
           <div class="actions">
-            <div class="button">Revert</div>
-            <div class="button primary">Save Settings</div>
+            <button class="button" data-pressable type="button">Revert</button>
+            <button class="button primary" data-pressable type="button">Save Settings</button>
           </div>
         </header>
 
         <div class="content">
           <nav class="tabs" aria-label="Settings sections">
-            <div class="tab active">Overview</div>
-            <div class="tab">Aliases &amp; Snippets</div>
-            <div class="tab">Scopes &amp; Status</div>
+            <button class="tab is-active" type="button" data-tab="overview">Overview</button>
+            <button class="tab" type="button" data-tab="content">Aliases &amp; Snippets</button>
+            <button class="tab" type="button" data-tab="scopes">Scopes &amp; Status</button>
           </nav>
 
-          <section class="card">
-            <div class="card-title">Search And Ranking</div>
-            <div class="card-subtitle">Tune best match behavior, app priority, preview defaults, and clipboard/snippet participation.</div>
+          <section class="panel is-active" data-panel="overview">
+            <section class="card">
+              <div class="card-title">Search And Ranking</div>
+              <div class="card-subtitle">Tune best match behavior, app priority, preview defaults, and clipboard/snippet participation.</div>
+              <div class="toggle-row">
+                <label class="toggle">
+                  <div class="toggle-text">
+                    <div class="toggle-label">Best match section</div>
+                    <div class="toggle-help">Show the top result in a dominant slot.</div>
+                  </div>
+                  <input type="checkbox" checked />
+                </label>
+                <label class="toggle">
+                  <div class="toggle-text">
+                    <div class="toggle-label">Prefer apps</div>
+                    <div class="toggle-help">Boost app candidates over similarly named files.</div>
+                  </div>
+                  <input type="checkbox" checked />
+                </label>
+                <label class="toggle">
+                  <div class="toggle-text">
+                    <div class="toggle-label">Preview pane</div>
+                    <div class="toggle-help">Keep an inline preview panel available in the launcher.</div>
+                  </div>
+                  <input type="checkbox" checked />
+                </label>
+                <label class="toggle">
+                  <div class="toggle-text">
+                    <div class="toggle-label">Preview open by default</div>
+                    <div class="toggle-help">Open the preview pane automatically when the launcher appears.</div>
+                  </div>
+                  <input type="checkbox" checked />
+                </label>
+              </div>
+            </section>
 
-            <div class="toggle-row">
-              <div class="toggle">
-                <div class="toggle-text">
-                  <div class="toggle-label">Best match section</div>
-                  <div class="toggle-help">Show the top result in a dominant slot.</div>
-                </div>
-                <div class="checkbox"></div>
+            <section class="card">
+              <div class="card-title">Launcher Window</div>
+              <div class="card-subtitle">Control the global shortcut and native utility-window behavior.</div>
+              <div class="field-grid">
+                <label class="field full">
+                  <span class="label">Launcher shortcut</span>
+                  <input class="input" type="text" value="Cmd + Shift + Space" />
+                </label>
               </div>
-              <div class="toggle">
-                <div class="toggle-text">
-                  <div class="toggle-label">Prefer apps</div>
-                  <div class="toggle-help">Boost app candidates over similarly named files.</div>
-                </div>
-                <div class="checkbox"></div>
-              </div>
-              <div class="toggle">
-                <div class="toggle-text">
-                  <div class="toggle-label">Preview pane</div>
-                  <div class="toggle-help">Keep an inline preview panel available in the launcher.</div>
-                </div>
-                <div class="checkbox"></div>
-              </div>
-              <div class="toggle">
-                <div class="toggle-text">
-                  <div class="toggle-label">Preview open by default</div>
-                  <div class="toggle-help">Open the preview pane automatically when the launcher appears.</div>
-                </div>
-                <div class="checkbox"></div>
-              </div>
-              <div class="toggle">
-                <div class="toggle-text">
-                  <div class="toggle-label">Clipboard history</div>
-                  <div class="toggle-help">Track recent clipboard text and expose it in search.</div>
-                </div>
-                <div class="checkbox"></div>
-              </div>
-              <div class="toggle">
-                <div class="toggle-text">
-                  <div class="toggle-label">Snippets</div>
-                  <div class="toggle-help">Include saved text snippets in search results.</div>
-                </div>
-                <div class="checkbox"></div>
-              </div>
-            </div>
+            </section>
+          </section>
 
-            <div class="field-grid">
-              <label class="field full">
-                <span class="label">Clipboard items</span>
-                <input class="input" type="text" value="20" />
-              </label>
-            </div>
+          <section class="panel" data-panel="content">
+            <section class="card">
+              <div class="card-title">Aliases</div>
+              <div class="card-subtitle">Short triggers for paths, snippets, or direct settings access.</div>
+              <div class="row">
+                <div class="row-title">Alias 1</div>
+                <div class="field-grid">
+                  <label class="field">
+                    <span class="label">Trigger</span>
+                    <input class="input" type="text" value="prefs" />
+                  </label>
+                  <label class="field">
+                    <span class="label">Target type</span>
+                    <input class="input" type="text" value="settings" />
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-title">Snippets</div>
+              <div class="card-subtitle">Reusable text blocks that appear as launcher results.</div>
+              <div class="row">
+                <div class="row-title">Snippet 1</div>
+                <div class="field-grid">
+                  <label class="field">
+                    <span class="label">Trigger</span>
+                    <input class="input" type="text" value="steel-review" />
+                  </label>
+                  <label class="field full">
+                    <span class="label">Content</span>
+                    <input class="input" type="text" value="Review the launcher UX for speed, hierarchy, and keyboard affordances." />
+                  </label>
+                </div>
+              </div>
+            </section>
+          </section>
+
+          <section class="panel" data-panel="scopes">
+            <section class="card">
+              <div class="card-title">Status</div>
+              <div class="card-subtitle">Read-only state for this settings session.</div>
+              <div style="margin-top: 14px;">
+                <span class="status-pill">Saved</span>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-title">Scope Guidance</div>
+              <div class="card-subtitle">A few rules that matter when you widen hybrid search coverage.</div>
+              <ul class="hint-list">
+                <li><code>~/Library</code> is usually the highest-value expansion for support files and preferences.</li>
+                <li>Disabled scopes stay saved but stop feeding the local catalog.</li>
+                <li>Broader scopes increase noise and hydration cost.</li>
+              </ul>
+            </section>
           </section>
         </div>
       </div>
     </main>
+
+    <script>
+      const tabs = document.querySelectorAll('[data-tab]');
+      const panels = document.querySelectorAll('[data-panel]');
+
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const id = tab.getAttribute('data-tab');
+          tabs.forEach((item) => item.classList.toggle('is-active', item === tab));
+          panels.forEach((panel) => panel.classList.toggle('is-active', panel.getAttribute('data-panel') === id));
+        });
+      });
+
+      document.querySelectorAll('[data-pressable]').forEach((button) => {
+        button.addEventListener('mousedown', () => {
+          button.classList.add('is-active');
+        });
+
+        ['mouseup', 'mouseleave', 'blur'].forEach((eventName) => {
+          button.addEventListener(eventName, () => button.classList.remove('is-active'));
+        });
+      });
+    </script>
   </body>
 </html>
