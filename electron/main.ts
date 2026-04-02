@@ -45,6 +45,7 @@ const imagePreviewExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif'
 const pdfPreviewExtensions = new Set(['.pdf']);
 let mainRequestSequence = 0;
 const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
 
 function clearPendingLauncherPositionSave() {
   if (!pendingLauncherPositionSave) {
@@ -321,7 +322,12 @@ function loadRenderer(targetWindow: BrowserWindow, view: 'launcher' | 'settings'
 }
 
 async function createWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    return mainWindow;
+  }
+
   launcherSettingsCache = getLauncherStateSnapshot().settings;
+  rendererReady = false;
 
   mainWindow = new BrowserWindow({
     width: WINDOW_WIDTH,
@@ -363,6 +369,13 @@ async function createWindow() {
     if (pendingShow) {
       void showLauncher();
     }
+  });
+
+  mainWindow.on('closed', () => {
+    clearPendingLauncherPositionSave();
+    mainWindow = null;
+    rendererReady = false;
+    pendingShow = false;
   });
 
   if (platform === 'darwin') {
@@ -407,6 +420,7 @@ async function createWindow() {
   });
 
   loadRenderer(mainWindow, 'launcher');
+  return mainWindow;
 }
 
 function openSettingsWindow() {
@@ -830,6 +844,25 @@ async function getPathIcon(path: string, requestId?: string) {
   }
 }
 
+if (!hasSingleInstanceLock) {
+  app.quit();
+}
+
+app.on('second-instance', () => {
+  if (!app.isReady()) {
+    return;
+  }
+
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    void createWindow().then(() => {
+      showLauncher();
+    });
+    return;
+  }
+
+  void showLauncher();
+});
+
 app.whenReady().then(async () => {
   app.setName(packageJson.productName ?? 'Northlight');
 
@@ -993,8 +1026,10 @@ app.whenReady().then(async () => {
   });
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      void createWindow();
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      void createWindow().then(() => {
+        showLauncher();
+      });
       return;
     }
 
