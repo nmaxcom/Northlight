@@ -27,6 +27,21 @@ type FeedbackState = {
   message: string;
 } | null;
 
+export type LauncherBarMockState = {
+  query: string;
+  results: LauncherResult[];
+  selectedIndex?: number;
+  isResolving?: boolean;
+  isActionsOpen?: boolean;
+  actionQuery?: string;
+  actionSelectedIndex?: number;
+  preview?: LauncherPreview | null;
+  feedback?: FeedbackState;
+  settings: LauncherSettings;
+  status: LauncherStatus;
+  iconUrls?: Record<string, string | null>;
+};
+
 function renderShortcut(hint: string, prefix = '') {
   if (!hint.trim()) {
     return null;
@@ -145,28 +160,29 @@ function groupActions(actions: LauncherAction[]) {
   return Array.from(grouped.entries()).map(([label, items]) => ({ label, items }));
 }
 
-export function LauncherBar() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<LauncherResult[]>(() => buildImmediateResults(''));
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [isResolving, setIsResolving] = useState(false);
-  const [isActionsOpen, setIsActionsOpen] = useState(false);
-  const [actionQuery, setActionQuery] = useState('');
-  const [actionSelectedIndex, setActionSelectedIndex] = useState(0);
-  const [preview, setPreview] = useState<LauncherPreview | null>(null);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
-  const [settings, setSettings] = useState<LauncherSettings>(launcherRuntime.getSettingsSnapshot());
-  const [isPreviewOpen, setIsPreviewOpen] = useState(settings.quickLookStartsOpen);
+export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState }) {
+  const isMock = Boolean(mockState);
+  const [query, setQuery] = useState(mockState?.query ?? '');
+  const [results, setResults] = useState<LauncherResult[]>(() => mockState?.results ?? buildImmediateResults(''));
+  const [selectedIndex, setSelectedIndex] = useState(mockState?.selectedIndex ?? 0);
+  const [isResolving, setIsResolving] = useState(Boolean(mockState?.isResolving));
+  const [isActionsOpen, setIsActionsOpen] = useState(Boolean(mockState?.isActionsOpen));
+  const [actionQuery, setActionQuery] = useState(mockState?.actionQuery ?? '');
+  const [actionSelectedIndex, setActionSelectedIndex] = useState(mockState?.actionSelectedIndex ?? 0);
+  const [preview, setPreview] = useState<LauncherPreview | null>(mockState?.preview ?? null);
+  const [feedback, setFeedback] = useState<FeedbackState>(mockState?.feedback ?? null);
+  const [settings, setSettings] = useState<LauncherSettings>(mockState?.settings ?? launcherRuntime.getSettingsSnapshot());
+  const [isPreviewOpen, setIsPreviewOpen] = useState(mockState?.settings.quickLookStartsOpen ?? settings.quickLookStartsOpen);
   const [status, setStatus] = useState<LauncherStatus>({
-    appVersion: '0.8.0',
-    indexEntryCount: 0,
-    indexReady: false,
-    isRestoring: true,
-    isRefreshing: false,
-    searchMode: 'hybrid',
-    catalogState: 'restoring'
+    appVersion: mockState?.status.appVersion ?? '0.8.0',
+    indexEntryCount: mockState?.status.indexEntryCount ?? 0,
+    indexReady: mockState?.status.indexReady ?? false,
+    isRestoring: mockState?.status.isRestoring ?? true,
+    isRefreshing: mockState?.status.isRefreshing ?? false,
+    searchMode: mockState?.status.searchMode ?? 'hybrid',
+    catalogState: mockState?.status.catalogState ?? 'restoring'
   });
-  const [iconUrls, setIconUrls] = useState<Record<string, string | null>>({});
+  const [iconUrls, setIconUrls] = useState<Record<string, string | null>>(mockState?.iconUrls ?? {});
 
   const selectedResult = results[selectedIndex];
   const filteredActions = useMemo(
@@ -190,6 +206,7 @@ export function LauncherBar() {
   const previewTargetRef = useRef<string | null>(null);
   const lastStableQueryRef = useRef('');
   const idleSummaryTimerRef = useRef<number | null>(null);
+  const pointerSelectionEnabledRef = useRef(false);
 
   const nextTraceRequestId = useCallback((prefix: string) => {
     traceRequestSequenceRef.current += 1;
@@ -217,6 +234,36 @@ export function LauncherBar() {
     const target = isActionsOpen ? actionInputRef.current : inputRef.current;
     target?.focus({ preventScroll: true });
   }, [isActionsOpen]);
+
+  const resetPointerSelection = useCallback(() => {
+    pointerSelectionEnabledRef.current = false;
+  }, []);
+
+  const enablePointerSelection = useCallback(() => {
+    pointerSelectionEnabledRef.current = true;
+  }, []);
+
+  const updateSelectedIndexFromPointer = useCallback(
+    (nextIndex: number) => {
+      if (!pointerSelectionEnabledRef.current) {
+        return;
+      }
+
+      setSelectedIndex(nextIndex);
+    },
+    []
+  );
+
+  const updateActionSelectedIndexFromPointer = useCallback(
+    (nextIndex: number) => {
+      if (!pointerSelectionEnabledRef.current) {
+        return;
+      }
+
+      setActionSelectedIndex(nextIndex);
+    },
+    []
+  );
 
   const openActions = useCallback(() => {
     if (!selectedResult) {
@@ -259,6 +306,14 @@ export function LauncherBar() {
         return;
       }
 
+      if (isMock) {
+        if (action.feedbackLabel) {
+          showFeedback('success', action.feedbackLabel);
+        }
+        focusActiveInput();
+        return;
+      }
+
       try {
         await action.run();
         if (action.feedbackLabel) {
@@ -277,18 +332,26 @@ export function LauncherBar() {
 
       focusActiveInput();
     },
-    [focusActiveInput, showFeedback]
+    [focusActiveInput, isMock, showFeedback]
   );
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     const frame = window.requestAnimationFrame(() => {
       void window.launcher?.ready();
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, []);
+  }, [isMock]);
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     let cancelled = false;
 
     void launcherRuntime.getTraceState(true).then((state) => {
@@ -320,13 +383,17 @@ export function LauncherBar() {
       cancelled = true;
       unsubscribe();
     };
-  }, [traceEvent]);
+  }, [isMock, traceEvent]);
 
   useEffect(() => {
     visibleResultsCountRef.current = results.length;
   }, [results.length]);
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     return launcherRuntime.onIndexChanged(() => {
       const traceRequestId = nextTraceRequestId('search-index');
       void traceEvent({
@@ -382,9 +449,13 @@ export function LauncherBar() {
         });
       });
     });
-  }, [nextTraceRequestId, query, traceEvent]);
+  }, [isMock, nextTraceRequestId, query, traceEvent]);
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     let cancelled = false;
     let timer: number | null = null;
 
@@ -447,11 +518,22 @@ export function LauncherBar() {
       }
       unsubscribe();
     };
-  }, [nextTraceRequestId, traceEvent]);
+  }, [isMock, nextTraceRequestId, traceEvent]);
 
   useEffect(() => {
     focusActiveInput();
   }, [focusActiveInput]);
+
+  useEffect(() => {
+    resetPointerSelection();
+
+    const handleFocus = () => {
+      resetPointerSelection();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [resetPointerSelection]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -482,6 +564,10 @@ export function LauncherBar() {
   }, [closeActions, isActionsOpen, selectedResult]);
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     const previousQuery = lastStableQueryRef.current;
     if (previousQuery === query) {
       void traceEvent({
@@ -540,9 +626,13 @@ export function LauncherBar() {
         idleSummaryTimerRef.current = null;
       }
     };
-  }, [query, settings, traceEvent]);
+  }, [isMock, query, settings, traceEvent]);
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     let canceled = false;
 
     if (!query.trim()) {
@@ -591,9 +681,19 @@ export function LauncherBar() {
     return () => {
       canceled = true;
     };
-  }, [nextTraceRequestId, query, settings, traceEvent]);
+  }, [isMock, nextTraceRequestId, query, settings, traceEvent]);
 
   useEffect(() => {
+    if (isMock) {
+      if (!selectedResult || !previewVisible) {
+        setPreview(null);
+        return;
+      }
+
+      setPreview(buildPreviewFallback(selectedResult));
+      return;
+    }
+
     let cancelled = false;
 
     if (!selectedResult || !previewVisible) {
@@ -658,9 +758,13 @@ export function LauncherBar() {
     return () => {
       cancelled = true;
     };
-  }, [nextTraceRequestId, previewVisible, selectedResult, traceEvent]);
+  }, [isMock, nextTraceRequestId, previewVisible, selectedResult, traceEvent]);
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     const iconPaths = Array.from(
       new Set(
         results
@@ -716,9 +820,13 @@ export function LauncherBar() {
     return () => {
       cancelled = true;
     };
-  }, [iconUrls, nextTraceRequestId, results, traceEvent]);
+  }, [iconUrls, isMock, nextTraceRequestId, results, traceEvent]);
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     const onKeyDown = async (event: KeyboardEvent) => {
       if (event.key === 'Tab') {
         event.preventDefault();
@@ -863,6 +971,7 @@ export function LauncherBar() {
     filteredActions.length,
     focusActiveInput,
     invokeAction,
+    isMock,
     isActionsOpen,
     openActions,
     query,
@@ -944,7 +1053,11 @@ export function LauncherBar() {
                 type="button"
                 className={`${classes.bestMatch} ${selectedIndex === 0 ? classes.bestMatchSelected : ''}`}
                 data-selected={selectedIndex === 0 ? 'true' : 'false'}
-                onMouseEnter={() => setSelectedIndex(0)}
+                onMouseMove={() => {
+                  enablePointerSelection();
+                  setSelectedIndex(0);
+                }}
+                onMouseEnter={() => updateSelectedIndexFromPointer(0)}
                 onClick={() => void invokeAction(bestMatch.actions[0])}
               >
                 <div className={iconClassName(bestMatch, classes.bestMatchIcon)}>
@@ -1008,10 +1121,15 @@ export function LauncherBar() {
                       data-selected={absoluteIndex === selectedIndex ? 'true' : 'false'}
                       tabIndex={-1}
                       onMouseDown={(event) => {
+                        enablePointerSelection();
                         event.preventDefault();
                         focusActiveInput();
                       }}
-                      onMouseEnter={() => setSelectedIndex(absoluteIndex)}
+                      onMouseMove={() => {
+                        enablePointerSelection();
+                        setSelectedIndex(absoluteIndex);
+                      }}
+                      onMouseEnter={() => updateSelectedIndexFromPointer(absoluteIndex)}
                       onClick={() => void invokeAction(result.actions[0])}
                     >
                       <div className={iconClassName(result)}>
@@ -1088,10 +1206,15 @@ export function LauncherBar() {
                             data-action-selected={absoluteIndex === actionSelectedIndex ? 'true' : 'false'}
                             tabIndex={-1}
                             onMouseDown={(event) => {
+                              enablePointerSelection();
                               event.preventDefault();
                               actionInputRef.current?.focus({ preventScroll: true });
                             }}
-                            onMouseEnter={() => setActionSelectedIndex(absoluteIndex)}
+                            onMouseMove={() => {
+                              enablePointerSelection();
+                              setActionSelectedIndex(absoluteIndex);
+                            }}
+                            onMouseEnter={() => updateActionSelectedIndexFromPointer(absoluteIndex)}
                             onClick={() => void invokeAction(action)}
                           >
                             <span className={classes.actionCopy}>
