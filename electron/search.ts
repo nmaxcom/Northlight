@@ -454,7 +454,7 @@ function resolveSearchScopePath(scopePath?: string | null, intent?: SearchIntent
     return scopePath;
   }
 
-  const tokenScope = resolveIntentScopePath(intent?.scopeToken, getLauncherStateSnapshot().settings.scopes);
+  const tokenScope = resolveIntentScopePath(intent?.scopeToken, intent?.scopePath, getLauncherStateSnapshot().settings.scopes);
   return tokenScope ?? scopePath ?? null;
 }
 

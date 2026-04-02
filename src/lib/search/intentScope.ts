@@ -1,5 +1,7 @@
 import type { ScopeEntry, SearchScopeToken, SearchTimeToken } from './types';
 
+export const RECENT_TIME_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
 function inferHomePath(scopes: ScopeEntry[]) {
   const match = scopes
     .map((scope) => scope.path.match(/^\/Users\/[^/]+/))
@@ -8,30 +10,42 @@ function inferHomePath(scopes: ScopeEntry[]) {
   return match?.[0] ?? '/Users';
 }
 
-export function resolveIntentScopePath(scopeToken: SearchScopeToken | undefined, scopes: ScopeEntry[]) {
+function normalizeScopePath(path: string) {
+  return path.length > 1 ? path.replace(/\/+$/, '') : path;
+}
+
+export function resolveIntentScopePath(scopeToken: SearchScopeToken | undefined, scopePath: string | undefined, scopes: ScopeEntry[]) {
+  const homePath = inferHomePath(scopes);
+  if (scopePath) {
+    if (scopePath.startsWith('~/')) {
+      return normalizeScopePath(`${homePath}/${scopePath.slice(2)}`);
+    }
+
+    return normalizeScopePath(scopePath);
+  }
+
   if (!scopeToken) {
     return null;
   }
 
-  const homePath = inferHomePath(scopes);
   switch (scopeToken) {
     case 'downloads':
-      return `${homePath}/Downloads`;
+      return normalizeScopePath(`${homePath}/Downloads`);
     case 'documents':
-      return `${homePath}/Documents`;
+      return normalizeScopePath(`${homePath}/Documents`);
     case 'desktop':
-      return `${homePath}/Desktop`;
+      return normalizeScopePath(`${homePath}/Desktop`);
     case 'library':
-      return `${homePath}/Library`;
+      return normalizeScopePath(`${homePath}/Library`);
     case 'home':
-      return homePath;
+      return normalizeScopePath(homePath);
     default:
       return null;
   }
 }
 
-export function pathMatchesIntentScope(path: string, scopeToken: SearchScopeToken | undefined, scopes: ScopeEntry[]) {
-  const resolvedScope = resolveIntentScopePath(scopeToken, scopes);
+export function pathMatchesIntentScope(path: string, scopeToken: SearchScopeToken | undefined, scopePath: string | undefined, scopes: ScopeEntry[]) {
+  const resolvedScope = resolveIntentScopePath(scopeToken, scopePath, scopes);
   if (!resolvedScope) {
     return true;
   }
@@ -47,7 +61,7 @@ export function modifiedAtMatchesIntentTime(modifiedAt: number | null | undefine
   const current = new Date(now);
   const startOfToday = new Date(current.getFullYear(), current.getMonth(), current.getDate()).getTime();
   const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
-  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const sevenDaysAgo = now - RECENT_TIME_WINDOW_MS;
 
   if (timeToken === 'today') {
     return modifiedAt >= startOfToday;

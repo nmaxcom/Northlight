@@ -115,11 +115,54 @@ describe('parseIntentQuery', () => {
       intent: {
         localFilter: { kind: 'file', extensions: ['json', 'jsonc'] },
         scopeToken: 'library',
+        scopePath: undefined,
         timeToken: 'today',
         matchedTokens: ['json', 'in:library', 'today']
       },
       localFilter: { kind: 'file', extensions: ['json', 'jsonc'] },
       matchedTokens: ['json', 'in:library', 'today']
+    });
+  });
+
+  it('parses a concrete in:path refiner as a structured scope path', () => {
+    expect(parseIntentQuery('northlight md in:/Users/nm4/STUFF/Coding/Northlight')).toEqual({
+      rawQuery: 'northlight md in:/Users/nm4/STUFF/Coding/Northlight',
+      searchText: 'northlight',
+      intent: {
+        localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+        scopeToken: undefined,
+        scopePath: '/Users/nm4/STUFF/Coding/Northlight',
+        timeToken: undefined,
+        matchedTokens: ['md', 'in:/Users/nm4/STUFF/Coding/Northlight']
+      },
+      localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+      matchedTokens: ['md', 'in:/Users/nm4/STUFF/Coding/Northlight']
+    });
+  });
+
+  it('parses a concrete in:~/path refiner as a structured scope path', () => {
+    expect(parseIntentQuery('notes md in:~/Documents')).toEqual({
+      rawQuery: 'notes md in:~/Documents',
+      searchText: 'notes',
+      intent: {
+        localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+        scopeToken: undefined,
+        scopePath: '~/Documents',
+        timeToken: undefined,
+        matchedTokens: ['md', 'in:~/Documents']
+      },
+      localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+      matchedTokens: ['md', 'in:~/Documents']
+    });
+  });
+
+  it('treats malformed in: tokens as plain text', () => {
+    expect(parseIntentQuery('notes md in:docs')).toEqual({
+      rawQuery: 'notes md in:docs',
+      searchText: 'notes md in:docs',
+      intent: null,
+      localFilter: null,
+      matchedTokens: []
     });
   });
 });
@@ -135,8 +178,23 @@ describe('local intent helpers', () => {
   it('produces stable cache keys for filters', () => {
     expect(localIntentFilterKey(null)).toBe('all');
     expect(localIntentFilterKey({ kind: 'file', extensions: ['png', 'jpg'] })).toBe('file::jpg,png');
-    expect(searchIntentKey({ localFilter: { kind: 'file', extensions: ['png'] }, scopeToken: 'downloads', timeToken: 'recent', matchedTokens: ['png', 'in:downloads', 'recent'] })).toBe(
-      'file::png::downloads::recent'
-    );
+    expect(
+      searchIntentKey({
+        localFilter: { kind: 'file', extensions: ['png'] },
+        scopeToken: 'downloads',
+        scopePath: undefined,
+        timeToken: 'recent',
+        matchedTokens: ['png', 'in:downloads', 'recent']
+      })
+    ).toBe('file::png::downloads::any-path::recent');
+    expect(
+      searchIntentKey({
+        localFilter: { kind: 'file', extensions: ['png'] },
+        scopeToken: undefined,
+        scopePath: '/Users/nm4/Desktop',
+        timeToken: 'recent',
+        matchedTokens: ['png', 'in:/Users/nm4/Desktop', 'recent']
+      })
+    ).toBe('file::png::any-scope::/users/nm4/desktop::recent');
   });
 });

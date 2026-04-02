@@ -536,12 +536,18 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   }, [resetPointerSelection]);
 
   useEffect(() => {
+    resetPointerSelection();
     setSelectedIndex(0);
-  }, [query]);
+  }, [query, resetPointerSelection]);
 
   useEffect(() => {
+    resetPointerSelection();
     setActionSelectedIndex(0);
-  }, [actionQuery, selectedResult?.id]);
+  }, [actionQuery, resetPointerSelection, selectedResult?.id]);
+
+  useEffect(() => {
+    resetPointerSelection();
+  }, [filteredActions, resetPointerSelection, results]);
 
   useEffect(() => {
     const selectedElement = resultsRef.current?.querySelector<HTMLElement>('[data-selected="true"]');

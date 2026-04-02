@@ -1,16 +1,14 @@
 # Northlight Search Refiners Guide
 
-## What This Is
+## What Refiners Are
 
-Northlight lets you start with a normal search, then add a short trailing hint only if the first results are not what you want.
+Search refiners are short trailing hints that help Northlight narrow the result set only when broad search is not enough.
 
-You do not need to learn a command language before typing.
+The intended workflow is:
 
-The intended flow is:
-
-1. Type what you want normally.
-2. See whether the top results already match your intent.
-3. If they do not, add one small refiner at the end.
+1. Start with a normal search.
+2. Look at the first results.
+3. Add one or more refiners at the end only if you need to clarify intent.
 
 Examples:
 
@@ -21,31 +19,55 @@ Examples:
 - `design`
 - `design png in:downloads`
 
-## The Core Rule
+Northlight is not expecting you to type special symbols from the first character. Refiners are a second step, not the default language of the launcher.
 
-Refiners are optional and trailing.
+## The Main Rule
 
-That means Northlight reads them when they appear as standalone tokens at the end of the query.
+Refiners are trailing standalone tokens.
 
-Good examples:
+That means Northlight only tries to interpret them when they appear at the end of the query as their own tokens.
+
+Examples that are treated as refiners:
 
 - `project/`
 - `snowboard img`
 - `invoice pdf`
 - `config json in:library`
+- `northlight md in:/Users/nm4/STUFF/Coding/Northlight`
 - `report today`
 
-Literal searches still stay literal when the token is not being used as a trailing refiner.
+Examples that stay literal:
 
-Examples:
+- `img-tools`
+- `project//`
+- `notes in:docs`
+- `snowboard app jpg`
 
-- `img-tools` keeps searching for `img-tools`
-- `project//` is treated as plain text
-- conflicting expressions such as `snowboard app jpg` fall back to plain text instead of applying a broken filter
+When Northlight sees an ambiguous or conflicting trailing expression, it falls back to plain text search instead of applying a broken filter.
+
+## How Northlight Reads A Refined Query
+
+Take this query:
+
+- `config json in:library today`
+
+Northlight interprets it as:
+
+- search text: `config`
+- type refiner: `json`
+- scope refiner: `in:library`
+- time refiner: `today`
+
+In other words:
+
+- look for things matching `config`
+- keep JSON-like files
+- narrow to `~/Library`
+- keep things modified today
 
 ## Folder Search
 
-Use a trailing slash to say "I want folders".
+The fastest folder refiner is a trailing slash.
 
 Examples:
 
@@ -53,15 +75,20 @@ Examples:
 - `chrome/`
 - `screenshots/`
 
-What this does:
+What it does:
 
-- keeps the main search text
-- filters the result set to folders
-- is useful when a file or app is outranking the directory you actually want
+- keeps your original search text
+- filters the result set to folders only
+
+Use it when:
+
+- the file is outranking the folder
+- the app bundle is outranking the directory
+- you want the container, not the item inside it
 
 ## Type Refiners
 
-These tell Northlight which kind of result you want.
+Type refiners narrow the result set by result kind or file format.
 
 ### Apps
 
@@ -75,7 +102,7 @@ Examples:
 - `figma app`
 - `notion app`
 
-Use this when you typed an app name but folders, docs, or support files are showing up too high.
+Use this when you typed the name of an app but support files, cache folders, documents, or screenshots are taking over the top results.
 
 ### Folders
 
@@ -106,7 +133,7 @@ This is useful when app or folder results are polluting the top of the list.
 
 ## Image And Format Refiners
 
-These are the most useful refiners for everyday file search.
+These are usually the highest-value refiners in day-to-day file search.
 
 ### Images
 
@@ -124,9 +151,24 @@ Examples:
 
 This narrows the result set to image files only.
 
-### Specific Extensions
+Internally, `img` maps to common image formats such as:
 
-Use the file type itself when you know the format.
+- `jpg`
+- `jpeg`
+- `png`
+- `gif`
+- `webp`
+- `bmp`
+- `tif`
+- `tiff`
+- `svg`
+- `avif`
+- `heic`
+- `heif`
+
+### Specific Formats
+
+If you know the format, use it directly.
 
 Examples:
 
@@ -138,7 +180,7 @@ Examples:
 - `settings yaml`
 - `theme toml`
 
-Common supported examples:
+Common supported format refiners:
 
 - `pdf`
 - `md`
@@ -154,14 +196,21 @@ Common supported examples:
 
 Why this matters:
 
-- `invoice` might show folders, spreadsheets, screenshots, or drafts
-- `invoice pdf` tells Northlight you only want PDFs
+- `invoice` may show folders, screenshots, drafts, and exports
+- `invoice pdf` says clearly that you only want PDFs
 
 ## Scope Refiners
 
-Scope refiners tell Northlight where to narrow the search.
+Scope refiners narrow where Northlight should look.
 
-Supported forms:
+Northlight supports two kinds of scope refiners:
+
+1. named scopes
+2. explicit paths
+
+### Named Scope Refiners
+
+Supported values:
 
 - `in:downloads`
 - `in:documents`
@@ -177,28 +226,66 @@ Examples:
 - `meeting notes md in:documents`
 - `chrome in:home`
 
-When to use them:
+Use named scopes when:
 
-- when the query is common and appears in many places
-- when you know roughly where the file lives
-- when Home-wide search is returning too much noise
+- you roughly know the area
+- you want a quick scope hint without typing a full path
+- the query is common and appears in too many places
 
-Practical examples:
+### Explicit Path Refiners
 
-- `config json in:library`
-  This is good for app settings, support files, and internal configuration.
+You can also use a concrete path with `in:`.
 
-- `receipt pdf in:downloads`
-  This is good for recent attachments, invoices, or exports.
+Supported forms:
 
-- `mockup png in:desktop`
-  This is good when you know you dropped the file there recently.
+- `in:/absolute/path`
+- `in:~/path/from/home`
+
+Examples:
+
+- `northlight md in:/Users/nm4/STUFF/Coding/Northlight`
+- `brief pdf in:/Users/nm4/Documents/Clients`
+- `config json in:~/Library/ApplicationSupport`
+- `screenshot png in:~/Desktop`
+
+Important limitations:
+
+- the path must be one token
+- do not include spaces inside the `in:` token
+- use absolute paths or `~/...`
+
+Good examples:
+
+- `northlight md in:/Users/nm4/STUFF/Coding/Northlight`
+- `notes md in:~/Documents`
+
+Examples that are not currently valid as path refiners:
+
+- `notes md in:docs`
+- `config json in:Library/ApplicationSupport`
+- `notes md in:/Users/nm4/My Projects`
+
+That last example fails because the path contains spaces and the current refiner parser is token-based. In that case, search more broadly first, then refine with a named scope or a path segment that does not require spaces.
+
+### When To Use A Named Scope Vs A Path
+
+Use a named scope when:
+
+- you want speed
+- the folder is one of the obvious zones like Downloads or Library
+- you do not care about exact depth yet
+
+Use an explicit path when:
+
+- the file lives inside a project root
+- the name is common across many repos
+- you want to constrain search to one workspace or client folder
 
 ## Time Refiners
 
-Time refiners tell Northlight to prefer files by modification time.
+Time refiners narrow results by modification time.
 
-Supported forms:
+Supported values:
 
 - `today`
 - `yesterday`
@@ -211,17 +298,42 @@ Examples:
 - `mockup png recent`
 - `config json in:library today`
 
-How they behave:
+### Exact Semantics
 
-- `today` means modified today
-- `yesterday` means modified yesterday
-- `recent` means modified recently
+`today`
 
-These are especially useful when you know the name only vaguely but remember when you touched it.
+- means modified on the current local calendar day
+- from local midnight up to now
+
+`yesterday`
+
+- means modified on the previous local calendar day
+- from yesterday's local midnight up to today's local midnight
+
+`recent`
+
+- means modified within the last 7 days
+- specifically, the last `168` hours from the current moment
+
+So if you run the same query at a different time, `recent` moves with the current time, while `today` and `yesterday` follow local date boundaries.
+
+### When Time Refiners Help
+
+Use them when:
+
+- you remember when you touched the file more clearly than what it was called
+- the file name is generic
+- the same document exists in many versions
+
+Examples:
+
+- `report today`
+- `brief pdf yesterday`
+- `mockup png recent`
 
 ## Combining Refiners
 
-Refiners are additive. You can combine them to get very targeted searches.
+Refiners are additive.
 
 Examples:
 
@@ -230,31 +342,32 @@ Examples:
 - `config json in:library`
 - `config json in:library today`
 - `reference img in:desktop recent`
+- `northlight md in:/Users/nm4/STUFF/Coding/Northlight recent`
 
 Good mental model:
 
-- the main words are still the search
-- the trailing refiners narrow the result set
+- the first words say what you are looking for
+- the trailing refiners say how to narrow it
 
-## Real Usage Examples
+## Practical Examples
 
-### Find an app, not its support files
+### Find the app, not the support files
 
 Start with:
 
 - `chrome`
 
-If support folders or extension files are showing up too high, refine to:
+If support folders or extension assets appear too high:
 
 - `chrome app`
 
-### Find a photo when broad search is noisy
+### Find the image, not the docs
 
 Start with:
 
 - `snowboard`
 
-If docs, folders, or app names appear above the photo, refine to:
+If PDFs, notes, and folders appear above the photo:
 
 - `snowboard img`
 
@@ -262,13 +375,13 @@ If you specifically want a JPEG:
 
 - `snowboard jpg`
 
-### Find a configuration file in `~/Library`
+### Find a JSON config in `~/Library`
 
 Start with:
 
 - `cursor`
 
-If the result set is too broad:
+If the search is too broad:
 
 - `cursor json in:library`
 
@@ -276,25 +389,25 @@ If you changed it today:
 
 - `cursor json in:library today`
 
-### Find a folder quickly
+### Search inside one project root
+
+If you know the file belongs to a project:
+
+- `northlight md in:/Users/nm4/STUFF/Coding/Northlight`
+
+If you only want recently modified Markdown files there:
+
+- `northlight md in:/Users/nm4/STUFF/Coding/Northlight recent`
+
+### Find a folder instead of a file
 
 Start with:
 
 - `project`
 
-If files and repos are outranking the directory:
+If file matches are outranking the directory:
 
 - `project/`
-
-### Find a Markdown note
-
-Start with:
-
-- `strategy`
-
-If images, folders, or other assets appear too high:
-
-- `strategy md`
 
 ### Find a recent download
 
@@ -306,34 +419,20 @@ If the list is too broad:
 
 - `invoice pdf in:downloads recent`
 
-## What Northlight Does Not Expect
+## How To Recover When Results Still Aren't Right
 
-Northlight does not require:
+Try this sequence:
 
-- prefixes before you start typing
-- strict syntax from the first character
-- memorizing symbolic commands for every search
-
-The goal is not to make the launcher feel like a shell.
-
-The goal is:
-
-- normal search first
-- lightweight clarification second
-
-## If A Refiner Does Not Help
-
-Try one of these:
-
-1. switch to a more concrete type such as `pdf`, `png`, or `json`
-2. add a scope like `in:downloads` or `in:library`
-3. add a time hint like `today` or `recent`
-4. reduce the search text to the strongest keyword
+1. keep only the strongest keyword
+2. add a type refiner
+3. add a scope refiner
+4. add a time refiner
 
 Examples:
 
 - from `snowboard` to `snowboard img`
 - from `config` to `config json in:library`
+- from `northlight` to `northlight md in:/Users/nm4/STUFF/Coding/Northlight`
 - from `report` to `report today`
 
 ## Quick Reference
@@ -354,13 +453,18 @@ Type:
 - `jpg`
 - `png`
 
-Scope:
+Named scopes:
 
 - `in:downloads`
 - `in:documents`
 - `in:desktop`
 - `in:library`
 - `in:home`
+
+Explicit paths:
+
+- `in:/absolute/path`
+- `in:~/path`
 
 Time:
 

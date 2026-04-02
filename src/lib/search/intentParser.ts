@@ -113,6 +113,7 @@ export function searchIntentKey(intent: SearchIntent | null | undefined) {
   return [
     localIntentFilterKey(intent.localFilter),
     intent.scopeToken ?? 'any-scope',
+    intent.scopePath?.toLowerCase() ?? 'any-path',
     intent.timeToken ?? 'any-time'
   ].join('::');
 }
@@ -142,6 +143,7 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
     return {
       rawQuery,
       searchText: '',
+      intent: null,
       localFilter: null,
       matchedTokens: []
     };
@@ -150,6 +152,7 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
   let working = trimmed;
   let localFilter: LocalIntentFilter | null = null;
   let scopeToken: SearchScopeToken | undefined;
+  let scopePath: string | undefined;
   let timeToken: SearchTimeToken | undefined;
   const matchedTokens: string[] = [];
 
@@ -171,7 +174,7 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
 
     const candidateScope = SCOPE_TOKENS[candidate];
     if (candidateScope) {
-      if (scopeToken && scopeToken !== candidateScope) {
+      if (scopeToken || scopePath) {
         return {
           rawQuery,
           searchText: trimmed,
@@ -182,6 +185,25 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
       }
 
       scopeToken = candidateScope;
+      matchedTokens.unshift(tokens.pop()!);
+      continue;
+    }
+
+    if (candidate.startsWith('in:') && candidate.length > 3) {
+      const candidateScopePath = tokens.at(-1)!.slice(3);
+      const looksLikePath = candidateScopePath.startsWith('/') || candidateScopePath.startsWith('~/');
+
+      if (!looksLikePath || scopeToken || scopePath) {
+        return {
+          rawQuery,
+          searchText: trimmed,
+          intent: null,
+          localFilter: null,
+          matchedTokens: []
+        };
+      }
+
+      scopePath = candidateScopePath;
       matchedTokens.unshift(tokens.pop()!);
       continue;
     }
@@ -224,7 +246,7 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
   }
 
   const searchText = tokens.join(' ').trim();
-  const intent = localFilter || scopeToken || timeToken ? { localFilter, scopeToken, timeToken, matchedTokens: [...matchedTokens] } : null;
+  const intent = localFilter || scopeToken || scopePath || timeToken ? { localFilter, scopeToken, scopePath, timeToken, matchedTokens: [...matchedTokens] } : null;
 
   if (!searchText || !intent) {
     return {

@@ -248,8 +248,31 @@ describe('buildResults', () => {
         extensions: ['json', 'jsonc']
       },
       scopeToken: 'library',
+      scopePath: undefined,
       timeToken: 'today',
       matchedTokens: ['json', 'in:library', 'today']
+    }, undefined);
+  });
+
+  it('passes a concrete in:path refiner into local search as structured intent', async () => {
+    const searchLocal = vi.fn().mockResolvedValue([]);
+
+    window.launcher = {
+      searchLocal,
+      getClipboardHistory: vi.fn().mockResolvedValue([])
+    } as never;
+
+    await buildResults('northlight md in:/Users/nm4/STUFF/Coding/Northlight');
+
+    expect(searchLocal).toHaveBeenCalledWith('northlight', undefined, {
+      localFilter: {
+        kind: 'file',
+        extensions: ['md', 'markdown', 'mdx']
+      },
+      scopeToken: undefined,
+      scopePath: '/Users/nm4/STUFF/Coding/Northlight',
+      timeToken: undefined,
+      matchedTokens: ['md', 'in:/Users/nm4/STUFF/Coding/Northlight']
     }, undefined);
   });
 });

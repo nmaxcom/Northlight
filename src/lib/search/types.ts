@@ -96,6 +96,7 @@ export type LocalIntentFilter = {
 export type SearchIntent = {
   localFilter: LocalIntentFilter | null;
   scopeToken?: SearchScopeToken;
+  scopePath?: string;
   timeToken?: SearchTimeToken;
   matchedTokens: string[];
 };

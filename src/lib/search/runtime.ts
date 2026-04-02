@@ -76,7 +76,7 @@ function filterByScope(items: LocalSearchItem[], scopePath?: string | null) {
 function rankItems(query: string, items: LocalSearchItem[], intent?: SearchIntent | null) {
   return items
     .filter((item) => matchesLocalIntent(item, intent?.localFilter))
-    .filter((item) => pathMatchesIntentScope(item.path, intent?.scopeToken, settingsCache.scopes))
+    .filter((item) => pathMatchesIntentScope(item.path, intent?.scopeToken, intent?.scopePath, settingsCache.scopes))
     .filter((item) => modifiedAtMatchesIntentTime(item.modifiedAt, intent?.timeToken))
     .map((item) => ({
       ...item,
