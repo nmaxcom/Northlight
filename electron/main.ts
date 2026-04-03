@@ -326,6 +326,10 @@ function hideLauncher() {
   }
 
   mainWindow.hide();
+
+  if (platform === 'darwin') {
+    app.hide();
+  }
 }
 
 function loadRenderer(targetWindow: BrowserWindow, view: 'launcher' | 'settings') {

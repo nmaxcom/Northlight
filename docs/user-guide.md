@@ -37,7 +37,7 @@ Current built-in capabilities:
 - Dragging the launcher no longer streams live settings updates back into the renderer, so the interface stays visually stable while you reposition it.
 - On macOS, Northlight runs as an accessory utility window: it stays out of the Dock, app switcher, and Mission Control window set, and it shows across Spaces instead of pulling you back to the desktop where it launched.
 - On macOS, opening the launcher from the global shortcut now explicitly re-activates the app and ignores the first transient blur, so the window stays visible instead of flickering closed.
-- On macOS, dismissing the launcher no longer forces a synthetic "restore previous app" handoff; Northlight now gets out of the way and lets the system settle focus naturally.
+- On macOS, dismissing the launcher now hides the Northlight app itself instead of leaving an active app with no key window behind, so the underlying app can usually keep keyboard focus without an extra click.
 - Keyboard launch, typing, and live result refreshes now ignore the cursor's resting position until you actually move or use the mouse inside the launcher, so `Enter` keeps targeting the keyboard-selected result and stale hover highlights disappear as soon as you resume typing.
 - The top-right status area shows the app version, indexed item count, and current index state.
 - Clicking the `Theme` chip in the launcher header toggles between the fixed `Original` theme and the duplicated `Sandbox` theme for fast visual comparison.
@@ -83,7 +83,7 @@ Current built-in capabilities:
 ## Result Behavior
 
 - Running an open, reveal, or copy action hides the launcher so the target app or Finder can be seen immediately.
-- Losing launcher focus also hides it so the underlying app can resume naturally without an extra forced activation step from Northlight.
+- Losing launcher focus also hides the launcher so Northlight gets out of the way and the underlying app can resume naturally.
 - The result list scrolls inside the launcher when there are more results than fit on screen.
 - The search textbox keeps focus while you interact with the launcher chrome, and keyboard navigation auto-scrolls to the selected result.
 - The launcher shell and the native utility window now share the same `10px` corner radius, and the search box is intentionally compressed to a very low-profile `35px` field.
