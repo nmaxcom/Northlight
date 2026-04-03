@@ -207,6 +207,8 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const lastStableQueryRef = useRef('');
   const idleSummaryTimerRef = useRef<number | null>(null);
   const pointerSelectionEnabledRef = useRef(false);
+  const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const pointerResetPositionRef = useRef<{ x: number; y: number } | null>(null);
 
   const nextTraceRequestId = useCallback((prefix: string) => {
     traceRequestSequenceRef.current += 1;
@@ -237,10 +239,24 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
   const resetPointerSelection = useCallback(() => {
     pointerSelectionEnabledRef.current = false;
+    pointerResetPositionRef.current = lastPointerPositionRef.current;
   }, []);
 
-  const enablePointerSelection = useCallback(() => {
+  const enablePointerSelection = useCallback((x: number, y: number) => {
+    const lastPosition = lastPointerPositionRef.current;
+    lastPointerPositionRef.current = { x, y };
+
+    const resetPosition = pointerResetPositionRef.current;
+    if (resetPosition && resetPosition.x === x && resetPosition.y === y) {
+      return false;
+    }
+
+    if (lastPosition && lastPosition.x === x && lastPosition.y === y) {
+      return false;
+    }
+
     pointerSelectionEnabledRef.current = true;
+    return true;
   }, []);
 
   const updateSelectedIndexFromPointer = useCallback(
@@ -1059,8 +1075,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                 type="button"
                 className={`${classes.bestMatch} ${selectedIndex === 0 ? classes.bestMatchSelected : ''}`}
                 data-selected={selectedIndex === 0 ? 'true' : 'false'}
-                onMouseMove={() => {
-                  enablePointerSelection();
+                onMouseMove={(event) => {
+                  if (!enablePointerSelection(event.clientX, event.clientY)) {
+                    return;
+                  }
+
                   setSelectedIndex(0);
                 }}
                 onMouseEnter={() => updateSelectedIndexFromPointer(0)}
@@ -1127,12 +1146,16 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                       data-selected={absoluteIndex === selectedIndex ? 'true' : 'false'}
                       tabIndex={-1}
                       onMouseDown={(event) => {
-                        enablePointerSelection();
+                        lastPointerPositionRef.current = { x: event.clientX, y: event.clientY };
+                        pointerSelectionEnabledRef.current = true;
                         event.preventDefault();
                         focusActiveInput();
                       }}
-                      onMouseMove={() => {
-                        enablePointerSelection();
+                      onMouseMove={(event) => {
+                        if (!enablePointerSelection(event.clientX, event.clientY)) {
+                          return;
+                        }
+
                         setSelectedIndex(absoluteIndex);
                       }}
                       onMouseEnter={() => updateSelectedIndexFromPointer(absoluteIndex)}
@@ -1212,12 +1235,16 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                             data-action-selected={absoluteIndex === actionSelectedIndex ? 'true' : 'false'}
                             tabIndex={-1}
                             onMouseDown={(event) => {
-                              enablePointerSelection();
+                              lastPointerPositionRef.current = { x: event.clientX, y: event.clientY };
+                              pointerSelectionEnabledRef.current = true;
                               event.preventDefault();
                               actionInputRef.current?.focus({ preventScroll: true });
                             }}
-                            onMouseMove={() => {
-                              enablePointerSelection();
+                            onMouseMove={(event) => {
+                              if (!enablePointerSelection(event.clientX, event.clientY)) {
+                                return;
+                              }
+
                               setActionSelectedIndex(absoluteIndex);
                             }}
                             onMouseEnter={() => updateActionSelectedIndexFromPointer(absoluteIndex)}
