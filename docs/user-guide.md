@@ -43,6 +43,7 @@ Current built-in capabilities:
 - `Cmd+,` opens the Northlight settings window.
 - Clicking away from the launcher hides it again.
 - The launcher mockup in `design/launcher-current-view.html` is calibrated to the native launcher content size of `1120×760` for visual design checks.
+- `npm run design` serves the shared renderer mockups, prints the available design URLs in the terminal, and exposes an index at `/design/`.
 
 ## Search Behavior
 

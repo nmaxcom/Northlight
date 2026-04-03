@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Northlight Design Index</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        min-height: 100vh;
+        padding: 40px;
+        font-family: Inter, "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+        color: #f5f7fa;
+        background:
+          radial-gradient(circle at top left, rgba(115, 142, 168, 0.16), transparent 28%),
+          linear-gradient(180deg, #10161d, #0a0f14);
+      }
+
+      .shell {
+        max-width: 980px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      p {
+        margin: 12px 0 0;
+        color: rgba(245, 247, 250, 0.62);
+        line-height: 1.5;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 28px;
+      }
+
+      .card {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        border-radius: 18px;
+        border: 1px solid rgba(170, 192, 214, 0.12);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 18px;
+        transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(170, 192, 214, 0.24);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .eyebrow {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(245, 247, 250, 0.5);
+      }
+
+      .title {
+        margin-top: 10px;
+        font-size: 1.1rem;
+        font-weight: 800;
+      }
+
+      .meta {
+        margin-top: 8px;
+        color: rgba(245, 247, 250, 0.6);
+        font-size: 0.92rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <h1>Northlight Design Index</h1>
+      <p>Shared renderer mockups served through Vite. Open one of these pages to tweak CSS against the real component tree.</p>
+
+      <section class="grid">
+        <a class="card" href="/design/launcher-current-view.html">
+          <div class="eyebrow">Launcher</div>
+          <div class="title">Current View</div>
+          <div class="meta">1120×760 native viewport</div>
+        </a>
+
+        <a class="card" href="/design/settings-current-view.html">
+          <div class="eyebrow">Settings</div>
+          <div class="title">Current View</div>
+          <div class="meta">980×760 native viewport</div>
+        </a>
+      </section>
+    </main>
+
+    <script type="module">
+      import { logAvailableDesigns } from '/src/design/logAvailableDesigns.ts';
+      logAvailableDesigns('/design/');
+    </script>
+  </body>
+</html>

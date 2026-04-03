@@ -1,4 +1,5 @@
 const designs = [
+  '/design/',
   '/design/launcher-current-view.html',
   '/design/settings-current-view.html'
 ];

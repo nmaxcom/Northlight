@@ -11,6 +11,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         app: resolve(__dirname, 'index.html'),
+        designIndex: resolve(__dirname, 'design/index.html'),
         launcherCurrentView: resolve(__dirname, 'design/launcher-current-view.html'),
         launcherCurrentViewFrame: resolve(__dirname, 'design/launcher-current-view-frame.html'),
         settingsCurrentView: resolve(__dirname, 'design/settings-current-view.html'),
