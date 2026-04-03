@@ -15,6 +15,7 @@ Current built-in capabilities:
 - Show a dominant `Best Match` card above the result list.
 - Show recent local results first when the query is empty.
 - Open the selected result with `Enter`.
+- Pressing `Enter` on an app result also re-activates already-open apps correctly on macOS, bringing you to the Space where that app is visible.
 - Reveal the selected result in Finder with `Cmd+Enter`.
 - Copy the selected path with `Cmd+Shift+C`.
 - Open a folder in Terminal, copy a result name, open files in TextEdit, and move results to Trash.

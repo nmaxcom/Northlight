@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { basename, extname, join } from 'node:path';
 import { platform } from 'node:process';
 import packageJson from '../package.json';
+import { getLauncherOpenStrategy } from '../src/lib/launcher/openTarget';
 import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/shortcuts';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem, SearchIntent } from '../src/lib/search/types';
 import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
@@ -151,6 +152,17 @@ function runCommand(command: string, args: string[]) {
       resolve();
     });
   });
+}
+
+async function openLauncherTarget(path: string) {
+  const strategy = getLauncherOpenStrategy(path, platform);
+
+  if (strategy.kind === 'open-app') {
+    await runCommand(strategy.command, strategy.args);
+    return;
+  }
+
+  await shell.openPath(path);
 }
 
 async function getFrontmostApplicationBundleId() {
@@ -939,7 +951,7 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('launcher:open-path', async (_event, path: string) => {
     mainWindow?.hide();
-    await shell.openPath(path);
+    await openLauncherTarget(path);
   });
 
   ipcMain.handle(
