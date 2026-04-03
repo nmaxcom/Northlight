@@ -177,10 +177,6 @@ async function capturePreviouslyActiveApplication() {
     return;
   }
 
-  if (bundleId === app.getBundleID()) {
-    return;
-  }
-
   lastExternalAppBundleId = bundleId;
 }
 
@@ -342,7 +338,7 @@ async function showLauncher() {
   blurSuppressionDeadline = createBlurSuppressionDeadline(Date.now());
   positionLauncherWindow();
   if (platform === 'darwin') {
-    await capturePreviouslyActiveApplication();
+    await capturePreviouslyActiveApplication().catch(() => {});
     app.focus({ steal: true });
   }
   mainWindow.moveTop();
