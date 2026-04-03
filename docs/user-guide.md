@@ -23,6 +23,7 @@ Current built-in capabilities:
 - Copy a conversion result with `Enter`.
 - Search saved aliases and snippets.
 - Search recent clipboard history when clipboard tracking is enabled.
+- Open major macOS System Settings destinations directly from search, including System Settings, Keyboard, Privacy & Security, Displays, Wi-Fi, Bluetooth, Sound, Notifications, Wallpaper, Battery, Network, Spotlight, and Accessibility.
 - Show an inline preview pane for the selected result.
 - Open a dedicated settings window to manage ranking, preview, scopes, aliases, snippets, and clipboard history.
 
@@ -54,6 +55,7 @@ Current built-in capabilities:
 - Type at least 2 characters for local file, folder, and app search.
 - Exact and prefix matches rank above loose path matches.
 - Apps are ranked above low-value system matches when names compete.
+- Direct app-name intent is ranked ahead of noisy support files and app-bundle resources, so queries like `text`, `preview`, `notes`, and `safari` favor the corresponding app when available.
 - macOS local recall is hybrid: Spotlight supplies broad candidates, then Northlight reranks them with personal signals from its local catalog.
 - Aliases rank above generic fuzzy matches when the trigger matches exactly.
 - Snippets and clipboard items can participate in search without overriding stronger file or app matches for broad queries.
@@ -62,6 +64,7 @@ Current built-in capabilities:
 - Scope refiners let you narrow broad queries with `in:downloads`, `in:documents`, `in:desktop`, `in:library`, `in:home`, or a concrete path such as `in:/Users/nm4/STUFF/Coding/Northlight` or `in:~/Documents`.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
 - `today` means modified on the current local calendar day, `yesterday` means the previous local calendar day, and `recent` means the last 7 days by modification time.
+- Common macOS settings terms such as `settings`, `system preferences`, `keyboard`, `privacy`, `security`, `display`, `wifi`, `bluetooth`, `sound`, `notifications`, `wallpaper`, `battery`, `network`, `spotlight`, and `accessibility` surface direct settings commands in the root results.
 - The launcher shows active refiner chips below the search box so you can confirm exactly what Northlight parsed.
 - Intent refiners are only recognized as trailing standalone terms, so literal names like `img-tools` keep searching as plain text.
 - For a full user guide to search refiners, examples, and combinations, see `docs/search-refiners-guide.md`.

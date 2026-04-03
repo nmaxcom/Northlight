@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { baseSearchScore } from './scoring';
+import { baseSearchScore, composedSearchScore } from './scoring';
 
 describe('baseSearchScore', () => {
   it('matches app abbreviations', () => {
@@ -25,5 +25,31 @@ describe('baseSearchScore', () => {
     });
 
     expect(exact).toBeGreaterThan(fuzzy);
+  });
+
+  it('keeps direct app intent above noisy files under Applications', () => {
+    const app = composedSearchScore(
+      'text',
+      {
+        name: 'TextEdit.app',
+        path: '/Applications/TextEdit.app',
+        kind: 'app',
+        score: 88
+      },
+      { appFirstEnabled: true }
+    );
+
+    const noisyFile = composedSearchScore(
+      'text',
+      {
+        name: 'Text.tpl',
+        path: '/Applications/Adobe Photoshop 2026/Presets/Tools/Text.tpl',
+        kind: 'file',
+        score: 132
+      },
+      { appFirstEnabled: true }
+    );
+
+    expect(app).toBeGreaterThan(noisyFile);
   });
 });

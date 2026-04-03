@@ -204,6 +204,16 @@ export type ActionDescriptor =
       group?: string;
       feedbackLabel?: string;
       dismissOnRun?: boolean;
+    }
+  | {
+      id: 'open-system-settings';
+      label: string;
+      hint: string;
+      group?: string;
+      feedbackLabel?: string;
+      dismissOnRun?: boolean;
+      url: string;
+      fallbackLabel?: string;
     };
 
 export type LauncherStatus = {
@@ -314,6 +324,7 @@ export type LauncherBridge = {
   saveSettings: (settings: LauncherSettings) => Promise<LauncherSettings>;
   getClipboardHistory: () => Promise<ClipboardEntry[]>;
   openSettings: () => Promise<void>;
+  openSystemSettings?: (url: string) => Promise<void>;
   getPathPreview: (path: string, kind: LocalSearchItem['kind'], requestId?: string) => Promise<LauncherPreview | null>;
   getPathIcon: (path: string, requestId?: string) => Promise<string | null>;
   getPathIcons?: (paths: string[], requestId?: string) => Promise<Record<string, string | null>>;

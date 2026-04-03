@@ -2,7 +2,7 @@ import { clearRankStore, recordSelection } from './adaptiveRanking';
 import { matchesLocalIntent, searchIntentKey } from './intentParser';
 import { fileFixtures } from './mockData';
 import { adaptiveRankBoost } from './adaptiveRanking';
-import { baseSearchScore } from './scoring';
+import { composedSearchScore } from './scoring';
 import { resolveLauncherShortcut } from '../shortcuts';
 import { modifiedAtMatchesIntentTime, pathMatchesIntentScope } from './intentScope';
 import type { ClipboardEntry, LauncherPreview, LauncherSettings, LauncherStatus, LocalSearchItem, SearchIntent } from './types';
@@ -82,10 +82,7 @@ function rankItems(query: string, items: LocalSearchItem[], intent?: SearchInten
     .filter((item) => modifiedAtMatchesIntentTime(item.modifiedAt, intent?.timeToken))
     .map((item) => ({
       ...item,
-      score:
-        Math.max(item.score, baseSearchScore(query, item)) +
-        adaptiveRankBoost(item.path) +
-        (settingsCache.appFirstEnabled && item.kind === 'app' ? 18 : 0)
+      score: composedSearchScore(query, item, { appFirstEnabled: settingsCache.appFirstEnabled }) + adaptiveRankBoost(item.path)
     }))
     .filter((item) => item.score > 0)
     .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name))
@@ -234,6 +231,9 @@ export const launcherRuntime = {
   },
   openSettings() {
     return window.launcher?.openSettings?.() ?? Promise.resolve();
+  },
+  openSystemSettings(url: string) {
+    return window.launcher?.openSystemSettings?.(url) ?? Promise.resolve();
   },
   getPathPreview(path: string, kind: LocalSearchItem['kind'], requestId?: string): Promise<LauncherPreview | null> {
     const cacheEntry = previewCache.get(`${kind}:${path}`);

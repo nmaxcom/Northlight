@@ -995,6 +995,14 @@ app.whenReady().then(async () => {
   ipcMain.handle('launcher:open-settings', async () => {
     openSettingsWindow();
   });
+  ipcMain.handle('launcher:open-system-settings', async (_event, url: string) => {
+    hideLauncher();
+    try {
+      await runOpenCommand([url]);
+    } catch {
+      await runOpenCommand(['/System/Applications/System Settings.app']);
+    }
+  });
   ipcMain.handle('launcher:get-path-preview', async (_event, path: string, kind: LocalSearchItem['kind'], requestId?: string) =>
     getPathPreview(path, kind, requestId || nextRequestId('preview'))
   );

@@ -21,6 +21,10 @@ function basename(path: string) {
   return segments.at(-1) ?? path;
 }
 
+function pathDepth(path: string) {
+  return path.split('/').filter(Boolean).length;
+}
+
 function buildAcronym(value: string) {
   return splitTokens(value)
     .map((token) => token[0] ?? '')
@@ -86,4 +90,72 @@ export function baseSearchScore(query: string, item: Pick<LocalSearchItem, 'name
   }
 
   return score;
+}
+
+function providerCarryScore(score: number, hasDirectTextualMatch: boolean) {
+  const capped = Math.max(0, Math.min(score, hasDirectTextualMatch ? 28 : 72));
+  return capped;
+}
+
+function bundleNoisePenalty(item: Pick<LocalSearchItem, 'path' | 'kind'>) {
+  if (item.kind === 'app') {
+    return 0;
+  }
+
+  const loweredPath = item.path.toLowerCase();
+
+  if (loweredPath.includes('.app/contents/')) {
+    return 36;
+  }
+
+  if (loweredPath.startsWith('/applications/') && pathDepth(loweredPath) > 2) {
+    return 28;
+  }
+
+  if (
+    loweredPath.includes('/library/application support/') ||
+    loweredPath.includes('/library/containers/') ||
+    loweredPath.includes('/library/group containers/')
+  ) {
+    return 18;
+  }
+
+  return 0;
+}
+
+function appIntentBonus(baseScore: number, item: Pick<LocalSearchItem, 'kind'>, appFirstEnabled: boolean) {
+  if (item.kind !== 'app') {
+    return 0;
+  }
+
+  let bonus = 0;
+
+  if (baseScore >= 150) {
+    bonus += 18;
+  } else if (baseScore >= 126) {
+    bonus += 14;
+  } else if (baseScore >= 104) {
+    bonus += 8;
+  }
+
+  if (appFirstEnabled) {
+    bonus += 12;
+  }
+
+  return bonus;
+}
+
+export function composedSearchScore(
+  query: string,
+  item: Pick<LocalSearchItem, 'name' | 'path' | 'kind' | 'score'>,
+  options: { appFirstEnabled?: boolean } = {}
+) {
+  const baseScore = baseSearchScore(query, item);
+  const carryScore = providerCarryScore(item.score, baseScore > 0);
+
+  if (baseScore === 0 && carryScore === 0) {
+    return 0;
+  }
+
+  return Math.max(0, baseScore + carryScore + appIntentBonus(baseScore, item, options.appFirstEnabled ?? false) - bundleNoisePenalty(item));
 }

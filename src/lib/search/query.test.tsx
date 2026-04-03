@@ -2,6 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildConversionResult, buildImmediateResults, buildResults } from './query';
 import { launcherRuntime } from './runtime';
 
+function installLocalSearchResults(results: Array<{ id: string; path: string; name: string; kind: 'file' | 'folder' | 'app'; score: number }>) {
+  window.launcher = {
+    searchLocal: vi.fn().mockResolvedValue(results),
+    getClipboardHistory: vi.fn().mockResolvedValue([])
+  } as never;
+}
+
 describe('buildResults', () => {
   beforeEach(() => {
     window.launcher = undefined;
@@ -54,6 +61,34 @@ describe('buildResults', () => {
     expect(results.some((result) => result.title === 'BetterTouchTool.app')).toBe(true);
   });
 
+  it('returns system settings commands for common launcher queries', async () => {
+    const settings = await buildResults('settings');
+    const keyboard = await buildResults('keyboard');
+    const privacy = await buildResults('privacy');
+    const display = await buildResults('display');
+    const wifi = await buildResults('wifi');
+    const prefs = await buildResults('prefs');
+
+    expect(settings[0]?.title).toBe('Open System Settings');
+    expect(settings.some((result) => result.title === 'Open Northlight Settings')).toBe(true);
+    expect(prefs.some((result) => result.title === 'Open Northlight Settings')).toBe(true);
+    expect(keyboard[0]?.title).toBe('Open Keyboard Settings');
+    expect(privacy[0]?.title).toBe('Open Privacy & Security Settings');
+    expect(display[0]?.title).toBe('Open Display Settings');
+    expect(wifi[0]?.title).toBe('Open Wi-Fi Settings');
+  });
+
+  it('supports broad macOS settings vocabulary beyond the basic examples', async () => {
+    expect((await buildResults('system preferences'))[0]?.title).toBe('Open System Settings');
+    expect((await buildResults('bluetooth'))[0]?.title).toBe('Open Bluetooth Settings');
+    expect((await buildResults('sound'))[0]?.title).toBe('Open Sound Settings');
+    expect((await buildResults('notifications'))[0]?.title).toBe('Open Notifications Settings');
+    expect((await buildResults('wallpaper'))[0]?.title).toBe('Open Wallpaper Settings');
+    expect((await buildResults('battery'))[0]?.title).toBe('Open Battery Settings');
+    expect((await buildResults('spotlight'))[0]?.title).toBe('Open Spotlight Settings');
+    expect((await buildResults('accessibility'))[0]?.title).toBe('Open Accessibility Settings');
+  });
+
   it('promotes repeatedly chosen results above similar matches', async () => {
     launcherRuntime.recordSelection('/Applications/BetterTouchTool.app');
     launcherRuntime.recordSelection('/Applications/BetterTouchTool.app');
@@ -68,6 +103,108 @@ describe('buildResults', () => {
     const folderResult = results.find((result) => result.title === 'steel-moodboard');
 
     expect(folderResult?.actions.some((action) => action.label === 'Open In Terminal')).toBe(true);
+  });
+
+  it('keeps direct app intent above noisy files inside app support paths', async () => {
+    installLocalSearchResults([
+      {
+        id: '/Applications/Adobe Photoshop 2026/Presets/Tools/Text.tpl',
+        path: '/Applications/Adobe Photoshop 2026/Presets/Tools/Text.tpl',
+        name: 'Text.tpl',
+        kind: 'file',
+        score: 184
+      },
+      {
+        id: '/Applications/Utilities/Adobe Creative Cloud/Components/CCX/preview/text.jsx',
+        path: '/Applications/Utilities/Adobe Creative Cloud/Components/CCX/preview/text.jsx',
+        name: 'text.jsx',
+        kind: 'file',
+        score: 176
+      },
+      {
+        id: '/Applications/TextEdit.app',
+        path: '/Applications/TextEdit.app',
+        name: 'TextEdit.app',
+        kind: 'app',
+        score: 120
+      }
+    ]);
+
+    const results = await buildResults('text');
+
+    expect(results[0]?.title).toBe('TextEdit.app');
+  });
+
+  it('keeps common app queries ahead of similarly named files', async () => {
+    installLocalSearchResults([
+      {
+        id: '/Applications/Preview.app',
+        path: '/Applications/Preview.app',
+        name: 'Preview.app',
+        kind: 'app',
+        score: 112
+      },
+      {
+        id: '/Users/nm4/Design/preview.png',
+        path: '/Users/nm4/Design/preview.png',
+        name: 'preview.png',
+        kind: 'file',
+        score: 168
+      },
+      {
+        id: '/Applications/Safari.app',
+        path: '/Applications/Safari.app',
+        name: 'Safari.app',
+        kind: 'app',
+        score: 104
+      },
+      {
+        id: '/Users/nm4/STUFF/Coding/site/safari.css',
+        path: '/Users/nm4/STUFF/Coding/site/safari.css',
+        name: 'safari.css',
+        kind: 'file',
+        score: 162
+      },
+      {
+        id: '/Applications/Notes.app',
+        path: '/Applications/Notes.app',
+        name: 'Notes.app',
+        kind: 'app',
+        score: 110
+      },
+      {
+        id: '/Users/nm4/Documents/notes.md',
+        path: '/Users/nm4/Documents/notes.md',
+        name: 'notes.md',
+        kind: 'file',
+        score: 158
+      }
+    ]);
+
+    expect((await buildResults('preview'))[0]?.title).toBe('Preview.app');
+    expect((await buildResults('safari'))[0]?.title).toBe('Safari.app');
+    expect((await buildResults('notes'))[0]?.title).toBe('Notes.app');
+  });
+
+  it('keeps direct app intent above noisy support files under Library containers', async () => {
+    installLocalSearchResults([
+      {
+        id: '/Users/nm4/Library/Application Support/TextExpander/preview-text-template.txt',
+        path: '/Users/nm4/Library/Application Support/TextExpander/preview-text-template.txt',
+        name: 'preview-text-template.txt',
+        kind: 'file',
+        score: 176
+      },
+      {
+        id: '/Applications/TextEdit.app',
+        path: '/Applications/TextEdit.app',
+        name: 'TextEdit.app',
+        kind: 'app',
+        score: 108
+      }
+    ]);
+
+    expect((await buildResults('textedit'))[0]?.title).toBe('TextEdit.app');
   });
 
   it('filters local results to folders when the query ends with a slash', async () => {

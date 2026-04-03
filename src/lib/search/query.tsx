@@ -4,6 +4,7 @@ import { buildDeterministicResult } from './calculations';
 import { parseIntentQuery } from './intentParser';
 import { launcherRuntime } from './runtime';
 import { normalizeSearchText } from './scoring';
+import { buildSystemSettingsCommandResults } from './systemSettings';
 import type { AliasEntry, ClipboardEntry, LauncherResult, LocalSearchItem, SnippetEntry } from './types';
 
 export type QueryContext = {
@@ -170,6 +171,13 @@ function buildSettingsCommandResult(query: string): LauncherResult[] {
       ]
     }
   ];
+}
+
+function withCommandIcons(results: LauncherResult[]) {
+  return results.map((result) => ({
+    ...result,
+    icon: result.icon ?? iconForKind('command')
+  }));
 }
 
 function buildSnippetResult(snippet: SnippetEntry, score: number): LauncherResult {
@@ -356,6 +364,7 @@ export function buildImmediateResults(query: string, context: QueryContext = {})
 
   return [
     ...buildAliasResults(trimmed),
+    ...withCommandIcons(buildSystemSettingsCommandResults(trimmed)),
     ...buildSettingsCommandResult(trimmed),
     ...buildCalculationResults(trimmed),
     ...buildSnippetResults(trimmed),
@@ -384,6 +393,7 @@ export async function buildResults(query: string, context: QueryContext = {}): P
 
   return [
     ...buildAliasResults(trimmed),
+    ...withCommandIcons(buildSystemSettingsCommandResults(trimmed)),
     ...buildSettingsCommandResult(trimmed),
     ...buildCalculationResults(trimmed),
     ...buildSnippetResults(trimmed),

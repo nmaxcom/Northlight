@@ -14,6 +14,7 @@ const launcherApi = {
   saveSettings: (settings: LauncherSettings) => ipcRenderer.invoke('launcher:save-settings', settings),
   getClipboardHistory: () => ipcRenderer.invoke('launcher:get-clipboard-history'),
   openSettings: () => ipcRenderer.invoke('launcher:open-settings'),
+  openSystemSettings: (url: string) => ipcRenderer.invoke('launcher:open-system-settings', url),
   getPathPreview: (path: string, kind: 'file' | 'folder' | 'app', requestId?: string) =>
     ipcRenderer.invoke('launcher:get-path-preview', path, kind, requestId),
   getPathIcon: (path: string, requestId?: string) => ipcRenderer.invoke('launcher:get-path-icon', path, requestId),

@@ -22,7 +22,7 @@ describe('LauncherBar', () => {
 
     expect(screen.getByLabelText('Launcher query')).toBeInTheDocument();
     expect(screen.getByText('Start from recent context')).toBeInTheDocument();
-    await screen.findByText('10 indexed');
+    await screen.findByText('14 indexed');
     expect(screen.getByText('v0.8.9')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /actions/i })).toBeDisabled();
   });
@@ -261,7 +261,7 @@ describe('LauncherBar', () => {
     );
 
     const input = screen.getByLabelText('Launcher query');
-    await screen.findByText('10 indexed');
+    await screen.findByText('14 indexed');
     fireEvent.mouseDown(document.querySelector('[data-results-scroll="true"]')!);
 
     expect(input).toHaveFocus();
@@ -275,7 +275,7 @@ describe('LauncherBar', () => {
     );
 
     const input = screen.getByLabelText('Launcher query');
-    await screen.findByText('10 indexed');
+    await screen.findByText('14 indexed');
 
     fireEvent.keyDown(window, { key: 'Tab' });
 
@@ -320,7 +320,7 @@ describe('LauncherBar', () => {
     );
 
     const input = screen.getByLabelText('Launcher query');
-    await screen.findByText('10 indexed');
+    await screen.findByText('14 indexed');
     fireEvent.change(input, { target: { value: 'steel' } });
 
     await waitFor(() => {

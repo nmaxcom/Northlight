@@ -120,6 +120,18 @@ export function buildOpenSettingsActionDescriptor(): ActionDescriptor {
   };
 }
 
+export function buildOpenSystemSettingsActionDescriptor(label: string, url: string): ActionDescriptor {
+  return {
+    id: 'open-system-settings',
+    label,
+    hint: 'Enter',
+    group: 'Open',
+    dismissOnRun: true,
+    feedbackLabel: 'Opened System Settings',
+    url
+  };
+}
+
 export function resolveActionDescriptor(descriptor: ActionDescriptor): LauncherAction {
   switch (descriptor.id) {
     case 'open':
@@ -236,6 +248,16 @@ export function resolveActionDescriptor(descriptor: ActionDescriptor): LauncherA
         group: descriptor.group,
         feedbackLabel: descriptor.feedbackLabel,
         run: () => launcherRuntime.openSettings()
+      };
+    case 'open-system-settings':
+      return {
+        id: descriptor.id,
+        label: descriptor.label,
+        hint: descriptor.hint,
+        group: descriptor.group,
+        feedbackLabel: descriptor.feedbackLabel,
+        dismissOnRun: descriptor.dismissOnRun,
+        run: () => launcherRuntime.openSystemSettings(descriptor.url)
       };
   }
 }
