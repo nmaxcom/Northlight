@@ -6,6 +6,7 @@ import { baseSearchScore } from './scoring';
 import { resolveLauncherShortcut } from '../shortcuts';
 import { modifiedAtMatchesIntentTime, pathMatchesIntentScope } from './intentScope';
 import type { ClipboardEntry, LauncherPreview, LauncherSettings, LauncherStatus, LocalSearchItem, SearchIntent } from './types';
+import { DEFAULT_LAUNCHER_THEME_ID } from '../../launcherTheme';
 import type {
   LauncherTraceDump,
   LauncherTraceDumpFile,
@@ -36,6 +37,7 @@ const defaultSettings: LauncherSettings = {
     { id: 'scope-4', path: '/Users/nm4/Downloads', enabled: true },
     { id: 'scope-5', path: '/Users/nm4/STUFF/Coding', enabled: true }
   ],
+  launcherThemeId: DEFAULT_LAUNCHER_THEME_ID,
   watchFsChangesEnabled: true,
   previewEnabled: true,
   clipboardHistoryEnabled: true,

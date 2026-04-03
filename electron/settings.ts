@@ -3,6 +3,7 @@ import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { ClipboardEntry, LauncherSettings, ScopeEntry, SnippetEntry, AliasEntry } from '../src/lib/search/types';
+import { DEFAULT_LAUNCHER_THEME_ID, normalizeLauncherThemeId } from '../src/launcherTheme';
 import { recordTrace } from './diagnostics';
 
 type LauncherState = {
@@ -38,6 +39,7 @@ const DEFAULT_SETTINGS: LauncherSettings = {
   aliases: DEFAULT_ALIASES,
   snippets: DEFAULT_SNIPPETS,
   scopes: DEFAULT_SCOPE_PATHS.map((path, index) => ({ id: `scope-${index}`, path, enabled: true })),
+  launcherThemeId: DEFAULT_LAUNCHER_THEME_ID,
   watchFsChangesEnabled: true,
   previewEnabled: true,
   clipboardHistoryEnabled: true,
@@ -180,6 +182,7 @@ function normalizeSettings(input?: Partial<LauncherSettings>): LauncherSettings 
     aliases: normalizeAliases(input?.aliases),
     snippets: normalizeSnippets(input?.snippets),
     scopes: normalizeScopes(input?.scopes),
+    launcherThemeId: normalizeLauncherThemeId(input?.launcherThemeId),
     watchFsChangesEnabled: input?.watchFsChangesEnabled ?? DEFAULT_SETTINGS.watchFsChangesEnabled,
     previewEnabled: input?.previewEnabled ?? DEFAULT_SETTINGS.previewEnabled,
     clipboardHistoryEnabled: input?.clipboardHistoryEnabled ?? DEFAULT_SETTINGS.clipboardHistoryEnabled,

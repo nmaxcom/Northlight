@@ -11,6 +11,7 @@ import type {
 import { parseIntentQuery } from '../lib/search/intentParser';
 import { buildImmediateResults, buildResults } from '../lib/search/query';
 import { launcherRuntime } from '../lib/search/runtime';
+import { getLauncherTheme, getLauncherThemeStyle, getNextLauncherThemeId } from '../launcherTheme';
 import classes from './LauncherBar.module.css';
 
 const shortcutLabelMap: Record<string, string> = {
@@ -186,6 +187,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   });
   const [iconUrls, setIconUrls] = useState<Record<string, string | null>>(mockState?.iconUrls ?? {});
   const activeRefiners = useMemo(() => parseIntentQuery(query).intent?.matchedTokens ?? [], [query]);
+  const activeTheme = useMemo(() => getLauncherTheme(settings.launcherThemeId), [settings.launcherThemeId]);
   const selectedResult = results[selectedIndex];
   const filteredActions = useMemo(
     () => (selectedResult?.actions ?? []).filter((action) => actionMatches(action, actionQuery)),
@@ -856,6 +858,22 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     };
   }, [iconUrls, isMock, nextTraceRequestId, results, traceEvent]);
 
+  const toggleLauncherTheme = useCallback(() => {
+    setSettings((current) => {
+      const nextSettings = {
+        ...current,
+        launcherThemeId: getNextLauncherThemeId(current.launcherThemeId)
+      };
+
+      if (!isMock) {
+        void launcherRuntime.saveSettings(nextSettings).then(setSettings).catch(() => undefined);
+      }
+
+      return nextSettings;
+    });
+    focusActiveInput();
+  }, [focusActiveInput, isMock]);
+
   useEffect(() => {
     if (isMock) {
       return;
@@ -1017,7 +1035,9 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   return (
     <div
       className={classes.window}
+      data-launcher-theme={activeTheme.id}
       data-pointer-active={isPointerActive ? 'true' : 'false'}
+      style={getLauncherThemeStyle(activeTheme.id)}
       onFocusCapture={(event) => {
         const target = event.target as HTMLElement;
         const activeInput = isActionsOpen ? actionInputRef.current : inputRef.current;
@@ -1045,7 +1065,22 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     >
       <section className={classes.shell}>
         <header className={classes.header}>
-          <div className={classes.brand}>Northlight</div>
+          <div className={classes.headerLeft}>
+            <div className={classes.brand}>Northlight</div>
+            <button
+              type="button"
+              className={classes.themeSwitch}
+              aria-label={`Switch launcher theme. Current theme ${activeTheme.label}`}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                focusActiveInput();
+              }}
+              onClick={toggleLauncherTheme}
+            >
+              <span className={classes.themeSwitchLabel}>Theme</span>
+              <span className={classes.themeSwitchValue}>{activeTheme.label}</span>
+            </button>
+          </div>
           <div className={classes.status}>
             <div className={classes.badge}>v{status.appVersion}</div>
             <div className={classes.badge}>{status.searchMode === 'hybrid' ? 'hybrid' : status.searchMode ?? 'catalog'}</div>

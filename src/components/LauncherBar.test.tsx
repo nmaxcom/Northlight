@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LauncherBar } from './LauncherBar';
 import { launcherRuntime } from '../lib/search/runtime';
 import { theme } from '../theme';
+import type { LauncherSettings } from '../lib/search/types';
 
 describe('LauncherBar', () => {
   beforeEach(() => {
@@ -26,6 +27,41 @@ describe('LauncherBar', () => {
     expect(screen.getByRole('button', { name: /actions/i })).toBeDisabled();
   });
 
+  it('falls back to the original launcher theme when settings contain an unknown theme id', async () => {
+    const invalidSettings = {
+      ...launcherRuntime.getSettingsSnapshot(),
+      launcherThemeId: 'broken-theme'
+    } as unknown as LauncherSettings;
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.8',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(invalidSettings),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      trashPath: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    await screen.findByText('10 indexed');
+    expect(document.querySelector('[data-launcher-theme="original"]')).toBeTruthy();
+  });
+
   it('shows fixture results and updates the bottom bar for the selected row', async () => {
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
@@ -45,6 +81,52 @@ describe('LauncherBar', () => {
     expect(scrollContainer?.getAttribute('tabindex')).toBeNull();
     expect(screen.getAllByText('Open File').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /actions cmd k/i })).toBeEnabled();
+  });
+
+  it('switches launcher themes from the header without clearing the active query or results', async () => {
+    const saveSettings = vi.fn().mockImplementation(async (settings) => settings);
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.8',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      saveSettings,
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      trashPath: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'product' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('product-brief.md').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /switch launcher theme/i }));
+
+    expect(input).toHaveValue('product');
+    expect(screen.getAllByText('product-brief.md').length).toBeGreaterThan(0);
+    expect(document.querySelector('[data-launcher-theme="sandbox"]')).toBeTruthy();
+    await waitFor(() => {
+      expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ launcherThemeId: 'sandbox' }));
+    });
   });
 
   it('shows a conversion result immediately for deterministic input', async () => {

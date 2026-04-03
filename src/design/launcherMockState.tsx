@@ -31,6 +31,7 @@ const settings: LauncherSettings = {
   aliases: [],
   snippets: [],
   scopes: [],
+  launcherThemeId: 'sandbox',
   watchFsChangesEnabled: true,
   previewEnabled: true,
   clipboardHistoryEnabled: true,

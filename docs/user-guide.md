@@ -39,6 +39,7 @@ Current built-in capabilities:
 - When you dismiss the launcher without opening another target, Northlight now re-activates the app that was frontmost before the launcher opened, so you can keep typing in the previous window immediately.
 - Keyboard launch, typing, and live result refreshes now ignore the cursor's resting position until you actually move or use the mouse inside the launcher, so `Enter` keeps targeting the keyboard-selected result and stale hover highlights disappear as soon as you resume typing.
 - The top-right status area shows the app version, indexed item count, and current index state.
+- Clicking the `Theme` chip in the launcher header toggles between the fixed `Original` theme and the duplicated `Sandbox` theme for fast visual comparison.
 - The launcher keeps a single active focus model: `Tab` and stray focus events do not move focus away from the active input for the current mode.
 - A persistent bottom bar always shows the primary action for the current result and an `Actions` trigger.
 - `Cmd+,` opens the Northlight settings window.

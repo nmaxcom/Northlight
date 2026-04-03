@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { LauncherThemeId } from '../../launcherTheme';
 
 export type ResultKind = 'file' | 'folder' | 'conversion' | 'app' | 'command' | 'clipboard' | 'snippet' | 'alias';
 export type SearchProviderKind = 'spotlight' | 'catalog' | 'deterministic' | 'targeted';
@@ -43,6 +44,7 @@ export type LauncherSettings = {
   aliases: AliasEntry[];
   snippets: SnippetEntry[];
   scopes: ScopeEntry[];
+  launcherThemeId: LauncherThemeId;
   watchFsChangesEnabled: boolean;
   previewEnabled: boolean;
   clipboardHistoryEnabled: boolean;
