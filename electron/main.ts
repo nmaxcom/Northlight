@@ -34,7 +34,6 @@ let registeredLauncherShortcut: string | null = null;
 let launcherSettingsCache = getLauncherStateSnapshot().settings;
 let blurSuppressionDeadline = 0;
 let pendingLauncherPositionSave: ReturnType<typeof setTimeout> | null = null;
-let lastExternalAppBundleId: string | null = null;
 const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 const textPreviewExtensions = new Set([
@@ -163,43 +162,6 @@ async function openLauncherTarget(path: string) {
   }
 
   await shell.openPath(path);
-}
-
-async function getFrontmostApplicationBundleId() {
-  if (platform !== 'darwin') {
-    return null;
-  }
-
-  const bundleId = await runCommandOutput('osascript', ['-e', 'id of application (path to frontmost application as text)']).catch(() => '');
-  const trimmed = bundleId.trim();
-  return trimmed || null;
-}
-
-async function activateApplicationByBundleId(bundleId: string) {
-  if (platform !== 'darwin' || !bundleId) {
-    return;
-  }
-
-  await runCommand('osascript', ['-e', `tell application id "${bundleId}" to activate`]).catch(() => {});
-}
-
-async function capturePreviouslyActiveApplication() {
-  const bundleId = await getFrontmostApplicationBundleId();
-  if (!bundleId) {
-    return;
-  }
-
-  lastExternalAppBundleId = bundleId;
-}
-
-async function restorePreviouslyActiveApplication() {
-  const bundleId = lastExternalAppBundleId;
-  lastExternalAppBundleId = null;
-  if (!bundleId) {
-    return;
-  }
-
-  await activateApplicationByBundleId(bundleId);
 }
 
 async function getPlistValue(plistPath: string, key: string) {
@@ -350,7 +312,6 @@ async function showLauncher() {
   blurSuppressionDeadline = createBlurSuppressionDeadline(Date.now());
   positionLauncherWindow();
   if (platform === 'darwin') {
-    await capturePreviouslyActiveApplication().catch(() => {});
     app.focus({ steal: true });
   }
   mainWindow.moveTop();
@@ -359,19 +320,12 @@ async function showLauncher() {
   mainWindow.webContents.focus();
 }
 
-function hideLauncher({ restorePreviousApp = true }: { restorePreviousApp?: boolean } = {}) {
+function hideLauncher() {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return;
   }
 
   mainWindow.hide();
-
-  if (restorePreviousApp) {
-    void restorePreviouslyActiveApplication();
-    return;
-  }
-
-  lastExternalAppBundleId = null;
 }
 
 function loadRenderer(targetWindow: BrowserWindow, view: 'launcher' | 'settings') {
@@ -1056,27 +1010,27 @@ app.whenReady().then(async () => {
     );
   });
   ipcMain.handle('launcher:quick-look-path', async (_event, path: string) => {
-    hideLauncher({ restorePreviousApp: false });
+    hideLauncher();
     quickLookPath(path);
   });
 
   ipcMain.handle('launcher:reveal-path', async (_event, path: string) => {
-    hideLauncher({ restorePreviousApp: false });
+    hideLauncher();
     await runOpenCommand(['-R', path]);
   });
 
   ipcMain.handle('launcher:open-in-terminal', async (_event, path: string) => {
-    hideLauncher({ restorePreviousApp: false });
+    hideLauncher();
     await runOpenCommand(['-a', 'Terminal', path]);
   });
 
   ipcMain.handle('launcher:open-with-text-edit', async (_event, path: string) => {
-    hideLauncher({ restorePreviousApp: false });
+    hideLauncher();
     await runOpenCommand(['-a', 'TextEdit', path]);
   });
 
   ipcMain.handle('launcher:trash-path', async (_event, path: string) => {
-    hideLauncher({ restorePreviousApp: false });
+    hideLauncher();
     await shell.trashItem(path);
   });
 
