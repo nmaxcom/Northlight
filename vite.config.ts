@@ -12,7 +12,9 @@ export default defineConfig({
       input: {
         app: resolve(__dirname, 'index.html'),
         launcherCurrentView: resolve(__dirname, 'design/launcher-current-view.html'),
-        settingsCurrentView: resolve(__dirname, 'design/settings-current-view.html')
+        launcherCurrentViewFrame: resolve(__dirname, 'design/launcher-current-view-frame.html'),
+        settingsCurrentView: resolve(__dirname, 'design/settings-current-view.html'),
+        settingsCurrentViewFrame: resolve(__dirname, 'design/settings-current-view-frame.html')
       }
     }
   },
