@@ -4,6 +4,7 @@ import { MantineProvider } from '@mantine/core';
 import { LauncherBar } from '../components/LauncherBar';
 import { launcherCurrentViewMock } from './launcherMockState';
 import '../styles/global.css';
+import '../styles/launcher-sandbox.css';
 import '@mantine/core/styles.css';
 import { theme } from '../theme';
 

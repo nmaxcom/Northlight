@@ -47,6 +47,7 @@ Current built-in capabilities:
 - Clicking away from the launcher hides it again.
 - The launcher mockup in `design/launcher-current-view.html` is calibrated to the native launcher content size of `1120×760` for visual design checks.
 - `npm run design` serves the shared renderer mockups, prints the available design URLs in the terminal, and exposes an index at `/design/`.
+- The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css), so you can edit that real file from Chrome DevTools `Sources` while the launcher or design mockup is open.
 
 ## Search Behavior
 

@@ -1,0 +1,28 @@
+/*
+  Sandbox-only launcher overrides.
+
+  Keep visual experiments for the duplicated Sandbox theme here.
+  This file is loaded by both the real launcher renderer and the shared
+  launcher design route, so Chrome DevTools shows it as a normal source.
+*/
+
+[data-launcher-theme='sandbox'] {
+  /*
+    Override launcher theme tokens here, for example:
+
+    --launcher-window-border: transparent;
+    --launcher-window-bg: linear-gradient(180deg, #101318, #060708);
+    --launcher-badge-bg: #161c24;
+    --launcher-text: #f3f5f7;
+  */
+}
+
+[data-launcher-theme='sandbox'] .themeSwitch {
+  /*
+    Sandbox-specific component overrides are also allowed here, for example:
+
+    border: none;
+    background: transparent;
+    font-family: "IBM Plex Sans", sans-serif;
+  */
+}
