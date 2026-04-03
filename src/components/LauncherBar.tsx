@@ -298,6 +298,14 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     window.requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
   }, []);
 
+  const handleQueryChange = useCallback(
+    (nextQuery: string) => {
+      resetPointerSelection();
+      setQuery(nextQuery);
+    },
+    [resetPointerSelection]
+  );
+
   const showFeedback = useCallback((tone: 'success' | 'error', message: string) => {
     setFeedback({ tone, message });
     window.clearTimeout((showFeedback as typeof showFeedback & { timer?: number }).timer);
@@ -1063,7 +1071,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
             placeholder="Search files, folders, apps, or type 30mph to kmh"
             autoComplete="off"
             spellCheck={false}
-            onChange={(event) => setQuery(event.currentTarget.value)}
+            onChange={(event) => handleQueryChange(event.currentTarget.value)}
           />
           <div className={classes.searchArrow}>→</div>
         </section>
