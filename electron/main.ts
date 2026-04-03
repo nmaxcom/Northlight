@@ -318,6 +318,7 @@ async function showLauncher() {
   mainWindow.show();
   mainWindow.focus();
   mainWindow.webContents.focus();
+  mainWindow.webContents.send('launcher:visibility-changed', true);
 }
 
 function hideLauncher() {
@@ -326,6 +327,7 @@ function hideLauncher() {
   }
 
   mainWindow.hide();
+  mainWindow.webContents.send('launcher:visibility-changed', false);
 
   if (platform === 'darwin') {
     app.hide();
@@ -1039,11 +1041,6 @@ app.whenReady().then(async () => {
   ipcMain.handle('launcher:open-with-text-edit', async (_event, path: string) => {
     hideLauncher();
     await runOpenCommand(['-a', 'TextEdit', path]);
-  });
-
-  ipcMain.handle('launcher:trash-path', async (_event, path: string) => {
-    hideLauncher();
-    await shell.trashItem(path);
   });
 
   ipcMain.handle('launcher:hide', () => {

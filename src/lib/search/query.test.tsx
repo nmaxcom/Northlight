@@ -32,6 +32,10 @@ describe('buildResults', () => {
     await expect(buildResults('   ')).resolves.toEqual([]);
   });
 
+  it('returns no immediate results for empty input', () => {
+    expect(buildImmediateResults('   ')).toEqual([]);
+  });
+
   it('keeps conversion results ahead of local results', async () => {
     const results = await buildResults('30mph to kmh');
 

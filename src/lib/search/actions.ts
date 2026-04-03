@@ -39,15 +39,6 @@ export function buildLocalActionDescriptors(item: Pick<LocalSearchItem, 'path' |
       dismissOnRun: true,
       feedbackLabel: 'Copied name',
       text: item.name
-    },
-    {
-      id: 'trash',
-      label: 'Move To Trash',
-      hint: 'Cmd+Backspace',
-      group: 'Manage',
-      dismissOnRun: true,
-      feedbackLabel: 'Moved to Trash',
-      targetPath: item.path
     }
   ];
 
@@ -229,16 +220,6 @@ export function resolveActionDescriptor(descriptor: ActionDescriptor): LauncherA
         feedbackLabel: descriptor.feedbackLabel,
         dismissOnRun: descriptor.dismissOnRun,
         run: () => launcherRuntime.copyText(descriptor.text)
-      };
-    case 'trash':
-      return {
-        id: descriptor.id,
-        label: descriptor.label,
-        hint: descriptor.hint,
-        group: descriptor.group,
-        feedbackLabel: descriptor.feedbackLabel,
-        dismissOnRun: descriptor.dismissOnRun,
-        run: () => launcherRuntime.trashPath(descriptor.targetPath)
       };
     case 'open-settings':
       return {

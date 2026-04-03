@@ -15,6 +15,7 @@ describe('buildLocalActionDescriptors', () => {
 
     expect(actions.map((action) => action.id)).toContain('quick-look');
     expect(actions.map((action) => action.id)).toContain('copy-markdown-link');
+    expect(actions.map((action) => action.id)).not.toContain('trash');
   });
 
   it('builds terminal action for folders only', () => {

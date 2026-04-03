@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { recordTrace } from './diagnostics';
 import { modifiedAtMatchesIntentTime, resolveIntentScopePath } from '../src/lib/search/intentScope';
 import { isPrivateNorthlightPath } from '../src/lib/search/searchExclusions';
-import { baseSearchScore } from '../src/lib/search/scoring';
+import { composedSearchScore } from '../src/lib/search/scoring';
 import { matchesLocalIntent, searchIntentKey } from '../src/lib/search/intentParser';
 import { isWatchableScope } from '../src/lib/search/watchScopePolicy';
 import type { LauncherStatus, LocalSearchItem, ResultKind, SearchContext, SearchIntent, SearchProvider, SearchProviderResult } from '../src/lib/search/types';
@@ -174,18 +174,16 @@ function selectionBoost(entry: CatalogEntry | SearchProviderResult) {
 
 function rankItem(query: string, entry: CatalogEntry | SearchProviderResult) {
   const settings = getLauncherStateSnapshot().settings;
-  const baseScore = baseSearchScore(query, entry);
+  const textScore = composedSearchScore(query, entry, { appFirstEnabled: settings.appFirstEnabled });
 
-  if (baseScore === 0) {
+  if (textScore === 0) {
     return 0;
   }
 
-  const appBoost = settings.appFirstEnabled && entry.kind === 'app' ? 18 : 0;
   const providerBoost = entry.providerId === 'spotlight' ? 10 : entry.providerId === 'catalog' ? 6 : 0;
   return (
-    baseScore +
+    textScore +
     preferredBoost(entry.path) +
-    appBoost +
     providerBoost +
     selectionBoost(entry) -
     systemPenalty(entry.path) -

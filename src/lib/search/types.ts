@@ -189,15 +189,6 @@ export type ActionDescriptor =
       text: string;
     }
   | {
-      id: 'trash';
-      label: string;
-      hint: string;
-      group?: string;
-      feedbackLabel?: string;
-      dismissOnRun?: boolean;
-      targetPath: string;
-    }
-  | {
       id: 'open-settings';
       label: string;
       hint: string;
@@ -338,11 +329,11 @@ export type LauncherBridge = {
   quickLookPath: (path: string) => Promise<void>;
   onSettingsChanged?: (callback: (settings: LauncherSettings) => void) => () => void;
   onIndexChanged?: (callback: () => void) => () => void;
+  onVisibilityChanged?: (callback: (visible: boolean) => void) => () => void;
   openPath: (path: string) => Promise<void>;
   revealPath: (path: string) => Promise<void>;
   openInTerminal: (path: string) => Promise<void>;
   openWithTextEdit: (path: string) => Promise<void>;
-  trashPath: (path: string) => Promise<void>;
   hide: () => Promise<void>;
   ready: () => Promise<void>;
 };

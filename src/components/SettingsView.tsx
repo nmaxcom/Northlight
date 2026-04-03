@@ -359,10 +359,9 @@ export function SettingsView() {
               {activeTab === 'overview' ? (
               <section className={classes.card}>
                 <div className={classes.cardTitle}>Search And Ranking</div>
-                <div className={classes.cardSubtitle}>Tune best match behavior, app priority, preview defaults, and clipboard/snippet participation.</div>
+                <div className={classes.cardSubtitle}>Tune app priority, preview defaults, and clipboard/snippet participation.</div>
                 <div className={classes.toggleRow}>
                   {[
-                    ['bestMatchEnabled', 'Best match section', 'Show the top result in a dominant slot.'],
                     ['appFirstEnabled', 'Prefer apps', 'Boost app candidates over similarly named files.'],
                     ['previewEnabled', 'Preview pane', 'Keep an inline preview panel available in the launcher.'],
                     ['quickLookStartsOpen', 'Preview open by default', 'Open the preview pane automatically when the launcher appears.'],

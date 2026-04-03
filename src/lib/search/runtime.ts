@@ -63,6 +63,10 @@ function clearTransientCaches() {
   previewCache.clear();
 }
 
+function clearVisibleSearchState() {
+  queryCache.clear();
+}
+
 function cacheKey(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
   return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${searchIntentKey(intent)}`;
 }
@@ -284,6 +288,13 @@ export const launcherRuntime = {
       callback();
     });
   },
+  onVisibilityChanged(callback: (visible: boolean) => void) {
+    if (!window.launcher?.onVisibilityChanged) {
+      return () => {};
+    }
+
+    return window.launcher.onVisibilityChanged(callback);
+  },
   getCachedLocal(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
     return searchCachedLocal(query, scopePath, intent);
   },
@@ -368,12 +379,10 @@ export const launcherRuntime = {
   openWithTextEdit(path: string) {
     return window.launcher?.openWithTextEdit(path) ?? Promise.resolve();
   },
-  trashPath(path: string) {
-    return window.launcher?.trashPath(path) ?? Promise.resolve();
-  },
   hide() {
     return window.launcher?.hide() ?? Promise.resolve();
   },
   copyText,
-  clearTransientCaches
+  clearTransientCaches,
+  clearVisibleSearchState
 };

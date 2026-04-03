@@ -196,8 +196,6 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const groupedActions = useMemo(() => groupActions(filteredActions), [filteredActions]);
   const selectedAction = filteredActions[actionSelectedIndex];
   const primaryAction = isActionsOpen ? selectedAction : selectedResult?.actions[0];
-  const bestMatch = settings.bestMatchEnabled ? results[0] : null;
-  const listResults = settings.bestMatchEnabled ? results.slice(1) : results;
   const previewVisible = settings.previewEnabled && isPreviewOpen;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const actionInputRef = useRef<HTMLInputElement | null>(null);
@@ -571,6 +569,19 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   }, [query, resetPointerSelection]);
 
   useEffect(() => {
+    if (results.length === 0) {
+      if (selectedIndex !== 0) {
+        setSelectedIndex(0);
+      }
+      return;
+    }
+
+    if (selectedIndex >= results.length) {
+      setSelectedIndex(results.length - 1);
+    }
+  }, [results.length, selectedIndex]);
+
+  useEffect(() => {
     resetPointerSelection();
     setActionSelectedIndex(0);
   }, [actionQuery, resetPointerSelection, selectedResult?.id]);
@@ -598,6 +609,29 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       closeActions();
     }
   }, [closeActions, isActionsOpen, selectedResult]);
+
+  useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
+    return launcherRuntime.onVisibilityChanged((visible) => {
+      if (!visible) {
+        setQuery('');
+        setResults([]);
+        setSelectedIndex(0);
+        setIsResolving(false);
+        setIsActionsOpen(false);
+        setActionQuery('');
+        setActionSelectedIndex(0);
+        setPreview(null);
+        launcherRuntime.clearVisibleSearchState();
+        return;
+      }
+
+      focusActiveInput();
+    });
+  }, [focusActiveInput, isMock]);
 
   useEffect(() => {
     if (isMock) {
@@ -644,7 +678,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     });
 
     if (!query.trim()) {
-      setResults(immediateResults);
+      setResults([]);
       setIsResolving(false);
       return;
     }
@@ -655,7 +689,8 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       return;
     }
 
-    setIsResolving((current) => current || visibleResultsCountRef.current === 0);
+    setResults([]);
+    setIsResolving(true);
     return () => {
       if (idleSummaryTimerRef.current) {
         window.clearTimeout(idleSummaryTimerRef.current);
@@ -892,6 +927,23 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         return;
       }
 
+      if (event.key === 'Backspace' && event.metaKey && !event.altKey && !event.shiftKey) {
+        if (document.activeElement === actionInputRef.current) {
+          event.preventDefault();
+          setActionQuery('');
+          return;
+        }
+
+        if (document.activeElement === inputRef.current) {
+          event.preventDefault();
+          setQuery('');
+          setResults([]);
+          setSelectedIndex(0);
+          setIsResolving(false);
+          return;
+        }
+      }
+
       if (event.key.toLowerCase() === 'k' && event.metaKey && !event.altKey && !event.shiftKey) {
         if (!selectedResult) {
           return;
@@ -992,10 +1044,6 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
         if (candidate.hint === 'Cmd+Shift+N') {
           return event.key.toLowerCase() === 'n' && event.metaKey && event.shiftKey;
-        }
-
-        if (candidate.hint === 'Cmd+Backspace') {
-          return event.key === 'Backspace' && event.metaKey;
         }
 
         if (candidate.hint === 'Right') {
@@ -1128,45 +1176,6 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
         <section className={`${classes.body} ${previewVisible ? classes.bodyWithPreview : ''}`}>
           <div className={classes.resultsColumn}>
-            {bestMatch ? (
-              <button
-                type="button"
-                className={`${classes.bestMatch} ${selectedIndex === 0 ? classes.bestMatchSelected : ''}`}
-                data-selected={selectedIndex === 0 ? 'true' : 'false'}
-                onMouseMove={(event) => {
-                  if (!enablePointerSelection(event.clientX, event.clientY)) {
-                    return;
-                  }
-
-                  setSelectedIndex(0);
-                }}
-                onMouseEnter={() => updateSelectedIndexFromPointer(0)}
-                onClick={() => void invokeAction(bestMatch.actions[0])}
-              >
-                <div className={iconClassName(bestMatch, classes.bestMatchIcon)}>
-                  {bestMatch.path && iconUrls[bestMatch.path] ? (
-                    <img className={classes.resultIconImage} src={iconUrls[bestMatch.path] ?? ''} alt="" />
-                  ) : (
-                    iconGlyph(bestMatch.kind)
-                  )}
-                </div>
-                <div className={classes.bestMatchCopy}>
-                  <div className={classes.bestMatchEyebrow}>Best Match</div>
-                  <div className={classes.bestMatchTitle}>{bestMatch.title}</div>
-                  <div className={classes.bestMatchSubtitle}>{bestMatch.subtitle}</div>
-                  <div className={classes.inlineActions}>
-                    {bestMatch.actions.slice(0, 3).map((action) => (
-                      <span key={action.id} className={classes.inlineActionChip}>
-                        <span>{action.label}</span>
-                        {action.hint ? <span className={classes.inlineActionHint}>{action.hint}</span> : null}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className={classes.resultKind}>{kindLabel(bestMatch)}</div>
-              </button>
-            ) : null}
-
             <section
               className={classes.results}
               data-results-scroll="true"
@@ -1183,19 +1192,19 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
               {results.length === 0 ? (
                 <section className={classes.emptyState}>
                   <div>
-                    <h2>{query.trim() ? (isResolving ? 'Searching...' : 'No matching result') : 'Start from recent context'}</h2>
+                    <h2>{query.trim() ? (isResolving ? 'Searching...' : 'No matching result') : 'Start typing to search'}</h2>
                     <p>
                       {query.trim()
                         ? isResolving
                           ? 'Hold for a moment while local results resolve.'
                           : 'Try a broader filename, alias, snippet trigger, folder name, app, or deterministic conversion.'
-                        : 'Recent launcher choices, clipboard items, and configured snippets can appear here as you build history.'}
+                        : 'Search apps, files, folders, snippets, clipboard history, calculations, and macOS settings from one field.'}
                     </p>
                   </div>
                 </section>
               ) : (
-                listResults.map((result, index) => {
-                  const absoluteIndex = settings.bestMatchEnabled ? index + 1 : index;
+                results.map((result, index) => {
+                  const absoluteIndex = index;
                   return (
                     <button
                       key={result.id}
@@ -1224,7 +1233,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                         {result.path && iconUrls[result.path] ? (
                           <img className={classes.resultIconImage} src={iconUrls[result.path] ?? ''} alt="" />
                         ) : (
-                          iconGlyph(result.kind)
+                          result.icon ?? iconGlyph(result.kind)
                         )}
                       </div>
                       <div className={classes.resultCopy}>

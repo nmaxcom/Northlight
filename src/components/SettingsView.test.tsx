@@ -152,14 +152,14 @@ describe('SettingsView', () => {
 
     await screen.findByText('Northlight Settings');
 
-    fireEvent.click(screen.getByRole('checkbox', { name: /best match section/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /prefer apps/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
 
     expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
 
     resolveSave?.({
       ...launcherRuntime.getSettingsSnapshot(),
-      bestMatchEnabled: false
+      appFirstEnabled: false
     });
 
     await waitFor(() => {

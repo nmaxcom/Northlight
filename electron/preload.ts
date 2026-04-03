@@ -31,7 +31,6 @@ const launcherApi = {
   revealPath: (path: string) => ipcRenderer.invoke('launcher:reveal-path', path),
   openInTerminal: (path: string) => ipcRenderer.invoke('launcher:open-in-terminal', path),
   openWithTextEdit: (path: string) => ipcRenderer.invoke('launcher:open-with-text-edit', path),
-  trashPath: (path: string) => ipcRenderer.invoke('launcher:trash-path', path),
   hide: () => ipcRenderer.invoke('launcher:hide'),
   ready: () => ipcRenderer.invoke('launcher:ready'),
   onSettingsChanged: (callback: (settings: LauncherSettings) => void) => {
@@ -43,6 +42,11 @@ const launcherApi = {
     const listener = () => callback();
     ipcRenderer.on('launcher:index-changed', listener);
     return () => ipcRenderer.removeListener('launcher:index-changed', listener);
+  },
+  onVisibilityChanged: (callback: (visible: boolean) => void) => {
+    const listener = (_event: unknown, visible: boolean) => callback(visible);
+    ipcRenderer.on('launcher:visibility-changed', listener);
+    return () => ipcRenderer.removeListener('launcher:visibility-changed', listener);
   }
 };
 

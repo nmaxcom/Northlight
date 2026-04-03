@@ -12,8 +12,8 @@ Current built-in capabilities:
 - Highlight each result type with a distinct color only in the left icon tile, so folders, apps, files, calculations, snippets, clipboard items, aliases, and commands are easier to scan.
 - Match abbreviations and fuzzy app names such as `btt` and `fig`.
 - Learn from repeated selections so important results rise to the top.
-- Show a dominant `Best Match` card above the result list.
-- Show recent local results first when the query is empty.
+- Show one consistent result list without a separate `Best Match` card.
+- Opening the launcher with an empty query starts from a clean blank state instead of showing leftover results from a previous search.
 - Open the selected result with `Enter`.
 - Pressing `Enter` on an app result also re-activates already-open apps correctly on macOS, bringing you to the Space where that app is visible.
 - Reveal the selected result in Finder with `Cmd+Enter`.
@@ -77,7 +77,7 @@ Current built-in capabilities:
 - `Alt+Enter`: run the alternate action for the selected result, such as `Open In Terminal` or `Open With TextEdit`.
 - `Cmd+Shift+T`: open the selected folder in Terminal when available.
 - `Cmd+Shift+N`: copy only the selected result name when available.
-- `Cmd+Backspace`: move the selected local result to Trash.
+- `Cmd+Backspace`: clear the current query or action filter when the text field is focused.
 - `Cmd+K`: open the current result's `Actions` panel.
 - `Cmd+,`: open the settings window.
 - `Arrow Up` / `Arrow Down`: move through results.
@@ -87,7 +87,7 @@ Current built-in capabilities:
 
 - Running an open, reveal, or copy action hides the launcher so the target app or Finder can be seen immediately.
 - Losing launcher focus also hides the launcher so Northlight gets out of the way and the underlying app can resume naturally.
-- The result list scrolls inside the launcher when there are more results than fit on screen.
+- The result list scrolls inside the launcher when there are more results than fit on screen, and every result row uses the same visual layout including the top result.
 - The search textbox keeps focus while you interact with the launcher chrome, and keyboard navigation auto-scrolls to the selected result.
 - The launcher shell and the native utility window now share the same `10px` corner radius, and the search box is intentionally compressed to a very low-profile `35px` field.
 - The search input uses a fully neutralized native appearance, so the text sits cleanly inside the field without extra WebKit capsules or clipping.

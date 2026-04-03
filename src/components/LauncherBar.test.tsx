@@ -21,10 +21,11 @@ describe('LauncherBar', () => {
     );
 
     expect(screen.getByLabelText('Launcher query')).toBeInTheDocument();
-    expect(screen.getByText('Start from recent context')).toBeInTheDocument();
+    expect(screen.getByText('Start typing to search')).toBeInTheDocument();
     await screen.findByText('14 indexed');
     expect(screen.getByText('v0.8.9')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /actions/i })).toBeDisabled();
+    expect(screen.queryByText('Best Match')).not.toBeInTheDocument();
   });
 
   it('falls back to the original launcher theme when settings contain an unknown theme id', async () => {
@@ -307,9 +308,116 @@ describe('LauncherBar', () => {
     const panel = document.querySelector('[data-actions-panel="true"]') as HTMLElement;
     expect(within(panel).getAllByText('Reveal in Finder').length).toBeGreaterThan(0);
     expect(within(panel).queryByText('Copy Path')).not.toBeInTheDocument();
+    expect(within(panel).queryByText('Move To Trash')).not.toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: 'Tab' });
     expect(actionFilter).toHaveFocus();
+  });
+
+  it('clears the query with cmd+backspace instead of invoking destructive actions', async () => {
+    const openPath = vi.fn().mockResolvedValue(undefined);
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      searchLocal: vi.fn().mockResolvedValue([
+        {
+          id: '/Applications/TextEdit.app',
+          path: '/Applications/TextEdit.app',
+          name: 'TextEdit.app',
+          kind: 'app',
+          score: 200
+        }
+      ]),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.15',
+        indexEntryCount: 14,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath,
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'textedit' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('TextEdit.app').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.keyDown(window, { key: 'Backspace', metaKey: true });
+
+    expect(input).toHaveValue('');
+    expect(openPath).not.toHaveBeenCalled();
+  });
+
+  it('clears stale visible results when the launcher hides and reopens', async () => {
+    let visibilityListener: ((visible: boolean) => void) | undefined;
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      searchLocal: vi.fn().mockResolvedValue([
+        {
+          id: '/Applications/TextEdit.app',
+          path: '/Applications/TextEdit.app',
+          name: 'TextEdit.app',
+          kind: 'app',
+          score: 200
+        }
+      ]),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.15',
+        indexEntryCount: 14,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined),
+      onVisibilityChanged: vi.fn().mockImplementation((callback) => {
+        visibilityListener = callback;
+        return () => {};
+      })
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'textedit' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('TextEdit.app').length).toBeGreaterThan(0);
+    });
+
+    act(() => {
+      visibilityListener?.(false);
+      visibilityListener?.(true);
+    });
+
+    expect(input).toHaveValue('');
+    expect(screen.queryByText('TextEdit.app')).not.toBeInTheDocument();
+    expect(screen.getByText('Start typing to search')).toBeInTheDocument();
   });
 
   it('redirects stray focus back to the textbox', async () => {

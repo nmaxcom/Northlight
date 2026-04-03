@@ -354,7 +354,7 @@ export function buildImmediateResults(query: string, context: QueryContext = {})
   const trimmed = parsedQuery.searchText.trim();
 
   if (!trimmed) {
-    return buildLocalResults(launcherRuntime.getRecentLocalItems(), context).sort((a, b) => b.score - a.score);
+    return [];
   }
 
   const localResults = buildLocalResults(launcherRuntime.getCachedLocal(trimmed, context.scopePath, parsedQuery.intent), context);
@@ -378,14 +378,13 @@ export async function buildResults(query: string, context: QueryContext = {}): P
   const trimmed = parsedQuery.searchText.trim();
 
   if (!trimmed) {
-    return buildLocalResults(launcherRuntime.getRecentLocalItems(), context).sort((a, b) => b.score - a.score);
+    return [];
   }
 
   const localResults = buildLocalResults(
     await launcherRuntime.searchLocal(trimmed, context.scopePath, parsedQuery.intent, context.traceRequestId),
     context
   );
-  await launcherRuntime.getClipboardHistory();
 
   if (parsedQuery.intent) {
     return localResults.sort((a, b) => b.score - a.score);
