@@ -484,6 +484,75 @@ describe('LauncherBar', () => {
     expect(openPath).toHaveBeenCalledWith('/Users/test/alpha.txt');
   });
 
+  it('drops pointer hover state when typing resumes', async () => {
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      searchLocal: vi.fn().mockResolvedValue([
+        {
+          id: '/Users/test/alpha.txt',
+          path: '/Users/test/alpha.txt',
+          name: 'alpha.txt',
+          kind: 'file',
+          score: 200
+        },
+        {
+          id: '/Users/test/beta.txt',
+          path: '/Users/test/beta.txt',
+          name: 'beta.txt',
+          kind: 'file',
+          score: 180
+        }
+      ]),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.7',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue({
+        ...launcherRuntime.getSettingsSnapshot(),
+        bestMatchEnabled: false
+      }),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      trashPath: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'al' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('alpha.txt').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('beta.txt').length).toBeGreaterThan(0);
+    });
+
+    const root = document.querySelector('[data-pointer-active]') as HTMLDivElement | null;
+    const rows = screen.getAllByRole('button').filter((button) => /alpha\.txt|beta\.txt/.test(button.textContent ?? ''));
+
+    await act(async () => {
+      fireEvent.mouseDown(rows[1]!, { clientX: 200, clientY: 120 });
+      await Promise.resolve();
+    });
+    expect(root?.dataset.pointerActive).toBe('true');
+
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'alp' } });
+      await Promise.resolve();
+    });
+    expect(root?.dataset.pointerActive).toBe('false');
+  });
+
   it('clears the query on escape before hiding the launcher', async () => {
     const hide = vi.fn().mockResolvedValue(undefined);
 

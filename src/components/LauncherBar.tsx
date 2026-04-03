@@ -173,6 +173,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const [feedback, setFeedback] = useState<FeedbackState>(mockState?.feedback ?? null);
   const [settings, setSettings] = useState<LauncherSettings>(mockState?.settings ?? launcherRuntime.getSettingsSnapshot());
   const [isPreviewOpen, setIsPreviewOpen] = useState(mockState?.settings.quickLookStartsOpen ?? settings.quickLookStartsOpen);
+  const [isPointerActive, setIsPointerActive] = useState(false);
   const [status, setStatus] = useState<LauncherStatus>({
     appVersion: mockState?.status.appVersion ?? '0.8.0',
     indexEntryCount: mockState?.status.indexEntryCount ?? 0,
@@ -240,6 +241,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const resetPointerSelection = useCallback(() => {
     pointerSelectionEnabledRef.current = false;
     pointerResetPositionRef.current = lastPointerPositionRef.current;
+    setIsPointerActive(false);
   }, []);
 
   const enablePointerSelection = useCallback((x: number, y: number) => {
@@ -256,6 +258,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     }
 
     pointerSelectionEnabledRef.current = true;
+    setIsPointerActive(true);
     return true;
   }, []);
 
@@ -1013,6 +1016,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   return (
     <div
       className={classes.window}
+      data-pointer-active={isPointerActive ? 'true' : 'false'}
       onFocusCapture={(event) => {
         const target = event.target as HTMLElement;
         const activeInput = isActionsOpen ? actionInputRef.current : inputRef.current;
@@ -1156,6 +1160,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                       onMouseDown={(event) => {
                         lastPointerPositionRef.current = { x: event.clientX, y: event.clientY };
                         pointerSelectionEnabledRef.current = true;
+                        setIsPointerActive(true);
                         event.preventDefault();
                         focusActiveInput();
                       }}
@@ -1245,6 +1250,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                             onMouseDown={(event) => {
                               lastPointerPositionRef.current = { x: event.clientX, y: event.clientY };
                               pointerSelectionEnabledRef.current = true;
+                              setIsPointerActive(true);
                               event.preventDefault();
                               actionInputRef.current?.focus({ preventScroll: true });
                             }}
