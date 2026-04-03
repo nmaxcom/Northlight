@@ -19,11 +19,11 @@
 
 ## Test Cases
 
-- [ ] Parse trailing `img`, `jpg`, `pdf`, `md`, `app`, `file`, and `folder`.
+- [ ] Parse trailing `img`, `.jpg`, `.pdf`, `.md`, `app`, `file`, and `folder`.
 - [ ] Parse trailing `/` as folder-only when query text exists.
 - [ ] Ignore refiner candidates when they are the full query.
 - [ ] Ignore embedded tokens such as `img-tools` and `project/jpg`.
-- [ ] Reject conflicting combinations such as `app jpg`.
+- [ ] Reject conflicting combinations such as `app .jpg`.
 - [ ] Return only filtered local results for refined queries.
 - [ ] Preserve normal mixed results for unrefined queries.
 - [ ] Ensure refined search can recover extension-specific results from a mixed mocked result pool.
@@ -36,7 +36,7 @@
 ## Pass Criteria
 
 - `npm run test:unit` passes.
-- Manual verification in dev confirms `project/`, `snowboard img`, `snowboard jpg`, and `figma app`.
+- Manual verification in dev confirms `project/`, `snowboard img`, `snowboard .jpg`, and `figma app`.
 
 ## Risks
 

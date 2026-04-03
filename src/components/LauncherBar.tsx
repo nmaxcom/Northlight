@@ -8,6 +8,7 @@ import type {
   LauncherTraceEvent,
   ResultKind
 } from '../lib/search/types';
+import { parseIntentQuery } from '../lib/search/intentParser';
 import { buildImmediateResults, buildResults } from '../lib/search/query';
 import { launcherRuntime } from '../lib/search/runtime';
 import classes from './LauncherBar.module.css';
@@ -175,7 +176,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const [isPreviewOpen, setIsPreviewOpen] = useState(mockState?.settings.quickLookStartsOpen ?? settings.quickLookStartsOpen);
   const [isPointerActive, setIsPointerActive] = useState(false);
   const [status, setStatus] = useState<LauncherStatus>({
-    appVersion: mockState?.status.appVersion ?? '0.8.0',
+    appVersion: mockState?.status.appVersion ?? '0.8.9',
     indexEntryCount: mockState?.status.indexEntryCount ?? 0,
     indexReady: mockState?.status.indexReady ?? false,
     isRestoring: mockState?.status.isRestoring ?? true,
@@ -184,7 +185,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     catalogState: mockState?.status.catalogState ?? 'restoring'
   });
   const [iconUrls, setIconUrls] = useState<Record<string, string | null>>(mockState?.iconUrls ?? {});
-
+  const activeRefiners = useMemo(() => parseIntentQuery(query).intent?.matchedTokens ?? [], [query]);
   const selectedResult = results[selectedIndex];
   const filteredActions = useMemo(
     () => (selectedResult?.actions ?? []).filter((action) => actionMatches(action, actionQuery)),
@@ -1079,6 +1080,16 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
           />
           <div className={classes.searchArrow}>→</div>
         </section>
+
+        {activeRefiners.length > 0 ? (
+          <section className={classes.refinerBar} aria-label="Active search refiners">
+            {activeRefiners.map((token, index) => (
+              <span key={`${token}-${index}`} className={classes.refinerChip}>
+                {token === '/' ? 'folder' : token}
+              </span>
+            ))}
+          </section>
+        ) : null}
 
         <section className={`${classes.body} ${previewVisible ? classes.bodyWithPreview : ''}`}>
           <div className={classes.resultsColumn}>

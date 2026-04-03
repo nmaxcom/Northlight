@@ -16,7 +16,7 @@
 
 ## Unit Cases
 
-- [ ] Intent parsing handles trailing type, scope, time, and explicit path refiners across ambiguous and conflicting cases.
+- [ ] Intent parsing handles trailing type, scope, time, `.ext`, and explicit path refiners across ambiguous and conflicting cases.
 - [ ] Search intent keys stay stable across equivalent refiner combinations.
 - [ ] Catalog ranking lifts selected and recent paths without overriding stronger exact matches incorrectly.
 - [ ] Provider result normalization deduplicates the same path returned by multiple providers.
@@ -26,15 +26,16 @@
 
 - [ ] Spotlight-backed candidates and catalog candidates merge into one ranked local result set.
 - [ ] If Spotlight errors or times out, catalog and targeted fallback search still return results without crashing.
-- [ ] `chrome app`, `invoice pdf`, `config json in:library`, `northlight md in:/Users/nm4/STUFF/Coding/Northlight`, and `report today` pass structured intent into local search.
+- [ ] `chrome app`, `invoice .pdf`, `config .json in:library`, `northlight .md in:/Users/nm4/STUFF/Coding/Northlight`, `northlight .md in:/Users/nm4/My Projects/Northlight`, and `report today` pass structured intent into local search.
+- [ ] Active refiner chips mirror the parser output for `.ext`, `img`, named scopes, explicit paths, and time hints.
 - [ ] Stable non-empty queries do not schedule catalog rebuilds or refresh loops.
 
 ## E2E Cases
 
 - [ ] Typing `chrome` shows a primary launch action and stable result list.
 - [ ] Typing `project/` narrows to folders.
-- [ ] Typing `invoice pdf` narrows to PDFs.
-- [ ] Typing `config json in:library` applies both type and scope hints.
+- [ ] Typing `invoice .pdf` narrows to PDFs.
+- [ ] Typing `config .json in:library` applies both type and scope hints.
 - [ ] Opening the actions panel still works with the resolved action model.
 
 ## Pass Criteria

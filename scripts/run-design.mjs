@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import process from 'node:process';
 
 const vite = spawn('npx', ['vite', '--host', '127.0.0.1', '--port', '4175'], {
   stdio: ['inherit', 'pipe', 'pipe']

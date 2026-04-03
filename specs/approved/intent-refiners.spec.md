@@ -16,7 +16,7 @@ Northlight already handles broad local search, but users need a fast way to tigh
 ## Scope
 
 - In scope:
-- Parse safe trailing refiners such as `img`, `jpg`, `pdf`, `md`, `app`, `file`, and `folder`.
+- Parse safe trailing refiners such as `img`, `.jpg`, `.pdf`, `.md`, `app`, `file`, and `folder`.
 - Treat a trailing `/` as a folder-only refiner when there is still query text before it.
 - Filter local search results by kind and extension when a valid refiner is active.
 - Remove unrelated result categories when a valid local refiner is active.
@@ -32,7 +32,7 @@ Northlight already handles broad local search, but users need a fast way to tigh
 
 ## User Stories
 
-- As a user, I can type `snowboard`, see mixed results, then add `img` or `jpg` to focus the launcher on image assets.
+- As a user, I can type `snowboard`, see mixed results, then add `img` or `.jpg` to focus the launcher on image assets.
 - As a user, I can type `project/` to force Northlight to treat the query as a folder search.
 - As a user, I can type `figma app` to remove non-app results from consideration.
 
@@ -52,16 +52,16 @@ Northlight already handles broad local search, but users need a fast way to tigh
 ## Acceptance Criteria
 
 - [ ] `snowboard img` returns only local image files when matching images exist.
-- [ ] `snowboard jpg` returns only `.jpg` or `.jpeg` files.
+- [ ] `snowboard .jpg` returns only `.jpg` or `.jpeg` files.
 - [ ] `project/` returns only folder results.
 - [ ] `figma app` returns only app results.
 - [ ] Queries with no remaining search text after removing a candidate refiner are treated as plain text.
-- [ ] Conflicting trailing refiners such as `snowboard app jpg` do not activate filtering.
+- [ ] Conflicting trailing refiners such as `snowboard app .jpg` do not activate filtering.
 - [ ] Refined local search can surface matches that were not in the broad query’s top mixed results.
 
 ## Failure Cases
 
-- If the query is only `img`, `jpg`, `app`, or another refiner token, Northlight must not strip it and must search literally.
+- If the query is only `img`, `.jpg`, `app`, or another refiner token, Northlight must not strip it and must search literally.
 - If a token is embedded in a filename like `img-tools`, it must not be treated as a refiner.
 - If multiple trailing refiners conflict, Northlight must preserve the original query instead of applying a partial filter.
 

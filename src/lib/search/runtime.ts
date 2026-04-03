@@ -331,7 +331,7 @@ export const launcherRuntime = {
     return (
       window.launcher?.getStatus?.(requestId) ??
       Promise.resolve({
-        appVersion: '0.8.0',
+        appVersion: '0.8.9',
         searchMode: 'hybrid',
         catalogState: 'ready',
         indexEntryCount: fileFixtures.length,

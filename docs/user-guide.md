@@ -8,7 +8,7 @@ Current built-in capabilities:
 
 - Search local files, folders, and apps by name.
 - Search through a hybrid local backbone: Spotlight brings broad macOS recall, and Northlight's local catalog lifts recent and repeated choices.
-- Refine a broad query with trailing intent hints such as `project/`, `snowboard img`, `snowboard jpg`, `figma app`, `notes md`, `config json in:library`, `northlight md in:/Users/nm4/STUFF/Coding/Northlight`, or `report today`.
+- Refine a broad query with trailing intent hints such as `project/`, `snowboard img`, `snowboard .jpg`, `figma app`, `notes .md`, `config .json in:library`, `northlight .md in:/Users/nm4/STUFF/Coding/Northlight`, or `report today`.
 - Highlight each result type with a distinct color only in the left icon tile, so folders, apps, files, calculations, snippets, clipboard items, aliases, and commands are easier to scan.
 - Match abbreviations and fuzzy app names such as `btt` and `fig`.
 - Learn from repeated selections so important results rise to the top.
@@ -55,10 +55,11 @@ Current built-in capabilities:
 - Aliases rank above generic fuzzy matches when the trigger matches exactly.
 - Snippets and clipboard items can participate in search without overriding stronger file or app matches for broad queries.
 - Search is local-first and favors common personal locations such as `/Applications`, `~/Desktop`, `~/Documents`, `~/Downloads`, and `~/STUFF/Coding`.
-- Trailing intent refiners stay optional: Northlight first searches broadly, then lets you tighten the result type with suffixes like `/`, `img`, `jpg`, `pdf`, `md`, `app`, `file`, or `folder`.
+- Trailing intent refiners stay optional: Northlight first searches broadly, then lets you tighten the result type with suffixes like `/`, `img`, `.jpg`, `.pdf`, `.md`, `app`, `file`, or `folder`.
 - Scope refiners let you narrow broad queries with `in:downloads`, `in:documents`, `in:desktop`, `in:library`, `in:home`, or a concrete path such as `in:/Users/nm4/STUFF/Coding/Northlight` or `in:~/Documents`.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
 - `today` means modified on the current local calendar day, `yesterday` means the previous local calendar day, and `recent` means the last 7 days by modification time.
+- The launcher shows active refiner chips below the search box so you can confirm exactly what Northlight parsed.
 - Intent refiners are only recognized as trailing standalone terms, so literal names like `img-tools` keep searching as plain text.
 - For a full user guide to search refiners, examples, and combinations, see `docs/search-refiners-guide.md`.
 

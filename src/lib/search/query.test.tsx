@@ -161,7 +161,7 @@ describe('buildResults', () => {
       getClipboardHistory: vi.fn().mockResolvedValue([])
     } as never;
 
-    const results = await buildResults('snowboard jpg');
+    const results = await buildResults('snowboard .jpg');
 
     expect(results.map((result) => result.title)).toEqual(['snowboard.jpeg', 'snowboard.jpg']);
     expect(results.every((result) => result.title.endsWith('.jpg') || result.title.endsWith('.jpeg'))).toBe(true);
@@ -181,7 +181,7 @@ describe('buildResults', () => {
       getClipboardHistory: vi.fn().mockResolvedValue([])
     } as never;
 
-    const results = await buildResults('snowboard app jpg');
+    const results = await buildResults('snowboard app .jpg');
 
     expect(results.some((result) => result.title === 'snowboard app jpg.md')).toBe(true);
   });
@@ -205,7 +205,7 @@ describe('buildResults', () => {
     expect(results.some((result) => result.title === 'img-notes.md')).toBe(true);
   });
 
-  it('passes refiners into the local search call so refined queries can surface a different top set', async () => {
+  it('passes dot-extension refiners into the local search call so refined queries can surface a different top set', async () => {
     const searchLocal = vi.fn().mockResolvedValue([
       {
         id: '/Users/nm4/Pictures/snowboard.jpg',
@@ -221,14 +221,14 @@ describe('buildResults', () => {
       getClipboardHistory: vi.fn().mockResolvedValue([])
     } as never;
 
-    await buildResults('snowboard jpg');
+    await buildResults('snowboard .jpg');
 
     expect(searchLocal).toHaveBeenCalledWith('snowboard', undefined, {
       localFilter: {
         kind: 'file',
         extensions: ['jpg', 'jpeg']
       },
-      matchedTokens: ['jpg']
+      matchedTokens: ['.jpg']
     }, undefined);
   });
 
@@ -240,7 +240,7 @@ describe('buildResults', () => {
       getClipboardHistory: vi.fn().mockResolvedValue([])
     } as never;
 
-    await buildResults('config json in:library today');
+    await buildResults('config .json in:library today');
 
     expect(searchLocal).toHaveBeenCalledWith('config', undefined, {
       localFilter: {
@@ -250,7 +250,7 @@ describe('buildResults', () => {
       scopeToken: 'library',
       scopePath: undefined,
       timeToken: 'today',
-      matchedTokens: ['json', 'in:library', 'today']
+      matchedTokens: ['.json', 'in:library', 'today']
     }, undefined);
   });
 
@@ -262,7 +262,7 @@ describe('buildResults', () => {
       getClipboardHistory: vi.fn().mockResolvedValue([])
     } as never;
 
-    await buildResults('northlight md in:/Users/nm4/STUFF/Coding/Northlight');
+    await buildResults('northlight .md in:/Users/nm4/STUFF/Coding/Northlight');
 
     expect(searchLocal).toHaveBeenCalledWith('northlight', undefined, {
       localFilter: {
@@ -272,7 +272,29 @@ describe('buildResults', () => {
       scopeToken: undefined,
       scopePath: '/Users/nm4/STUFF/Coding/Northlight',
       timeToken: undefined,
-      matchedTokens: ['md', 'in:/Users/nm4/STUFF/Coding/Northlight']
+      matchedTokens: ['.md', 'in:/Users/nm4/STUFF/Coding/Northlight']
+    }, undefined);
+  });
+
+  it('passes a concrete in:path refiner with spaces into local search as structured intent', async () => {
+    const searchLocal = vi.fn().mockResolvedValue([]);
+
+    window.launcher = {
+      searchLocal,
+      getClipboardHistory: vi.fn().mockResolvedValue([])
+    } as never;
+
+    await buildResults('northlight .md in:/Users/nm4/My Projects/Northlight');
+
+    expect(searchLocal).toHaveBeenCalledWith('northlight', undefined, {
+      localFilter: {
+        kind: 'file',
+        extensions: ['md', 'markdown', 'mdx']
+      },
+      scopeToken: undefined,
+      scopePath: '/Users/nm4/My Projects/Northlight',
+      timeToken: undefined,
+      matchedTokens: ['.md', 'in:/Users/nm4/My Projects/Northlight']
     }, undefined);
   });
 });

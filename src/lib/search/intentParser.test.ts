@@ -26,25 +26,25 @@ describe('parseIntentQuery', () => {
   });
 
   it('narrows image filters when a concrete extension is added after them', () => {
-    expect(parseIntentQuery('snowboard img jpg')).toEqual({
-      rawQuery: 'snowboard img jpg',
+    expect(parseIntentQuery('snowboard img .jpg')).toEqual({
+      rawQuery: 'snowboard img .jpg',
       searchText: 'snowboard',
       intent: {
         localFilter: { kind: 'file', extensions: ['jpg', 'jpeg'] },
-        matchedTokens: ['img', 'jpg']
+        matchedTokens: ['img', '.jpg']
       },
       localFilter: { kind: 'file', extensions: ['jpg', 'jpeg'] },
-      matchedTokens: ['img', 'jpg']
+      matchedTokens: ['img', '.jpg']
     });
   });
 
-  it('parses extension-only trailing refiners', () => {
-    expect(parseIntentQuery('notes md')).toEqual({
-      rawQuery: 'notes md',
+  it('parses dot-extension trailing refiners', () => {
+    expect(parseIntentQuery('notes .md')).toEqual({
+      rawQuery: 'notes .md',
       searchText: 'notes',
-      intent: { localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] }, matchedTokens: ['md'] },
+      intent: { localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] }, matchedTokens: ['.md'] },
       localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
-      matchedTokens: ['md']
+      matchedTokens: ['.md']
     });
   });
 
@@ -78,10 +78,20 @@ describe('parseIntentQuery', () => {
     });
   });
 
+  it('keeps bare extension words as literal search text', () => {
+    expect(parseIntentQuery('invoice pdf')).toEqual({
+      rawQuery: 'invoice pdf',
+      searchText: 'invoice pdf',
+      intent: null,
+      localFilter: null,
+      matchedTokens: []
+    });
+  });
+
   it('ignores conflicting trailing refiners instead of partially applying them', () => {
-    expect(parseIntentQuery('snowboard app jpg')).toEqual({
-      rawQuery: 'snowboard app jpg',
-      searchText: 'snowboard app jpg',
+    expect(parseIntentQuery('snowboard app .jpg')).toEqual({
+      rawQuery: 'snowboard app .jpg',
+      searchText: 'snowboard app .jpg',
       intent: null,
       localFilter: null,
       matchedTokens: []
@@ -89,12 +99,12 @@ describe('parseIntentQuery', () => {
   });
 
   it('keeps safe whitespace normalization while preserving the raw query', () => {
-    expect(parseIntentQuery('   snowboard    jpg   ')).toEqual({
-      rawQuery: '   snowboard    jpg   ',
+    expect(parseIntentQuery('   snowboard    .jpg   ')).toEqual({
+      rawQuery: '   snowboard    .jpg   ',
       searchText: 'snowboard',
-      intent: { localFilter: { kind: 'file', extensions: ['jpg', 'jpeg'] }, matchedTokens: ['jpg'] },
+      intent: { localFilter: { kind: 'file', extensions: ['jpg', 'jpeg'] }, matchedTokens: ['.jpg'] },
       localFilter: { kind: 'file', extensions: ['jpg', 'jpeg'] },
-      matchedTokens: ['jpg']
+      matchedTokens: ['.jpg']
     });
   });
 
@@ -109,60 +119,76 @@ describe('parseIntentQuery', () => {
   });
 
   it('parses scope and time refiners as structured intent', () => {
-    expect(parseIntentQuery('config json in:library today')).toEqual({
-      rawQuery: 'config json in:library today',
+    expect(parseIntentQuery('config .json in:library today')).toEqual({
+      rawQuery: 'config .json in:library today',
       searchText: 'config',
       intent: {
         localFilter: { kind: 'file', extensions: ['json', 'jsonc'] },
         scopeToken: 'library',
         scopePath: undefined,
         timeToken: 'today',
-        matchedTokens: ['json', 'in:library', 'today']
+        matchedTokens: ['.json', 'in:library', 'today']
       },
       localFilter: { kind: 'file', extensions: ['json', 'jsonc'] },
-      matchedTokens: ['json', 'in:library', 'today']
+      matchedTokens: ['.json', 'in:library', 'today']
     });
   });
 
   it('parses a concrete in:path refiner as a structured scope path', () => {
-    expect(parseIntentQuery('northlight md in:/Users/nm4/STUFF/Coding/Northlight')).toEqual({
-      rawQuery: 'northlight md in:/Users/nm4/STUFF/Coding/Northlight',
+    expect(parseIntentQuery('northlight .md in:/Users/nm4/STUFF/Coding/Northlight')).toEqual({
+      rawQuery: 'northlight .md in:/Users/nm4/STUFF/Coding/Northlight',
       searchText: 'northlight',
       intent: {
         localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
         scopeToken: undefined,
         scopePath: '/Users/nm4/STUFF/Coding/Northlight',
         timeToken: undefined,
-        matchedTokens: ['md', 'in:/Users/nm4/STUFF/Coding/Northlight']
+        matchedTokens: ['.md', 'in:/Users/nm4/STUFF/Coding/Northlight']
       },
       localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
-      matchedTokens: ['md', 'in:/Users/nm4/STUFF/Coding/Northlight']
+      matchedTokens: ['.md', 'in:/Users/nm4/STUFF/Coding/Northlight']
     });
   });
 
   it('parses a concrete in:~/path refiner as a structured scope path', () => {
-    expect(parseIntentQuery('notes md in:~/Documents')).toEqual({
-      rawQuery: 'notes md in:~/Documents',
+    expect(parseIntentQuery('notes .md in:~/Documents')).toEqual({
+      rawQuery: 'notes .md in:~/Documents',
       searchText: 'notes',
       intent: {
         localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
         scopeToken: undefined,
         scopePath: '~/Documents',
         timeToken: undefined,
-        matchedTokens: ['md', 'in:~/Documents']
+        matchedTokens: ['.md', 'in:~/Documents']
       },
       localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
-      matchedTokens: ['md', 'in:~/Documents']
+      matchedTokens: ['.md', 'in:~/Documents']
     });
   });
 
   it('treats malformed in: tokens as plain text', () => {
-    expect(parseIntentQuery('notes md in:docs')).toEqual({
-      rawQuery: 'notes md in:docs',
-      searchText: 'notes md in:docs',
+    expect(parseIntentQuery('notes .md in:docs')).toEqual({
+      rawQuery: 'notes .md in:docs',
+      searchText: 'notes .md in:docs',
       intent: null,
       localFilter: null,
       matchedTokens: []
+    });
+  });
+
+  it('parses a concrete in:path refiner with spaces when it is the last trailing scope token', () => {
+    expect(parseIntentQuery('northlight .md in:/Users/nm4/My Projects/Northlight')).toEqual({
+      rawQuery: 'northlight .md in:/Users/nm4/My Projects/Northlight',
+      searchText: 'northlight',
+      intent: {
+        localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+        scopeToken: undefined,
+        scopePath: '/Users/nm4/My Projects/Northlight',
+        timeToken: undefined,
+        matchedTokens: ['.md', 'in:/Users/nm4/My Projects/Northlight']
+      },
+      localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+      matchedTokens: ['.md', 'in:/Users/nm4/My Projects/Northlight']
     });
   });
 });
@@ -184,7 +210,7 @@ describe('local intent helpers', () => {
         scopeToken: 'downloads',
         scopePath: undefined,
         timeToken: 'recent',
-        matchedTokens: ['png', 'in:downloads', 'recent']
+        matchedTokens: ['.png', 'in:downloads', 'recent']
       })
     ).toBe('file::png::downloads::any-path::recent');
     expect(

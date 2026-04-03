@@ -22,7 +22,7 @@ describe('LauncherBar', () => {
     expect(screen.getByLabelText('Launcher query')).toBeInTheDocument();
     expect(screen.getByText('Start from recent context')).toBeInTheDocument();
     await screen.findByText('10 indexed');
-    expect(screen.getByText('v0.8.0')).toBeInTheDocument();
+    expect(screen.getByText('v0.8.9')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /actions/i })).toBeDisabled();
   });
 
@@ -80,6 +80,25 @@ describe('LauncherBar', () => {
     expect(screen.getByText('30 cm = 0.98 ft')).toBeInTheDocument();
   });
 
+  it('shows active refiner chips for parsed search hints including explicit paths with spaces', async () => {
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'northlight .md in:/Users/nm4/My Projects/Northlight recent' } });
+      await Promise.resolve();
+    });
+
+    expect(screen.getByLabelText('Active search refiners')).toBeInTheDocument();
+    expect(screen.getByText('.md')).toBeInTheDocument();
+    expect(screen.getByText('in:/Users/nm4/My Projects/Northlight')).toBeInTheDocument();
+    expect(screen.getByText('recent')).toBeInTheDocument();
+  });
+
   it('renders media inside the preview pane when the preview provides it', async () => {
     const getPathPreview = vi.fn().mockResolvedValue({
       title: 'product-brief.md',
@@ -93,7 +112,7 @@ describe('LauncherBar', () => {
       ready: vi.fn().mockResolvedValue(undefined),
       getPathPreview,
       getStatus: vi.fn().mockResolvedValue({
-        appVersion: '0.8.0',
+        appVersion: '0.8.9',
         indexEntryCount: 10,
         indexReady: true,
         isRestoring: false,
@@ -691,7 +710,7 @@ describe('LauncherBar', () => {
       ready: vi.fn().mockResolvedValue(undefined),
       searchLocal,
       getStatus: vi.fn().mockResolvedValue({
-        appVersion: '0.8.0',
+        appVersion: '0.8.9',
         indexEntryCount: 10,
         indexReady: true,
         isRestoring: false,
@@ -787,7 +806,7 @@ describe('LauncherBar', () => {
       searchLocal,
       getPathPreview,
       getStatus: vi.fn().mockResolvedValue({
-        appVersion: '0.8.0',
+        appVersion: '0.8.9',
         indexEntryCount: 10,
         indexReady: true,
         isRestoring: false,
