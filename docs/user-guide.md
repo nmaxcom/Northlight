@@ -18,7 +18,7 @@ Current built-in capabilities:
 - Pressing `Enter` on an app result also re-activates already-open apps correctly on macOS, bringing you to the Space where that app is visible.
 - Reveal the selected result in Finder with `Cmd+Enter`.
 - Copy the selected path with `Cmd+Shift+C`.
-- Open a folder in Terminal, copy a result name, open files in TextEdit, and move results to Trash.
+- Open a folder in Terminal, copy a result name, and open files in TextEdit.
 - Resolve deterministic calculations inline, including units, percentages, currencies, timezone conversions, durations, data sizes, and volume measures.
 - Copy a conversion result with `Enter`.
 - Search saved aliases and snippets.
@@ -60,7 +60,7 @@ Current built-in capabilities:
 - macOS local recall is hybrid: Spotlight supplies broad candidates, then Northlight reranks them with personal signals from its local catalog.
 - Aliases rank above generic fuzzy matches when the trigger matches exactly.
 - Snippets and clipboard items can participate in search without overriding stronger file or app matches for broad queries.
-- Search is local-first and favors common personal locations such as `/Applications`, `~/Desktop`, `~/Documents`, `~/Downloads`, and `~/STUFF/Coding`.
+- Search is local-first and favors common personal locations such as `/Applications`, `/System/Applications`, `~/Desktop`, `~/Documents`, `~/Downloads`, and `~/STUFF/Coding`.
 - Trailing intent refiners stay optional: Northlight first searches broadly, then lets you tighten the result type with suffixes like `/`, `img`, `.jpg`, `.pdf`, `.md`, `app`, `file`, or `folder`.
 - Scope refiners let you narrow broad queries with `in:downloads`, `in:documents`, `in:desktop`, `in:library`, `in:home`, or a concrete path such as `in:/Users/nm4/STUFF/Coding/Northlight` or `in:~/Documents`.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.

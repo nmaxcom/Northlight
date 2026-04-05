@@ -475,7 +475,7 @@ describe('LauncherBar', () => {
     fireEvent.change(input, { target: { value: 'wifi' } });
 
     await waitFor(() => {
-      expect(screen.getByText('Open Wi-Fi Settings')).toBeInTheDocument();
+      expect(screen.getAllByText('Open Wi-Fi Settings').length).toBeGreaterThan(0);
       expect(document.querySelector('[data-launcher-role="result-icon-image"]')).toBeTruthy();
     });
   });

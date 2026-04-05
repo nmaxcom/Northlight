@@ -178,7 +178,7 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     title: 'Open Spotlight Settings',
     subtitle: 'Search results, privacy, and indexing behavior',
     url: 'x-apple.systempreferences:com.apple.Spotlight',
-    keywords: ['spotlight', 'search indexing', 'search privacy'],
+    keywords: ['spotlight', 'search indexing', 'indexing'],
     icon: <IconSearch size={18} stroke={1.7} />,
     iconPath: `${SETTINGS_EXTENSION_ROOT}/SpotlightPreferenceExtension.appex`
   },
