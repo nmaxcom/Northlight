@@ -321,8 +321,8 @@ describe('LauncherBar', () => {
       ready: vi.fn().mockResolvedValue(undefined),
       searchLocal: vi.fn().mockResolvedValue([
         {
-          id: '/Applications/TextEdit.app',
-          path: '/Applications/TextEdit.app',
+          id: '/System/Applications/TextEdit.app',
+          path: '/System/Applications/TextEdit.app',
           name: 'TextEdit.app',
           kind: 'app',
           score: 200
@@ -370,8 +370,8 @@ describe('LauncherBar', () => {
       ready: vi.fn().mockResolvedValue(undefined),
       searchLocal: vi.fn().mockResolvedValue([
         {
-          id: '/Applications/TextEdit.app',
-          path: '/Applications/TextEdit.app',
+          id: '/System/Applications/TextEdit.app',
+          path: '/System/Applications/TextEdit.app',
           name: 'TextEdit.app',
           kind: 'app',
           score: 200
@@ -440,6 +440,43 @@ describe('LauncherBar', () => {
 
     await waitFor(() => {
       expect(input).toHaveFocus();
+    });
+  });
+
+  it('renders native icon images for macOS settings commands when icon paths resolve', async () => {
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.16',
+        indexEntryCount: 14,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      getPathIcons: vi.fn().mockImplementation(async (paths: string[]) =>
+        Object.fromEntries(paths.map((path) => [path, `data:image/png;base64,${btoa(path)}`]))
+      ),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'wifi' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Open Wi-Fi Settings')).toBeInTheDocument();
+      expect(document.querySelector('[data-launcher-role="result-icon-image"]')).toBeTruthy();
     });
   });
 

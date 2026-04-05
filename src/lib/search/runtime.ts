@@ -31,11 +31,12 @@ const defaultSettings: LauncherSettings = {
   ],
   scopes: [
     { id: 'scope-0', path: '/Applications', enabled: true },
-    { id: 'scope-1', path: '/Users/nm4/Applications', enabled: true },
-    { id: 'scope-2', path: '/Users/nm4/Desktop', enabled: true },
-    { id: 'scope-3', path: '/Users/nm4/Documents', enabled: true },
-    { id: 'scope-4', path: '/Users/nm4/Downloads', enabled: true },
-    { id: 'scope-5', path: '/Users/nm4/STUFF/Coding', enabled: true }
+    { id: 'scope-1', path: '/System/Applications', enabled: true },
+    { id: 'scope-2', path: '/Users/nm4/Applications', enabled: true },
+    { id: 'scope-3', path: '/Users/nm4/Desktop', enabled: true },
+    { id: 'scope-4', path: '/Users/nm4/Documents', enabled: true },
+    { id: 'scope-5', path: '/Users/nm4/Downloads', enabled: true },
+    { id: 'scope-6', path: '/Users/nm4/STUFF/Coding', enabled: true }
   ],
   launcherThemeId: DEFAULT_LAUNCHER_THEME_ID,
   watchFsChangesEnabled: true,

@@ -839,8 +839,8 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     const iconPaths = Array.from(
       new Set(
         results
-          .filter((result) => Boolean(result.path) && (result.source === 'local' || result.source === 'alias'))
-          .map((result) => result.path as string)
+          .map((result) => result.iconPath ?? result.path)
+          .filter((path): path is string => Boolean(path))
           .filter((path) => !(path in iconUrls))
       )
     );
@@ -1235,7 +1235,9 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                       onClick={() => void invokeAction(result.actions[0])}
                     >
                       <div className={iconClassName(result)} data-launcher-role="result-icon" data-launcher-kind={result.kind}>
-                        {result.path && iconUrls[result.path] ? (
+                        {result.iconPath && iconUrls[result.iconPath] ? (
+                          <img className={classes.resultIconImage} data-launcher-role="result-icon-image" src={iconUrls[result.iconPath] ?? ''} alt="" />
+                        ) : result.path && iconUrls[result.path] ? (
                           <img className={classes.resultIconImage} data-launcher-role="result-icon-image" src={iconUrls[result.path] ?? ''} alt="" />
                         ) : (
                           result.icon ?? iconGlyph(result.kind)

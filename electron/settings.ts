@@ -12,8 +12,10 @@ type LauncherState = {
 };
 
 const SETTINGS_FILENAME = 'launcher-state.json';
+const SYSTEM_APPLICATIONS_PATH = '/System/Applications';
 const DEFAULT_SCOPE_PATHS = [
   '/Applications',
+  SYSTEM_APPLICATIONS_PATH,
   join(homedir(), 'Applications'),
   join(homedir(), 'Desktop'),
   join(homedir(), 'Documents'),
@@ -62,17 +64,31 @@ function stateFilePath() {
 }
 
 function normalizeScopes(scopes: ScopeEntry[] | undefined) {
-  if (!Array.isArray(scopes) || scopes.length === 0) {
-    return DEFAULT_SETTINGS.scopes;
+  const baseScopes =
+    !Array.isArray(scopes) || scopes.length === 0
+      ? DEFAULT_SETTINGS.scopes
+      : scopes
+          .filter((scope) => typeof scope?.path === 'string' && scope.path.trim().length > 0)
+          .map((scope, index) => ({
+            id: scope.id || `scope-${index}`,
+            path: scope.path.trim(),
+            enabled: scope.enabled !== false
+          }));
+
+  const hasSystemApplications = baseScopes.some((scope) => scope.path === SYSTEM_APPLICATIONS_PATH);
+
+  if (hasSystemApplications) {
+    return baseScopes;
   }
 
-  return scopes
-    .filter((scope) => typeof scope?.path === 'string' && scope.path.trim().length > 0)
-    .map((scope, index) => ({
-      id: scope.id || `scope-${index}`,
-      path: scope.path.trim(),
-      enabled: scope.enabled !== false
-    }));
+  return [
+    ...baseScopes,
+    {
+      id: `scope-${baseScopes.length}`,
+      path: SYSTEM_APPLICATIONS_PATH,
+      enabled: true
+    }
+  ];
 }
 
 function normalizeAliases(aliases: AliasEntry[] | undefined) {

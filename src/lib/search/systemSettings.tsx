@@ -31,7 +31,11 @@ type SystemSettingsTarget = {
   url: string;
   keywords: string[];
   icon: ReactNode;
+  iconPath: string;
 };
+
+const SYSTEM_SETTINGS_APP_PATH = '/System/Applications/System Settings.app';
+const SETTINGS_EXTENSION_ROOT = '/System/Library/ExtensionKit/Extensions';
 
 const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
   {
@@ -40,7 +44,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'macOS settings hub',
     url: 'x-apple.systempreferences:',
     keywords: ['settings', 'system settings', 'system preferences', 'preferences', 'mac settings', 'mac preferences'],
-    icon: <IconSettings size={18} stroke={1.7} />
+    icon: <IconSettings size={18} stroke={1.7} />,
+    iconPath: SYSTEM_SETTINGS_APP_PATH
   },
   {
     id: 'apple-account',
@@ -48,7 +53,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Apple ID, iCloud, media, and purchases',
     url: 'x-apple.systempreferences:com.apple.systempreferences.AppleIDSettings',
     keywords: ['apple account', 'apple id', 'icloud account', 'account'],
-    icon: <IconUserCircle size={18} stroke={1.7} />
+    icon: <IconUserCircle size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/AppleIDSettings.appex`
   },
   {
     id: 'general',
@@ -56,7 +62,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'About, Software Update, login items, sharing, and more',
     url: 'x-apple.systempreferences:com.apple.systempreferences.GeneralSettings',
     keywords: ['general', 'about mac', 'software update', 'login items', 'sharing'],
-    icon: <IconAdjustments size={18} stroke={1.7} />
+    icon: <IconAdjustments size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/AboutExtension.appex`
   },
   {
     id: 'appearance',
@@ -64,7 +71,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Accent color, theme, and sidebar appearance',
     url: 'x-apple.systempreferences:com.apple.Appearance-Settings.extension',
     keywords: ['appearance', 'theme', 'accent color'],
-    icon: <IconPalette size={18} stroke={1.7} />
+    icon: <IconPalette size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/Appearance.appex`
   },
   {
     id: 'control-center',
@@ -72,7 +80,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Menu bar and Control Center modules',
     url: 'x-apple.systempreferences:com.apple.ControlCenter',
     keywords: ['control center', 'menu bar'],
-    icon: <IconMenu2 size={18} stroke={1.7} />
+    icon: <IconMenu2 size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/ControlCenterSettings.appex`
   },
   {
     id: 'desktop-dock',
@@ -80,7 +89,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Dock behavior, Stage Manager, and window layout',
     url: 'x-apple.systempreferences:com.apple.Desktop-Settings.extension',
     keywords: ['desktop', 'dock', 'desktop & dock', 'stage manager'],
-    icon: <IconDeviceDesktop size={18} stroke={1.7} />
+    icon: <IconDeviceDesktop size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/DesktopSettings.appex`
   },
   {
     id: 'display',
@@ -88,7 +98,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Resolution, refresh rate, brightness, and arrangement',
     url: 'x-apple.systempreferences:com.apple.Displays-Settings.extension',
     keywords: ['display', 'displays', 'screen', 'monitor', 'brightness', 'resolution'],
-    icon: <IconDeviceDesktop size={18} stroke={1.7} />
+    icon: <IconDeviceDesktop size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/DisplaysExt.appex`
   },
   {
     id: 'wallpaper',
@@ -96,7 +107,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Wallpaper and desktop background',
     url: 'x-apple.systempreferences:com.apple.Wallpaper-Settings.extension',
     keywords: ['wallpaper', 'background', 'desktop background'],
-    icon: <IconWallpaper size={18} stroke={1.7} />
+    icon: <IconWallpaper size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/WallpaperIntentsExtension.appex`
   },
   {
     id: 'notifications',
@@ -104,7 +116,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Notification permissions and alert behavior',
     url: 'x-apple.systempreferences:com.apple.Notifications',
     keywords: ['notifications', 'notification', 'alerts'],
-    icon: <IconBell size={18} stroke={1.7} />
+    icon: <IconBell size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/NotificationsSettingsIntents.appex`
   },
   {
     id: 'sound',
@@ -112,7 +125,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Input, output, volume, and system sounds',
     url: 'x-apple.systempreferences:com.apple.Sound',
     keywords: ['sound', 'sounds', 'audio', 'volume', 'speaker', 'microphone'],
-    icon: <IconBulb size={18} stroke={1.7} />
+    icon: <IconBulb size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/Sound.appex`
   },
   {
     id: 'wifi',
@@ -120,7 +134,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Wireless network settings',
     url: 'x-apple.systempreferences:com.apple.Wi-Fi-Settings.extension',
     keywords: ['wifi', 'wi-fi', 'wireless'],
-    icon: <IconWifi size={18} stroke={1.7} />
+    icon: <IconWifi size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/Wi-Fi.appex`
   },
   {
     id: 'bluetooth',
@@ -128,7 +143,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Bluetooth devices and pairing',
     url: 'x-apple.systempreferences:com.apple.BluetoothSettings',
     keywords: ['bluetooth', 'bt', 'airpods'],
-    icon: <IconBluetooth size={18} stroke={1.7} />
+    icon: <IconBluetooth size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/Bluetooth.appex`
   },
   {
     id: 'network',
@@ -136,7 +152,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Network services, DNS, proxies, and interfaces',
     url: 'x-apple.systempreferences:com.apple.Network',
     keywords: ['network', 'ethernet', 'dns', 'proxy'],
-    icon: <IconNetwork size={18} stroke={1.7} />
+    icon: <IconNetwork size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/Network.appex`
   },
   {
     id: 'battery',
@@ -144,7 +161,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Battery usage, charging, and power mode',
     url: 'x-apple.systempreferences:com.apple.Battery',
     keywords: ['battery', 'power', 'charging', 'low power'],
-    icon: <IconBattery size={18} stroke={1.7} />
+    icon: <IconBattery size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/BatterySettingsIntentsExtension.appex`
   },
   {
     id: 'lock-screen',
@@ -152,7 +170,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Sleep timing, password timing, and lock behavior',
     url: 'x-apple.systempreferences:com.apple.Lock',
     keywords: ['lock screen', 'screen lock', 'lock', 'password after sleep'],
-    icon: <IconLock size={18} stroke={1.7} />
+    icon: <IconLock size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/LockScreen.appex`
   },
   {
     id: 'spotlight',
@@ -160,7 +179,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Search results, privacy, and indexing behavior',
     url: 'x-apple.systempreferences:com.apple.Spotlight',
     keywords: ['spotlight', 'search indexing', 'search privacy'],
-    icon: <IconSearch size={18} stroke={1.7} />
+    icon: <IconSearch size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/SpotlightPreferenceExtension.appex`
   },
   {
     id: 'keyboard',
@@ -168,7 +188,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Keyboard behavior, text replacements, and shortcuts',
     url: 'x-apple.systempreferences:com.apple.Keyboard',
     keywords: ['keyboard', 'kb', 'keys', 'shortcuts', 'text replacements', 'input sources'],
-    icon: <IconKeyboard size={18} stroke={1.7} />
+    icon: <IconKeyboard size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/KeyboardSettings.appex`
   },
   {
     id: 'trackpad',
@@ -176,7 +197,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Trackpad gestures and pointer behavior',
     url: 'x-apple.systempreferences:com.apple.Trackpad',
     keywords: ['trackpad', 'gestures'],
-    icon: <IconAdjustments size={18} stroke={1.7} />
+    icon: <IconAdjustments size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/TrackpadExtension.appex`
   },
   {
     id: 'mouse',
@@ -184,7 +206,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Mouse speed, gestures, and scrolling',
     url: 'x-apple.systempreferences:com.apple.Mouse',
     keywords: ['mouse', 'pointer speed', 'scroll direction'],
-    icon: <IconAdjustments size={18} stroke={1.7} />
+    icon: <IconAdjustments size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/MouseExtension.appex`
   },
   {
     id: 'accessibility',
@@ -192,7 +215,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Vision, hearing, motor, and interaction features',
     url: 'x-apple.systempreferences:com.apple.Accessibility',
     keywords: ['accessibility', 'voiceover', 'zoom', 'switch control', 'voice control'],
-    icon: <IconAdjustments size={18} stroke={1.7} />
+    icon: <IconAdjustments size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/AccessibilitySettingsExtension.appex`
   },
   {
     id: 'privacy-security',
@@ -200,7 +224,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Permissions, FileVault, firewall, and security options',
     url: 'x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension',
     keywords: ['privacy', 'security', 'privacy & security', 'permissions', 'filevault', 'firewall'],
-    icon: <IconLock size={18} stroke={1.7} />
+    icon: <IconLock size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/SecurityPrivacyExtension.appex`
   },
   {
     id: 'screen-time',
@@ -208,7 +233,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Usage limits, downtime, and app limits',
     url: 'x-apple.systempreferences:com.apple.Screen-Time',
     keywords: ['screen time', 'downtime', 'app limits'],
-    icon: <IconMoon size={18} stroke={1.7} />
+    icon: <IconMoon size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/ScreenTimePreferencesExtension.appex`
   },
   {
     id: 'siri',
@@ -216,7 +242,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Siri, Apple Intelligence, and voice invocation',
     url: 'x-apple.systempreferences:com.apple.Siri',
     keywords: ['siri', 'apple intelligence', 'voice assistant'],
-    icon: <IconRosetteDiscountCheck size={18} stroke={1.7} />
+    icon: <IconRosetteDiscountCheck size={18} stroke={1.7} />,
+    iconPath: SYSTEM_SETTINGS_APP_PATH
   },
   {
     id: 'focus',
@@ -224,7 +251,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'Focus modes and notification filtering',
     url: 'x-apple.systempreferences:com.apple.Focus',
     keywords: ['focus', 'do not disturb'],
-    icon: <IconFocus2 size={18} stroke={1.7} />
+    icon: <IconFocus2 size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/FocusSettingsExtension.appex`
   },
   {
     id: 'vpn',
@@ -232,7 +260,8 @@ const SYSTEM_SETTINGS_TARGETS: SystemSettingsTarget[] = [
     subtitle: 'VPN profiles and network tunnels',
     url: 'x-apple.systempreferences:com.apple.Network',
     keywords: ['vpn', 'tunnel'],
-    icon: <IconColorSwatch size={18} stroke={1.7} />
+    icon: <IconColorSwatch size={18} stroke={1.7} />,
+    iconPath: `${SETTINGS_EXTENSION_ROOT}/VPN.appex`
   }
 ];
 
@@ -289,6 +318,7 @@ export function buildSystemSettingsCommandResults(query: string): LauncherResult
       score,
       value: 'Command',
       icon: target.icon,
+      iconPath: target.iconPath,
       source: 'command' as const,
       preview: {
         title: target.title,

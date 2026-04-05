@@ -65,6 +65,13 @@ describe('buildResults', () => {
     expect(results.some((result) => result.title === 'BetterTouchTool.app')).toBe(true);
   });
 
+  it('returns built-in Apple apps from realistic /System/Applications paths in default search fixtures', async () => {
+    const results = await buildResults('textedit');
+
+    expect(results[0]?.title).toBe('TextEdit.app');
+    expect(results[0]?.path).toBe('/System/Applications/TextEdit.app');
+  });
+
   it('returns system settings commands for common launcher queries', async () => {
     const settings = await buildResults('settings');
     const keyboard = await buildResults('keyboard');
@@ -74,12 +81,16 @@ describe('buildResults', () => {
     const prefs = await buildResults('prefs');
 
     expect(settings[0]?.title).toBe('Open System Settings');
+    expect(settings[0]?.iconPath).toBe('/System/Applications/System Settings.app');
     expect(settings.some((result) => result.title === 'Open Northlight Settings')).toBe(true);
     expect(prefs.some((result) => result.title === 'Open Northlight Settings')).toBe(true);
     expect(keyboard[0]?.title).toBe('Open Keyboard Settings');
+    expect(keyboard[0]?.iconPath).toBe('/System/Library/ExtensionKit/Extensions/KeyboardSettings.appex');
     expect(privacy[0]?.title).toBe('Open Privacy & Security Settings');
+    expect(privacy[0]?.iconPath).toBe('/System/Library/ExtensionKit/Extensions/SecurityPrivacyExtension.appex');
     expect(display[0]?.title).toBe('Open Display Settings');
     expect(wifi[0]?.title).toBe('Open Wi-Fi Settings');
+    expect(wifi[0]?.iconPath).toBe('/System/Library/ExtensionKit/Extensions/Wi-Fi.appex');
   });
 
   it('supports broad macOS settings vocabulary beyond the basic examples', async () => {
@@ -126,8 +137,8 @@ describe('buildResults', () => {
         score: 176
       },
       {
-        id: '/Applications/TextEdit.app',
-        path: '/Applications/TextEdit.app',
+        id: '/System/Applications/TextEdit.app',
+        path: '/System/Applications/TextEdit.app',
         name: 'TextEdit.app',
         kind: 'app',
         score: 120
@@ -142,8 +153,8 @@ describe('buildResults', () => {
   it('keeps common app queries ahead of similarly named files', async () => {
     installLocalSearchResults([
       {
-        id: '/Applications/Preview.app',
-        path: '/Applications/Preview.app',
+        id: '/System/Applications/Preview.app',
+        path: '/System/Applications/Preview.app',
         name: 'Preview.app',
         kind: 'app',
         score: 112
@@ -156,8 +167,8 @@ describe('buildResults', () => {
         score: 168
       },
       {
-        id: '/Applications/Safari.app',
-        path: '/Applications/Safari.app',
+        id: '/System/Applications/Safari.app',
+        path: '/System/Applications/Safari.app',
         name: 'Safari.app',
         kind: 'app',
         score: 104
@@ -170,8 +181,8 @@ describe('buildResults', () => {
         score: 162
       },
       {
-        id: '/Applications/Notes.app',
-        path: '/Applications/Notes.app',
+        id: '/System/Applications/Notes.app',
+        path: '/System/Applications/Notes.app',
         name: 'Notes.app',
         kind: 'app',
         score: 110
@@ -200,15 +211,18 @@ describe('buildResults', () => {
         score: 176
       },
       {
-        id: '/Applications/TextEdit.app',
-        path: '/Applications/TextEdit.app',
+        id: '/System/Applications/TextEdit.app',
+        path: '/System/Applications/TextEdit.app',
         name: 'TextEdit.app',
         kind: 'app',
         score: 108
       }
     ]);
 
-    expect((await buildResults('textedit'))[0]?.title).toBe('TextEdit.app');
+    const results = await buildResults('textedit');
+
+    expect(results[0]?.title).toBe('TextEdit.app');
+    expect(results[0]?.path).toBe('/System/Applications/TextEdit.app');
   });
 
   it('filters local results to folders when the query ends with a slash', async () => {

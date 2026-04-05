@@ -72,29 +72,29 @@ export const fileFixtures: LocalSearchItem[] = [
     score: 0
   },
   {
-    id: '/Applications/TextEdit.app',
-    path: '/Applications/TextEdit.app',
+    id: '/System/Applications/TextEdit.app',
+    path: '/System/Applications/TextEdit.app',
     name: 'TextEdit.app',
     kind: 'app',
     score: 0
   },
   {
-    id: '/Applications/Preview.app',
-    path: '/Applications/Preview.app',
+    id: '/System/Applications/Preview.app',
+    path: '/System/Applications/Preview.app',
     name: 'Preview.app',
     kind: 'app',
     score: 0
   },
   {
-    id: '/Applications/Notes.app',
-    path: '/Applications/Notes.app',
+    id: '/System/Applications/Notes.app',
+    path: '/System/Applications/Notes.app',
     name: 'Notes.app',
     kind: 'app',
     score: 0
   },
   {
-    id: '/Applications/Safari.app',
-    path: '/Applications/Safari.app',
+    id: '/System/Applications/Safari.app',
+    path: '/System/Applications/Safari.app',
     name: 'Safari.app',
     kind: 'app',
     score: 0

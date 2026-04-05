@@ -857,6 +857,10 @@ async function getPathIcon(path: string, requestId?: string) {
     });
     return icon;
   } catch {
+    if (path.startsWith('/System/Library/ExtensionKit/Extensions/')) {
+      return getPathIcon('/System/Applications/System Settings.app', requestId);
+    }
+
     iconCache.set(path, null);
     recordTrace({
       subsystem: 'icon',

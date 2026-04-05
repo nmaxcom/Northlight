@@ -22,6 +22,7 @@ const SPOTLIGHT_TIMEOUT_MS = 1200;
 const MAX_SPOTLIGHT_CANDIDATES = 120;
 const FALLBACK_ROOTS = [
   { path: '/Applications', maxDepth: 2 },
+  { path: '/System/Applications', maxDepth: 2 },
   { path: join(homedir(), 'Applications'), maxDepth: 2 },
   { path: join(homedir(), 'Desktop'), maxDepth: 5 },
   { path: join(homedir(), 'Documents'), maxDepth: 5 },
@@ -40,6 +41,7 @@ const EXCLUDED_SEGMENTS = [
   '/.Trash/'
 ];
 const PREFERRED_SEGMENTS = [
+  '/System/Applications',
   join(homedir(), 'STUFF', 'Coding'),
   join(homedir(), 'Desktop'),
   join(homedir(), 'Documents'),
@@ -154,6 +156,10 @@ function preferredBoost(path: string) {
 }
 
 function systemPenalty(path: string) {
+  if (path.startsWith('/System/Applications/') && path.endsWith('.app')) {
+    return 0;
+  }
+
   if (path.startsWith('/System/') || path.startsWith('/Library/')) {
     return 28;
   }

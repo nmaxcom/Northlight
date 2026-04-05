@@ -294,6 +294,7 @@ export type LauncherResult = {
   subtitle: string;
   value?: string;
   icon: ReactNode;
+  iconPath?: string;
   kind: ResultKind;
   score: number;
   path?: string;

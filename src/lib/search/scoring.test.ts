@@ -32,7 +32,7 @@ describe('baseSearchScore', () => {
       'text',
       {
         name: 'TextEdit.app',
-        path: '/Applications/TextEdit.app',
+        path: '/System/Applications/TextEdit.app',
         kind: 'app',
         score: 88
       },
@@ -46,6 +46,32 @@ describe('baseSearchScore', () => {
         path: '/Applications/Adobe Photoshop 2026/Presets/Tools/Text.tpl',
         kind: 'file',
         score: 132
+      },
+      { appFirstEnabled: true }
+    );
+
+    expect(app).toBeGreaterThan(noisyFile);
+  });
+
+  it('keeps exact system app matches above broad file noise', () => {
+    const app = composedSearchScore(
+      'textedit',
+      {
+        name: 'TextEdit.app',
+        path: '/System/Applications/TextEdit.app',
+        kind: 'app',
+        score: 64
+      },
+      { appFirstEnabled: true }
+    );
+
+    const noisyFile = composedSearchScore(
+      'textedit',
+      {
+        name: 'textedit-reference.md',
+        path: '/Users/nm4/Documents/textedit-reference.md',
+        kind: 'file',
+        score: 120
       },
       { appFirstEnabled: true }
     );
