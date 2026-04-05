@@ -19,11 +19,17 @@ type SuggestedConversion = {
   from: string;
 };
 
+const UNIT_TOKEN_PATTERN = '[-a-zA-Z0-9/^².]+';
+
 const unitAliasMap: Record<string, string> = {
   mph: 'm/h',
+  'mi/h': 'm/h',
+  mih: 'm/h',
   kmh: 'km/h',
   kph: 'km/h',
   kmph: 'km/h',
+  'km/hr': 'km/h',
+  'mi/hr': 'm/h',
   centimeter: 'cm',
   centimeters: 'cm',
   centimetre: 'cm',
@@ -32,32 +38,25 @@ const unitAliasMap: Record<string, string> = {
   meters: 'm',
   metre: 'm',
   metres: 'm',
-  km: 'km',
   kilometer: 'km',
   kilometers: 'km',
   kilometre: 'km',
   kilometres: 'km',
-  mi: 'mi',
   mile: 'mi',
   miles: 'mi',
   inch: 'in',
   inches: 'in',
-  in: 'in',
   foot: 'ft',
   feet: 'ft',
-  ft: 'ft',
   yard: 'yd',
   yards: 'yd',
-  yd: 'yd',
-  g: 'g',
-  kg: 'kg',
+  gram: 'g',
+  grams: 'g',
   kilogram: 'kg',
   kilograms: 'kg',
-  lb: 'lb',
-  lbs: 'lb',
   pound: 'lb',
   pounds: 'lb',
-  oz: 'oz',
+  lbs: 'lb',
   ounce: 'oz',
   ounces: 'oz',
   m2: 'm2',
@@ -75,7 +74,125 @@ const unitAliasMap: Record<string, string> = {
   squarefoot: 'ft2',
   squarefeet: 'ft2',
   c: 'C',
-  f: 'F'
+  '°c': 'C',
+  celsius: 'C',
+  f: 'F',
+  '°f': 'F',
+  fahrenheit: 'F',
+  k: 'K',
+  kelvin: 'K',
+  ns: 'ns',
+  nanosecond: 'ns',
+  nanoseconds: 'ns',
+  us: 'mu',
+  'µs': 'mu',
+  microsecond: 'mu',
+  microseconds: 'mu',
+  ms: 'ms',
+  millisecond: 'ms',
+  milliseconds: 'ms',
+  sec: 's',
+  secs: 's',
+  second: 's',
+  seconds: 's',
+  min: 'min',
+  mins: 'min',
+  minute: 'min',
+  minutes: 'min',
+  hr: 'h',
+  hrs: 'h',
+  hour: 'h',
+  hours: 'h',
+  day: 'd',
+  days: 'd',
+  wk: 'week',
+  wks: 'week',
+  week: 'week',
+  weeks: 'week',
+  month: 'month',
+  months: 'month',
+  yr: 'year',
+  yrs: 'year',
+  year: 'year',
+  years: 'year',
+  bit: 'b',
+  bits: 'b',
+  byte: 'B',
+  bytes: 'B',
+  kib: 'KB',
+  kb: 'KB',
+  kilobyte: 'KB',
+  kilobytes: 'KB',
+  mib: 'MB',
+  mb: 'MB',
+  megabyte: 'MB',
+  megabytes: 'MB',
+  gib: 'GB',
+  gb: 'GB',
+  gigabyte: 'GB',
+  gigabytes: 'GB',
+  tib: 'TB',
+  tb: 'TB',
+  terabyte: 'TB',
+  terabytes: 'TB',
+  kbit: 'Kb',
+  kbits: 'Kb',
+  mbit: 'Mb',
+  mbits: 'Mb',
+  gbit: 'Gb',
+  gbits: 'Gb',
+  tbit: 'Tb',
+  tbits: 'Tb',
+  milliliter: 'ml',
+  milliliters: 'ml',
+  millilitre: 'ml',
+  millilitres: 'ml',
+  centiliter: 'cl',
+  centiliters: 'cl',
+  deciliter: 'dl',
+  deciliters: 'dl',
+  liter: 'l',
+  liters: 'l',
+  litre: 'l',
+  litres: 'l',
+  kiloliter: 'kl',
+  kiloliters: 'kl',
+  teaspoon: 'tsp',
+  teaspoons: 'tsp',
+  tsp: 'tsp',
+  tablespoon: 'Tbs',
+  tablespoons: 'Tbs',
+  tbsp: 'Tbs',
+  tbs: 'Tbs',
+  floz: 'fl-oz',
+  'fl-oz': 'fl-oz',
+  fluidounce: 'fl-oz',
+  fluidounces: 'fl-oz',
+  cup: 'cup',
+  cups: 'cup',
+  pint: 'pnt',
+  pints: 'pnt',
+  quart: 'qt',
+  quarts: 'qt',
+  gallon: 'gal',
+  gallons: 'gal'
+};
+
+const unitDisplayMap: Record<string, string> = {
+  'm/h': 'mi/h',
+  C: '°C',
+  F: '°F',
+  K: 'K',
+  mu: 'us',
+  b: 'bit',
+  B: 'B',
+  Kb: 'Kb',
+  Mb: 'Mb',
+  Gb: 'Gb',
+  Tb: 'Tb',
+  'fl-oz': 'fl oz',
+  Tbs: 'tbsp',
+  pnt: 'pint'
 };
 
 const implicitUnitTargets: Record<string, string[]> = {
@@ -91,7 +208,38 @@ const implicitUnitTargets: Record<string, string[]> = {
   oz: ['g'],
   g: ['oz'],
   m2: ['ft2'],
-  ft2: ['m2']
+  ft2: ['m2'],
+  C: ['F'],
+  F: ['C'],
+  K: ['C', 'F'],
+  'km/h': ['m/h'],
+  'm/h': ['km/h'],
+  ms: ['s'],
+  s: ['ms', 'min'],
+  min: ['h', 's'],
+  h: ['min'],
+  d: ['h'],
+  week: ['d'],
+  month: ['d'],
+  year: ['d'],
+  B: ['KB', 'MB'],
+  KB: ['MB'],
+  MB: ['GB', 'KB'],
+  GB: ['TB', 'MB'],
+  TB: ['GB'],
+  b: ['B'],
+  Kb: ['Mb', 'KB'],
+  Mb: ['Gb', 'MB'],
+  Gb: ['Tb', 'GB'],
+  Tb: ['GB'],
+  ml: ['fl-oz', 'cup'],
+  l: ['qt', 'gal'],
+  tsp: ['ml'],
+  Tbs: ['ml'],
+  cup: ['ml', 'fl-oz'],
+  pnt: ['ml', 'l'],
+  qt: ['l'],
+  gal: ['l']
 };
 
 const currencyRates: Record<string, number> = {
@@ -99,6 +247,13 @@ const currencyRates: Record<string, number> = {
   eur: 0.92,
   gbp: 0.78,
   jpy: 149.4
+};
+
+const implicitCurrencyTargets: Record<string, string[]> = {
+  usd: ['eur', 'gbp', 'jpy'],
+  eur: ['usd', 'gbp'],
+  gbp: ['usd', 'eur'],
+  jpy: ['usd', 'eur']
 };
 
 const timeZoneAliases: Record<string, string> = {
@@ -123,8 +278,14 @@ function normalizeUnit(unit: string) {
   return unitAliasMap[unit.toLowerCase()] ?? unit;
 }
 
+function formatUnit(unit: string) {
+  return unitDisplayMap[unit] ?? unit;
+}
+
 function parseUnitConversion(query: string): ConversionMatch | null {
-  const match = query.trim().match(/^(-?\d+(?:\.\d+)?)\s*([a-zA-Z0-9/^²]+)\s+(?:to|in)\s+([a-zA-Z0-9/^²]+)$/);
+  const match = query
+    .trim()
+    .match(new RegExp(`^(-?\\d+(?:\\.\\d+)?)\\s*(${UNIT_TOKEN_PATTERN})\\s+(?:to|in)\\s+(${UNIT_TOKEN_PATTERN})$`, 'i'));
 
   if (!match) {
     return null;
@@ -144,7 +305,7 @@ function parseSuggestedUnitConversion(query: string): SuggestedConversion | null
     return null;
   }
 
-  const match = trimmed.match(/^(-?\d+(?:\.\d+)?)\s*([a-zA-Z0-9/^²]+)$/);
+  const match = trimmed.match(new RegExp(`^(-?\\d+(?:\\.\\d+)?)\\s*(${UNIT_TOKEN_PATTERN})$`, 'i'));
 
   if (!match) {
     return null;
@@ -160,14 +321,14 @@ function formatNumber(value: number) {
   return Number(value.toFixed(2)).toString();
 }
 
-function buildResult(builder: Builder): LauncherResult {
+function buildResult(builder: Builder, score = 160): LauncherResult {
   return {
     id: builder.id,
     title: builder.title,
     subtitle: builder.subtitle,
     value: builder.value,
     kind: 'conversion',
-    score: 160,
+    score,
     icon: null,
     actions: []
   };
@@ -186,7 +347,7 @@ function buildUnitResult(query: string): Builder | null {
 
     return {
       id: `conversion:unit:${query}`,
-      title: `${match.value} ${match.from} = ${formatted} ${match.to}`,
+      title: `${match.value} ${formatUnit(match.from)} = ${formatted} ${formatUnit(match.to)}`,
       subtitle: 'Deterministic unit conversion',
       value: formatted
     };
@@ -216,7 +377,7 @@ function buildSuggestedUnitResults(query: string): Builder[] {
       return [
         {
           id: `conversion:suggested:${query}:${target}`,
-          title: `${match.value} ${match.from} = ${formatted} ${target}`,
+          title: `${match.value} ${formatUnit(match.from)} = ${formatted} ${formatUnit(target)}`,
           subtitle: 'Suggested unit conversion',
           value: formatted
         }
@@ -246,31 +407,87 @@ function buildPercentageResult(query: string): Builder | null {
   };
 }
 
-function buildCurrencyResult(query: string): Builder | null {
+function parseCurrencyConversion(query: string): ConversionMatch | null {
   const match = query.trim().match(/^(-?\d+(?:\.\d+)?)\s*([a-zA-Z]{3})\s+(?:to|in)\s+([a-zA-Z]{3})$/i);
 
   if (!match) {
     return null;
   }
 
-  const amount = Number(match[1]);
-  const from = match[2].toLowerCase();
-  const to = match[3].toLowerCase();
+  return {
+    value: Number(match[1]),
+    from: match[2].toLowerCase(),
+    to: match[3].toLowerCase()
+  };
+}
 
-  if (!(from in currencyRates) || !(to in currencyRates)) {
+function parseSuggestedCurrencyConversion(query: string): SuggestedConversion | null {
+  const trimmed = query.trim();
+
+  if (!trimmed || /\s(?:to|in)\s/i.test(trimmed)) {
     return null;
   }
 
+  const match = trimmed.match(/^(-?\d+(?:\.\d+)?)\s*([a-zA-Z]{3})$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    value: Number(match[1]),
+    from: match[2].toLowerCase()
+  };
+}
+
+function convertCurrency(amount: number, from: string, to: string) {
   const usdValue = amount / currencyRates[from];
-  const converted = usdValue * currencyRates[to];
-  const formatted = formatNumber(converted);
+  return usdValue * currencyRates[to];
+}
+
+function buildCurrencyResult(query: string): Builder | null {
+  const match = parseCurrencyConversion(query);
+
+  if (!match) {
+    return null;
+  }
+
+  if (!(match.from in currencyRates) || !(match.to in currencyRates)) {
+    return null;
+  }
+
+  const formatted = formatNumber(convertCurrency(match.value, match.from, match.to));
 
   return {
     id: `conversion:currency:${query}`,
-    title: `${amount} ${from.toUpperCase()} = ${formatted} ${to.toUpperCase()}`,
+    title: `${match.value} ${match.from.toUpperCase()} = ${formatted} ${match.to.toUpperCase()}`,
     subtitle: 'Deterministic currency conversion (local rate table)',
     value: formatted
   };
+}
+
+function buildSuggestedCurrencyResults(query: string): Builder[] {
+  const match = parseSuggestedCurrencyConversion(query);
+
+  if (!match) {
+    return [];
+  }
+
+  const targets = implicitCurrencyTargets[match.from];
+
+  if (!targets?.length) {
+    return [];
+  }
+
+  return targets.map((target) => {
+    const formatted = formatNumber(convertCurrency(match.value, match.from, target));
+    return {
+      id: `conversion:suggested-currency:${query}:${target}`,
+      title: `${match.value} ${match.from.toUpperCase()} = ${formatted} ${target.toUpperCase()}`,
+      subtitle: 'Suggested currency conversion (local rate table)',
+      value: formatted
+    };
+  });
 }
 
 function extractTimeParts(date: Date, timeZone: string) {
@@ -369,8 +586,11 @@ export function buildDeterministicResult(query: string): LauncherResult[] {
   const explicitResult = buildDeterministicCalculation(query);
 
   if (explicitResult) {
-    return [buildResult(explicitResult)];
+    return [buildResult(explicitResult, 168)];
   }
 
-  return buildSuggestedUnitResults(query).map(buildResult);
+  return [
+    ...buildSuggestedCurrencyResults(query).map((result) => buildResult(result, 166)),
+    ...buildSuggestedUnitResults(query).map((result) => buildResult(result, 164))
+  ];
 }

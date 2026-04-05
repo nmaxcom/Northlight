@@ -143,7 +143,7 @@ describe('LauncherBar', () => {
       await Promise.resolve();
     });
 
-    expect(screen.getAllByText('30 m/h = 48.28 km/h').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('30 mi/h = 48.28 km/h').length).toBeGreaterThan(0);
   });
 
   it('shows implicit unit suggestions when the query already looks like a unit amount', async () => {

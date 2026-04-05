@@ -19,7 +19,7 @@ Current built-in capabilities:
 - Reveal the selected result in Finder with `Cmd+Enter`.
 - Copy the selected path with `Cmd+Shift+C`.
 - Open a folder in Terminal, copy a result name, open files in TextEdit, and move results to Trash.
-- Resolve deterministic calculations inline, including units, percentages, currencies, and timezone conversions.
+- Resolve deterministic calculations inline, including units, percentages, currencies, timezone conversions, durations, data sizes, and volume measures.
 - Copy a conversion result with `Enter`.
 - Search saved aliases and snippets.
 - Search recent clipboard history when clipboard tracking is enabled.
@@ -69,6 +69,13 @@ Current built-in capabilities:
 - The launcher shows active refiner chips below the search box so you can confirm exactly what Northlight parsed.
 - Intent refiners are only recognized as trailing standalone terms, so literal names like `img-tools` keep searching as plain text.
 - For a full user guide to search refiners, examples, and combinations, see `docs/search-refiners-guide.md`.
+
+## Deterministic Calculations
+
+- Full expressions work inline for units, currencies, percentages, time zones, durations, data sizes, and volume conversions.
+- Examples: `30mph to kmh`, `9km/h to mi/h`, `15% of 240`, `45 usd to eur`, `2pm CET in Tokyo`, `90 min to h`, `2048 mb to gb`, and `500ml to cup`.
+- Northlight also surfaces obvious conversion suggestions early from compact tokens such as `40F`, `20USD`, `90min`, `2048MB`, and `500ml`.
+- Currency conversions use a deterministic local rate table for quick answers, not live market rates.
 
 ## Keyboard Controls
 

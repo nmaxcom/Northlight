@@ -11,7 +11,7 @@ test('shows deterministic conversion answers', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Launcher query').fill('30mph to kmh');
 
-  await expect(page.getByText('30 m/h = 48.28 km/h').first()).toBeVisible();
+  await expect(page.getByText('30 mi/h = 48.28 km/h').first()).toBeVisible();
   await expect(page.getByText('Copy Result').first()).toBeVisible();
 });
 
