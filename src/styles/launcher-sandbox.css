@@ -1,28 +1,690 @@
 /*
-  Sandbox-only launcher overrides.
+  Sandbox launcher stylesheet for Chrome DevTools editing.
 
-  Keep visual experiments for the duplicated Sandbox theme here.
-  This file is loaded by both the real launcher renderer and the shared
-  launcher design route, so Chrome DevTools shows it as a normal source.
+  Intended workflow:
+  1. Run `npm run design`
+  2. Open `/design/launcher-current-view.html`
+  3. Switch the header chip to `Sandbox`
+  4. In Chrome DevTools connect the project as a Workspace
+  5. Edit these rules from the Styles panel
+
+  This file intentionally mirrors the current launcher look so edits here
+  are modifications, not a rewrite from scratch.
 */
 
-[data-launcher-theme='sandbox'] {
-  /*
-    Override launcher theme tokens here, for example:
-
-    --launcher-window-border: transparent;
-    --launcher-window-bg: linear-gradient(180deg, #101318, #060708);
-    --launcher-badge-bg: #161c24;
-    --launcher-text: #f3f5f7;
-  */
+[data-launcher-theme='sandbox'][data-launcher-role='window'] {
+  border: 1px solid var(--launcher-window-border);
+  box-shadow:
+    inset 0 0 0 1px var(--launcher-window-highlight),
+    0 18px 50px var(--launcher-window-shadow);
+  background: var(--launcher-window-bg);
 }
 
-[data-launcher-theme='sandbox'] .themeSwitch {
-  /*
-    Sandbox-specific component overrides are also allowed here, for example:
+[data-launcher-theme='sandbox'] [data-launcher-role='shell'] {
+  color: var(--launcher-text);
+}
 
-    border: none;
-    background: transparent;
-    font-family: "IBM Plex Sans", sans-serif;
-  */
+[data-launcher-theme='sandbox'] [data-launcher-role='header'] {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 14px 8px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='header-left'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='brand'] {
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='theme-switch'] {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--launcher-theme-switch-border);
+  background: var(--launcher-theme-switch-bg);
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='theme-switch']:hover {
+  background: var(--launcher-theme-switch-hover-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='theme-switch-label'] {
+  color: var(--launcher-theme-switch-label);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='theme-switch-value'] {
+  color: var(--launcher-theme-switch-value);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='status'] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='status-badge'],
+[data-launcher-theme='sandbox'] [data-launcher-role='status-ready-badge'] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: var(--launcher-badge-bg);
+  color: var(--launcher-badge-fg);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='status-ready-badge'] {
+  background: var(--launcher-ready-badge-bg);
+  color: var(--launcher-ready-badge-fg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='search'] {
+  margin: 0 14px 10px;
+  height: 35px;
+  border-radius: 10px;
+  border: 1px solid var(--launcher-search-border);
+  background: var(--launcher-search-bg);
+  box-shadow:
+    inset 0 1px 0 var(--launcher-search-highlight),
+    0 0 0 1px var(--launcher-search-shadow);
+  display: grid;
+  grid-template-columns: 27px 1fr 27px;
+  align-items: center;
+  padding: 0 6px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='search-icon'],
+[data-launcher-theme='sandbox'] [data-launcher-role='search-arrow'] {
+  color: var(--launcher-search-icon);
+  font-size: 27px;
+  line-height: 1;
+  user-select: none;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='search-input'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--launcher-text);
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='search-input']::placeholder {
+  color: var(--launcher-search-placeholder);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='refiner-bar'] {
+  margin: 0 14px 10px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='refiner-chip'] {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--launcher-refiner-border);
+  background: var(--launcher-refiner-bg);
+  color: var(--launcher-refiner-fg);
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='body'] {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  padding: 0 14px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='window'] [data-launcher-role='body'].bodyWithPreview,
+[data-launcher-theme='sandbox'] [data-launcher-role='body']:has([data-launcher-role='preview-pane']) {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='results-column'] {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='results'] {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='results']::-webkit-scrollbar,
+[data-launcher-theme='sandbox'] [data-launcher-role='action-list']::-webkit-scrollbar,
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-body']::-webkit-scrollbar {
+  width: 10px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='results']::-webkit-scrollbar-thumb,
+[data-launcher-theme='sandbox'] [data-launcher-role='action-list']::-webkit-scrollbar-thumb,
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-body']::-webkit-scrollbar-thumb {
+  background: var(--launcher-scroll-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='empty-state'] {
+  flex: 1;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  border: 1px dashed var(--launcher-empty-border);
+  background: var(--launcher-empty-bg);
+  text-align: center;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='empty-state'] h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='empty-state'] p {
+  margin: 0;
+  color: var(--launcher-subtle-text);
+  font-size: 0.98rem;
+  max-width: 520px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result'] {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--launcher-result-bg);
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+[data-launcher-theme='sandbox'][data-pointer-active='true'] [data-launcher-role='result']:hover,
+[data-launcher-theme='sandbox'] [data-launcher-role='result'][data-selected='true'] {
+  border-color: var(--launcher-result-hover-border);
+  background: var(--launcher-result-hover-bg);
+}
+
+[data-launcher-theme='sandbox'][data-pointer-active='true'] [data-launcher-role='result']:hover {
+  transform: translateY(-1px);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon'] {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--launcher-result-icon-fg);
+  font-size: 1rem;
+  box-shadow: inset 0 1px 0 var(--launcher-result-icon-emboss);
+  overflow: hidden;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='folder'] {
+  background: var(--launcher-icon-folder-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='app'] {
+  background: var(--launcher-icon-app-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='file'] {
+  background: var(--launcher-icon-file-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='conversion'] {
+  background: var(--launcher-icon-conversion-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='clipboard'] {
+  background: var(--launcher-icon-clipboard-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='snippet'] {
+  background: var(--launcher-icon-snippet-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='command'] {
+  background: var(--launcher-icon-command-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='alias'] {
+  background: var(--launcher-icon-alias-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-icon-image'] {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  padding: 4px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-copy'] {
+  min-width: 0;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-title'] {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-subtitle'] {
+  margin-top: 4px;
+  color: var(--launcher-subtle-text);
+  font-size: 0.74rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='result-kind'] {
+  align-self: start;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  background: var(--launcher-kind-bg);
+  color: var(--launcher-kind-fg);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-pane'] {
+  min-height: 0;
+  border-radius: 20px;
+  border: 1px solid var(--launcher-panel-border);
+  background: var(--launcher-panel-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-header'] {
+  padding: 14px 16px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--launcher-panel-divider);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-eyebrow'] {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--launcher-muted-text);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-content'] {
+  min-height: 0;
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-title'] {
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-subtitle'] {
+  color: var(--launcher-muted-text);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-media-frame'] {
+  min-height: 180px;
+  max-height: 300px;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--launcher-panel-border);
+  background: var(--launcher-panel-surface);
+  display: grid;
+  place-items: center;
+  padding: 10px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-media-image'] {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-body'] {
+  margin: 0;
+  min-height: 140px;
+  max-height: 320px;
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid var(--launcher-panel-border);
+  background: var(--launcher-panel-surface);
+  padding: 14px;
+  color: var(--launcher-preview-body-fg);
+  white-space: pre-wrap;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    'Liberation Mono',
+    'Courier New',
+    monospace;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-meta'] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-meta-row'] {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+  align-items: center;
+  border-radius: 12px;
+  background: var(--launcher-result-bg);
+  padding: 0 12px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-meta-label'] {
+  color: var(--launcher-muted-text);
+  font-size: 0.8rem;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-meta-value'] {
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-placeholder'] {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--launcher-subtle-text);
+  padding: 20px;
+  text-align: center;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='footer'] {
+  position: relative;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 14px 12px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='footer-left'],
+[data-launcher-theme='sandbox'] [data-launcher-role='footer-right'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='footer-left'] {
+  flex-wrap: wrap;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='footer-primary-text'],
+[data-launcher-theme='sandbox'] [data-launcher-role='footer-button-text'] {
+  font-size: 0.84rem;
+  color: var(--launcher-text);
+  font-weight: 700;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='kbd'] {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--launcher-kbd-border);
+  background: var(--launcher-kbd-bg);
+  color: var(--launcher-kbd-fg);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='settings-trigger'],
+[data-launcher-theme='sandbox'] [data-launcher-role='actions-trigger'] {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--launcher-control-bg);
+  border: 1px solid var(--launcher-control-border);
+  color: inherit;
+  cursor: pointer;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='settings-trigger']:hover,
+[data-launcher-theme='sandbox'] [data-launcher-role='actions-trigger']:hover {
+  background: var(--launcher-control-hover-bg);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='actions-panel'] {
+  position: absolute;
+  right: 14px;
+  bottom: calc(100% + 12px);
+  width: min(560px, calc(100vw - 28px));
+  border-radius: 20px;
+  border: 1px solid var(--launcher-actions-panel-border);
+  background: var(--launcher-actions-panel-bg);
+  box-shadow:
+    inset 0 1px 0 var(--launcher-actions-panel-highlight),
+    0 24px 46px var(--launcher-actions-panel-shadow);
+  overflow: hidden;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-header'] {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--launcher-panel-divider);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-header-title'] {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-header-subtitle'] {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--launcher-subtle-text);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-list'] {
+  max-height: 320px;
+  overflow: auto;
+  padding: 8px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-group'] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-group'] + [data-launcher-role='action-group'] {
+  margin-top: 10px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-group-label'] {
+  padding: 0 8px;
+  color: var(--launcher-subtle-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-row'] {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-row']:hover,
+[data-launcher-theme='sandbox'] [data-launcher-role='action-row'][data-action-selected='true'] {
+  background: var(--launcher-action-hover-bg);
+  border-color: var(--launcher-action-hover-border);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-copy'] {
+  min-width: 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-label'] {
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-row-hint'] {
+  margin-top: 3px;
+  color: var(--launcher-subtle-text);
+  font-size: 0.78rem;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-shortcuts'] {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-search'] {
+  padding: 12px;
+  border-top: 1px solid var(--launcher-panel-divider);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-search-input'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: 42px;
+  border-radius: 14px;
+  border: 1px solid var(--launcher-input-border);
+  background: var(--launcher-input-bg);
+  color: var(--launcher-text);
+  padding: 0 16px;
+  font-size: 1rem;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-search-input']::placeholder {
+  color: var(--launcher-subtle-text);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='action-empty'] {
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--launcher-subtle-text);
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='feedback'] {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--launcher-feedback-success-bg);
+  display: inline-flex;
+  align-items: center;
+  color: var(--launcher-text);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='feedback'].feedbackError {
+  background: var(--launcher-feedback-error-bg);
 }

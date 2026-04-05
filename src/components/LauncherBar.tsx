@@ -50,7 +50,7 @@ function renderShortcut(hint: string, prefix = '') {
   }
 
   return hint.split('+').map((part) => (
-    <span key={`${prefix}${hint}-${part}`} className={classes.kbd}>
+    <span key={`${prefix}${hint}-${part}`} className={classes.kbd} data-launcher-role="kbd">
       {shortcutLabelMap[part] ?? part}
     </span>
   ));
@@ -1083,6 +1083,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   return (
     <div
       className={classes.window}
+      data-launcher-role="window"
       data-launcher-theme={activeTheme.id}
       data-pointer-active={isPointerActive ? 'true' : 'false'}
       style={getLauncherThemeStyle(activeTheme.id)}
@@ -1111,13 +1112,14 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         focusActiveInput();
       }}
     >
-      <section className={classes.shell}>
-        <header className={classes.header}>
-          <div className={classes.headerLeft}>
-            <div className={classes.brand}>Northlight</div>
+      <section className={classes.shell} data-launcher-role="shell">
+        <header className={classes.header} data-launcher-role="header">
+          <div className={classes.headerLeft} data-launcher-role="header-left">
+            <div className={classes.brand} data-launcher-role="brand">Northlight</div>
             <button
               type="button"
               className={classes.themeSwitch}
+              data-launcher-role="theme-switch"
               aria-label={`Switch launcher theme. Current theme ${activeTheme.label}`}
               onMouseDown={(event) => {
                 event.preventDefault();
@@ -1125,15 +1127,15 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
               }}
               onClick={toggleLauncherTheme}
             >
-              <span className={classes.themeSwitchLabel}>Theme</span>
-              <span className={classes.themeSwitchValue}>{activeTheme.label}</span>
+              <span className={classes.themeSwitchLabel} data-launcher-role="theme-switch-label">Theme</span>
+              <span className={classes.themeSwitchValue} data-launcher-role="theme-switch-value">{activeTheme.label}</span>
             </button>
           </div>
-          <div className={classes.status}>
-            <div className={classes.badge}>v{status.appVersion}</div>
-            <div className={classes.badge}>{status.searchMode === 'hybrid' ? 'hybrid' : status.searchMode ?? 'catalog'}</div>
-            <div className={classes.badge}>{status.indexEntryCount.toLocaleString()} indexed</div>
-            <div className={classes.badge}>
+          <div className={classes.status} data-launcher-role="status">
+            <div className={classes.badge} data-launcher-role="status-badge">v{status.appVersion}</div>
+            <div className={classes.badge} data-launcher-role="status-badge">{status.searchMode === 'hybrid' ? 'hybrid' : status.searchMode ?? 'catalog'}</div>
+            <div className={classes.badge} data-launcher-role="status-badge">{status.indexEntryCount.toLocaleString()} indexed</div>
+            <div className={classes.badge} data-launcher-role="status-badge">
               {status.catalogState === 'hydrating'
                 ? 'catalog hydrating'
                 : status.catalogState === 'restoring'
@@ -1142,18 +1144,19 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                     ? 'catalog ready'
                     : 'catalog cold'}
             </div>
-            <div className={`${classes.badge} ${classes.readyBadge}`}>
+            <div className={`${classes.badge} ${classes.readyBadge}`} data-launcher-role="status-ready-badge">
               {status.isRestoring ? 'Restoring' : status.isRefreshing ? 'Refreshing' : status.indexReady ? 'Ready' : 'Cold'}
             </div>
           </div>
         </header>
 
-        <section className={classes.search}>
-          <div className={classes.searchIcon}>⌕</div>
+        <section className={classes.search} data-launcher-role="search">
+          <div className={classes.searchIcon} data-launcher-role="search-icon">⌕</div>
           <input
             aria-label="Launcher query"
             ref={inputRef}
             className={classes.searchInput}
+            data-launcher-role="search-input"
             type="text"
             value={query}
             placeholder="Search files, folders, apps, or type 30mph to kmh"
@@ -1161,23 +1164,24 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
             spellCheck={false}
             onChange={(event) => handleQueryChange(event.currentTarget.value)}
           />
-          <div className={classes.searchArrow}>→</div>
+          <div className={classes.searchArrow} data-launcher-role="search-arrow">→</div>
         </section>
 
         {activeRefiners.length > 0 ? (
-          <section className={classes.refinerBar} aria-label="Active search refiners">
+          <section className={classes.refinerBar} data-launcher-role="refiner-bar" aria-label="Active search refiners">
             {activeRefiners.map((token, index) => (
-              <span key={`${token}-${index}`} className={classes.refinerChip}>
+              <span key={`${token}-${index}`} className={classes.refinerChip} data-launcher-role="refiner-chip">
                 {token === '/' ? 'folder' : token}
               </span>
             ))}
           </section>
         ) : null}
 
-        <section className={`${classes.body} ${previewVisible ? classes.bodyWithPreview : ''}`}>
-          <div className={classes.resultsColumn}>
+        <section className={`${classes.body} ${previewVisible ? classes.bodyWithPreview : ''}`} data-launcher-role="body">
+          <div className={classes.resultsColumn} data-launcher-role="results-column">
             <section
               className={classes.results}
+              data-launcher-role="results"
               data-results-scroll="true"
               ref={resultsRef}
               onMouseDown={(event) => {
@@ -1190,7 +1194,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
               }}
             >
               {results.length === 0 ? (
-                <section className={classes.emptyState}>
+                <section className={classes.emptyState} data-launcher-role="empty-state">
                   <div>
                     <h2>{query.trim() ? (isResolving ? 'Searching...' : 'No matching result') : 'Start typing to search'}</h2>
                     <p>
@@ -1210,6 +1214,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                       key={result.id}
                       type="button"
                       className={classes.result}
+                      data-launcher-role="result"
                       data-selected={absoluteIndex === selectedIndex ? 'true' : 'false'}
                       tabIndex={-1}
                       onMouseDown={(event) => {
@@ -1229,18 +1234,18 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                       onMouseEnter={() => updateSelectedIndexFromPointer(absoluteIndex)}
                       onClick={() => void invokeAction(result.actions[0])}
                     >
-                      <div className={iconClassName(result)}>
+                      <div className={iconClassName(result)} data-launcher-role="result-icon" data-launcher-kind={result.kind}>
                         {result.path && iconUrls[result.path] ? (
-                          <img className={classes.resultIconImage} src={iconUrls[result.path] ?? ''} alt="" />
+                          <img className={classes.resultIconImage} data-launcher-role="result-icon-image" src={iconUrls[result.path] ?? ''} alt="" />
                         ) : (
                           result.icon ?? iconGlyph(result.kind)
                         )}
                       </div>
-                      <div className={classes.resultCopy}>
-                        <div className={classes.resultTitle}>{result.title}</div>
-                        <div className={classes.resultSubtitle}>{result.subtitle}</div>
+                      <div className={classes.resultCopy} data-launcher-role="result-copy">
+                        <div className={classes.resultTitle} data-launcher-role="result-title">{result.title}</div>
+                        <div className={classes.resultSubtitle} data-launcher-role="result-subtitle">{result.subtitle}</div>
                       </div>
-                      <div className={classes.resultKind}>{kindLabel(result)}</div>
+                      <div className={classes.resultKind} data-launcher-role="result-kind">{kindLabel(result)}</div>
                     </button>
                   );
                 })
@@ -1249,50 +1254,50 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
           </div>
 
           {previewVisible ? (
-            <aside className={classes.previewPane}>
-              <div className={classes.previewHeader}>
-                <div className={classes.previewEyebrow}>Preview</div>
+            <aside className={classes.previewPane} data-launcher-role="preview-pane">
+              <div className={classes.previewHeader} data-launcher-role="preview-header">
+                <div className={classes.previewEyebrow} data-launcher-role="preview-eyebrow">Preview</div>
               </div>
               {preview ? (
-                <div className={classes.previewContent}>
-                  <div className={classes.previewTitle}>{preview.title}</div>
-                  <div className={classes.previewSubtitle}>{preview.subtitle}</div>
+                <div className={classes.previewContent} data-launcher-role="preview-content">
+                  <div className={classes.previewTitle} data-launcher-role="preview-title">{preview.title}</div>
+                  <div className={classes.previewSubtitle} data-launcher-role="preview-subtitle">{preview.subtitle}</div>
                   {preview.mediaUrl ? (
-                    <div className={classes.previewMediaFrame}>
-                      <img className={classes.previewMediaImage} src={preview.mediaUrl} alt={preview.mediaAlt ?? ''} />
+                    <div className={classes.previewMediaFrame} data-launcher-role="preview-media-frame">
+                      <img className={classes.previewMediaImage} data-launcher-role="preview-media-image" src={preview.mediaUrl} alt={preview.mediaAlt ?? ''} />
                     </div>
                   ) : null}
-                  {preview.body ? <pre className={classes.previewBody}>{preview.body}</pre> : null}
-                  <div className={classes.previewMeta}>
+                  {preview.body ? <pre className={classes.previewBody} data-launcher-role="preview-body">{preview.body}</pre> : null}
+                  <div className={classes.previewMeta} data-launcher-role="preview-meta">
                     {preview.sections.map((section) => (
-                      <div key={`${section.label}-${section.value}`} className={classes.previewMetaRow}>
-                        <span className={classes.previewMetaLabel}>{section.label}</span>
-                        <span className={classes.previewMetaValue}>{section.value}</span>
+                      <div key={`${section.label}-${section.value}`} className={classes.previewMetaRow} data-launcher-role="preview-meta-row">
+                        <span className={classes.previewMetaLabel} data-launcher-role="preview-meta-label">{section.label}</span>
+                        <span className={classes.previewMetaValue} data-launcher-role="preview-meta-value">{section.value}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className={classes.previewPlaceholder}>Select a result to inspect it here.</div>
+                <div className={classes.previewPlaceholder} data-launcher-role="preview-placeholder">Select a result to inspect it here.</div>
               )}
             </aside>
           ) : null}
         </section>
 
-        <footer className={classes.footer}>
+        <footer className={classes.footer} data-launcher-role="footer">
           {isActionsOpen ? (
-            <div className={classes.actionsPanel} data-actions-panel="true">
-              <div className={classes.actionHeader}>
-                <div className={classes.actionHeaderTitle}>{selectedResult?.title ?? 'Actions'}</div>
-                <div className={classes.actionHeaderSubtitle}>{selectedResult ? kindLabel(selectedResult) : 'Current result'}</div>
+            <div className={classes.actionsPanel} data-launcher-role="actions-panel" data-actions-panel="true">
+              <div className={classes.actionHeader} data-launcher-role="action-header">
+                <div className={classes.actionHeaderTitle} data-launcher-role="action-header-title">{selectedResult?.title ?? 'Actions'}</div>
+                <div className={classes.actionHeaderSubtitle} data-launcher-role="action-header-subtitle">{selectedResult ? kindLabel(selectedResult) : 'Current result'}</div>
               </div>
-              <div className={classes.actionList} ref={actionsRef}>
+              <div className={classes.actionList} data-launcher-role="action-list" ref={actionsRef}>
                 {groupedActions.length === 0 ? (
-                  <div className={classes.actionEmpty}>No matching actions</div>
+                  <div className={classes.actionEmpty} data-launcher-role="action-empty">No matching actions</div>
                 ) : (
                   groupedActions.map((group) => (
-                    <section key={group.label} className={classes.actionGroup}>
-                      <div className={classes.actionGroupLabel}>{group.label}</div>
+                    <section key={group.label} className={classes.actionGroup} data-launcher-role="action-group">
+                      <div className={classes.actionGroupLabel} data-launcher-role="action-group-label">{group.label}</div>
                       {group.items.map((action) => {
                         const absoluteIndex = filteredActions.findIndex((candidate) => candidate.id === action.id);
                         return (
@@ -1300,6 +1305,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                             key={action.id}
                             type="button"
                             className={classes.actionRow}
+                            data-launcher-role="action-row"
                             data-action-selected={absoluteIndex === actionSelectedIndex ? 'true' : 'false'}
                             tabIndex={-1}
                             onMouseDown={(event) => {
@@ -1319,11 +1325,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                             onMouseEnter={() => updateActionSelectedIndexFromPointer(absoluteIndex)}
                             onClick={() => void invokeAction(action)}
                           >
-                            <span className={classes.actionCopy}>
-                              <span className={classes.actionLabel}>{action.label}</span>
-                              {action.feedbackLabel ? <span className={classes.actionRowHint}>{action.feedbackLabel}</span> : null}
+                            <span className={classes.actionCopy} data-launcher-role="action-copy">
+                              <span className={classes.actionLabel} data-launcher-role="action-label">{action.label}</span>
+                              {action.feedbackLabel ? <span className={classes.actionRowHint} data-launcher-role="action-row-hint">{action.feedbackLabel}</span> : null}
                             </span>
-                            <span className={classes.actionShortcuts}>{renderShortcut(action.hint, `panel-${action.id}`)}</span>
+                            <span className={classes.actionShortcuts} data-launcher-role="action-shortcuts">{renderShortcut(action.hint, `panel-${action.id}`)}</span>
                           </button>
                         );
                       })}
@@ -1331,10 +1337,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                   ))
                 )}
               </div>
-              <div className={classes.actionSearch}>
+              <div className={classes.actionSearch} data-launcher-role="action-search">
                 <input
                   aria-label="Action filter"
                   ref={actionInputRef}
+                  data-launcher-role="action-search-input"
                   type="text"
                   value={actionQuery}
                   placeholder="Search actions..."
@@ -1346,29 +1353,31 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
             </div>
           ) : null}
 
-          <div className={classes.footerLeft}>
-            <span className={`${classes.footerText} ${classes.footerTextStrong}`}>{primaryAction?.label ?? 'Start typing or use recent results'}</span>
-            <span className={classes.actionShortcuts}>
+          <div className={classes.footerLeft} data-launcher-role="footer-left">
+            <span className={`${classes.footerText} ${classes.footerTextStrong}`} data-launcher-role="footer-primary-text">{primaryAction?.label ?? 'Start typing or use recent results'}</span>
+            <span className={classes.actionShortcuts} data-launcher-role="action-shortcuts">
               {primaryAction ? renderShortcut(primaryAction.hint, `primary-${primaryAction.id}`) : <span className={classes.kbd}>Enter</span>}
             </span>
           </div>
 
-          <div className={classes.footerRight}>
+          <div className={classes.footerRight} data-launcher-role="footer-right">
             <button
               type="button"
               className={classes.actionsTrigger}
+              data-launcher-role="settings-trigger"
               onMouseDown={(event) => {
                 event.preventDefault();
                 focusActiveInput();
               }}
               onClick={() => void launcherRuntime.openSettings()}
             >
-              <span className={`${classes.footerText} ${classes.footerTextStrong}`}>Settings</span>
+              <span className={`${classes.footerText} ${classes.footerTextStrong}`} data-launcher-role="footer-button-text">Settings</span>
               {renderShortcut('Cmd+,', 'settings-trigger')}
             </button>
             <button
               type="button"
               className={classes.actionsTrigger}
+              data-launcher-role="actions-trigger"
               disabled={!selectedResult}
               onMouseDown={(event) => {
                 event.preventDefault();
@@ -1383,13 +1392,13 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                 openActions();
               }}
             >
-              <span className={`${classes.footerText} ${classes.footerTextStrong}`}>Actions</span>
+              <span className={`${classes.footerText} ${classes.footerTextStrong}`} data-launcher-role="footer-button-text">Actions</span>
               {renderShortcut('Cmd+K', 'actions-trigger')}
             </button>
           </div>
         </footer>
 
-        {feedback ? <div className={`${classes.feedback} ${feedback.tone === 'error' ? classes.feedbackError : ''}`}>{feedback.message}</div> : null}
+        {feedback ? <div className={`${classes.feedback} ${feedback.tone === 'error' ? classes.feedbackError : ''}`} data-launcher-role="feedback">{feedback.message}</div> : null}
       </section>
     </div>
   );

@@ -24,6 +24,9 @@ function printLinks(baseUrl) {
   for (const url of urls) {
     process.stdout.write(`  ${url}\n`);
   }
+  process.stdout.write('\nChrome DevTools workspace:\n');
+  process.stdout.write(`  ${normalized}/.well-known/appspecific/com.chrome.devtools.json\n`);
+  process.stdout.write('  Open DevTools > Sources > Workspaces and click Connect if Chrome offers it.\n');
   process.stdout.write('\n');
 }
 
