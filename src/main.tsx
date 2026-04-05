@@ -4,7 +4,6 @@ import { MantineProvider } from '@mantine/core';
 import App from './App';
 import '@mantine/core/styles.css';
 import './styles/global.css';
-import './styles/launcher-sandbox.css';
 import { theme } from './theme';
 
 window.addEventListener('error', (event) => {
