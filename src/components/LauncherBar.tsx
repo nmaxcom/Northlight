@@ -226,8 +226,12 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
   const iconClassName = useCallback(
     (result: LauncherResult, extra = '') => {
-      const hasNativeIcon = Boolean(result.path && iconUrls[result.path]);
-      return [classes.resultIcon, hasNativeIcon ? classes.resultIconAsset : kindClass(result.kind), extra]
+      const hasImageIcon = Boolean(result.iconUrl || (result.iconPath && iconUrls[result.iconPath]) || (result.path && iconUrls[result.path]));
+      return [
+        classes.resultIcon,
+        hasImageIcon ? classes.resultIconImageBacked : kindClass(result.kind),
+        extra
+      ]
         .filter(Boolean)
         .join(' ');
     },

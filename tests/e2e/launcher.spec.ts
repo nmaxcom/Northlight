@@ -102,3 +102,21 @@ test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page
   await expect(privacyRow).toBeVisible();
   await expect(page.locator('[data-launcher-role="result"] img').first()).toHaveAttribute('src', /data:image\/svg\+xml/);
 });
+
+test('removes the decorative tile behind image-backed icons', async ({ page }) => {
+  await page.goto('/');
+
+  const input = page.getByLabel('Launcher query');
+  await input.fill('wifi');
+
+  const imageBackedIcon = page.locator('[data-launcher-role="result-icon"]').first();
+  await expect(imageBackedIcon).toBeVisible();
+  await expect(imageBackedIcon).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(imageBackedIcon.locator('img')).toHaveCount(1);
+
+  await input.fill('product');
+
+  const glyphIcon = page.locator('[data-launcher-role="result-icon"]').first();
+  await expect(glyphIcon).toBeVisible();
+  await expect(glyphIcon.locator('img')).toHaveCount(0);
+});

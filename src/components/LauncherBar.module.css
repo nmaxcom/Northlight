@@ -364,6 +364,11 @@
   overflow: hidden;
 }
 
+.resultIconImageBacked {
+  background: transparent;
+  box-shadow: none;
+}
+
 .resultIconAsset {
   background: var(--launcher-result-icon-asset-bg);
 }
@@ -373,7 +378,7 @@
   height: 100%;
   object-fit: contain;
   display: block;
-  padding: 4px;
+  padding: 0;
 }
 
 .iconFolder {

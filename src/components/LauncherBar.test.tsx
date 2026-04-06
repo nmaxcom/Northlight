@@ -478,6 +478,27 @@ describe('LauncherBar', () => {
       expect(screen.getAllByText('Open Wi-Fi Settings').length).toBeGreaterThan(0);
       expect(document.querySelector('[data-launcher-role="result-icon-image"]')).toBeTruthy();
     });
+
+    const iconContainer = document.querySelector('[data-launcher-role="result-icon"]') as HTMLElement | null;
+    expect(iconContainer?.className).toContain('resultIconImageBacked');
+  });
+
+  it('keeps fallback glyph icons on the non-image tile styling', async () => {
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'product' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('product-brief.md').length).toBeGreaterThan(0);
+    });
+
+    const iconContainer = document.querySelector('[data-launcher-role="result-icon"]') as HTMLElement | null;
+    expect(iconContainer?.className).not.toContain('resultIconImageBacked');
   });
 
   it('dismisses after running an enter action that requests dismissal', async () => {
