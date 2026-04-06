@@ -126,11 +126,41 @@ test('shows the launcher design mockup on a black review background with exact m
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
 
   const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
-  await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgb(106, 123, 255)');
+  await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
   await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('box-shadow', 'none');
   await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('30,487 indexed');
   await expect(frame.getByText(/^hybrid$/i)).toHaveCount(0);
   await expect(frame.getByText(/^catalog ready$/i)).toHaveCount(0);
+  await expect(frame.getByText('position.test.ts')).toBeVisible();
+});
+
+test('shows the sandbox selected row with the hover treatment in the launcher mockup', async ({ page }) => {
+  await page.goto('/design/launcher-current-view.html');
+
+  const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
+  const selectedRow = frame.locator('[data-launcher-role="result"][data-selected="true"]').first();
+
+  await expect(selectedRow).toBeVisible();
+
+  const selectedColor = await selectedRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(selectedColor).toBe('rgba(105, 123, 255, 0.21)');
+});
+
+test('renders launcher preview text as selectable in the launcher mockup', async ({ page }) => {
+  await page.goto('/design/launcher-current-view.html');
+
+  const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
+  const previewTitle = frame.locator('[data-launcher-role="preview-title"]');
+  const previewBody = frame.locator('[data-launcher-role="preview-body"]');
+  const previewMetaValue = frame.locator('[data-launcher-role="preview-meta-value"]').first();
+
+  await expect(previewTitle).toBeVisible();
+  await expect(previewBody).toBeVisible();
+  await expect(previewMetaValue).toBeVisible();
+
+  await expect(previewTitle).toHaveCSS('user-select', 'text');
+  await expect(previewBody).toHaveCSS('user-select', 'text');
+  await expect(previewMetaValue).toHaveCSS('user-select', 'text');
 });
 
 test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page }) => {

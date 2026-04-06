@@ -511,6 +511,9 @@
 .previewTitle {
   font-size: 1.02rem;
   font-weight: 800;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .previewSubtitle {
@@ -518,6 +521,9 @@
   font-size: 0.82rem;
   line-height: 1.4;
   word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .previewBody {
@@ -542,6 +548,9 @@
     'Liberation Mono',
     'Courier New',
     monospace;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .previewMediaFrame {
@@ -583,12 +592,18 @@
 .previewMetaLabel {
   color: var(--launcher-muted-text);
   font-size: 0.8rem;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .previewMetaValue {
   font-size: 0.84rem;
   font-weight: 600;
   text-align: right;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .previewPlaceholder {

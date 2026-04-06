@@ -52,6 +52,7 @@ Current built-in capabilities:
 - `npm run design` serves the shared renderer mockups, prints the available design URLs in the terminal, and exposes an index at `/design/`.
 - The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css) as a linked stylesheet in the launcher renderer and launcher design frame, so Chrome DevTools shows it as a normal CSS file instead of an injected `<style>` block.
 - During `npm run design`, Northlight also serves Chrome DevTools automatic workspace metadata at `/.well-known/appspecific/com.chrome.devtools.json`, so `Sources > Workspaces` can connect directly to this repo and persist `Styles` edits back into the local files.
+- The shared launcher mockup includes a file-preview state with selectable title, path, code body, and metadata text so you can copy directly from the preview while iterating visual design.
 
 ## Search Behavior
 
@@ -109,6 +110,7 @@ Current built-in capabilities:
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.
 - In the `Sandbox` theme, the keyboard-selected result row uses the same background treatment as hover so list states stay visually aligned while iterating.
+- In the `Sandbox` theme, preview text is selectable and the preview media/code panels can drop their borders when that cleaner treatment is desired.
 - When the selected result stays the same across background refreshes, the preview remains pinned instead of flashing back to a fallback state.
 - Result rows and the bottom action bar are intentionally compact so more hits fit on screen at once.
 

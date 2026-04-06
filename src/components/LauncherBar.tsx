@@ -33,6 +33,7 @@ export type LauncherBarMockState = {
   query: string;
   results: LauncherResult[];
   selectedIndex?: number;
+  pointerActive?: boolean;
   isResolving?: boolean;
   isActionsOpen?: boolean;
   actionQuery?: string;
@@ -175,7 +176,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const [feedback, setFeedback] = useState<FeedbackState>(mockState?.feedback ?? null);
   const [settings, setSettings] = useState<LauncherSettings>(mockState?.settings ?? launcherRuntime.getSettingsSnapshot());
   const [isPreviewOpen, setIsPreviewOpen] = useState(mockState?.settings.quickLookStartsOpen ?? settings.quickLookStartsOpen);
-  const [isPointerActive, setIsPointerActive] = useState(false);
+  const [isPointerActive, setIsPointerActive] = useState(Boolean(mockState?.pointerActive));
   const [status, setStatus] = useState<LauncherStatus>({
     appVersion: mockState?.status.appVersion ?? '0.8.9',
     indexEntryCount: mockState?.status.indexEntryCount ?? 0,

@@ -13,7 +13,7 @@
 */
 
 [data-launcher-theme='sandbox'][data-launcher-role='window'] {
-  border: 1px solid rgb(106 123 255);
+  border: 1px solid rgb(106 123 255 / 35%);
   box-shadow: none;
   background: var(--launcher-window-bg);
 }
@@ -282,12 +282,12 @@
   transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 
-[data-launcher-theme='sandbox'][data-pointer-active='true'] [data-launcher-role='result']:hover,
+[data-launcher-theme='sandbox'] [data-launcher-role='result']:hover,
 [data-launcher-theme='sandbox'] [data-launcher-role='result'][data-selected='true'] {
   background: #697bff36;
 }
 
-[data-launcher-theme='sandbox'][data-pointer-active='true'] [data-launcher-role='result']:hover {
+[data-launcher-theme='sandbox'] [data-launcher-role='result']:hover {
   transform: none !important;
   border: none !important;
   background: #697bff36 !important;
@@ -418,6 +418,9 @@
 [data-launcher-theme='sandbox'] [data-launcher-role='preview-title'] {
   font-size: 1.02rem;
   font-weight: 600;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='preview-subtitle'] {
@@ -425,6 +428,9 @@
   font-size: 0.82rem;
   line-height: 1.4;
   word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='preview-media-frame'] {
@@ -432,7 +438,7 @@
   max-height: 300px;
   overflow: hidden;
   border-radius: 14px;
-  border: 1px solid var(--launcher-panel-border);
+  border: none;
   background: var(--launcher-panel-surface);
   display: grid;
   place-items: center;
@@ -452,7 +458,7 @@
   max-height: 320px;
   overflow: auto;
   border-radius: 14px;
-  border: 1px solid var(--launcher-panel-border);
+  border: none;
   background: var(--launcher-panel-surface);
   padding: 14px;
   color: var(--launcher-preview-body-fg);
@@ -468,6 +474,16 @@
     'Liberation Mono',
     'Courier New',
     monospace;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-meta-label'],
+[data-launcher-theme='sandbox'] [data-launcher-role='preview-meta-value'] {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='preview-meta'] {
