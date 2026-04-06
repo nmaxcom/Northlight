@@ -1117,10 +1117,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         focusActiveInput();
       }}
     >
-      <section
-        className={`${classes.shell} ${activeRefiners.length > 0 ? classes.shellWithRefiners : ''}`}
-        data-launcher-role="shell"
-      >
+      <section className={classes.shell} data-launcher-role="shell">
         <header className={classes.header} data-launcher-role="header">
           <div className={classes.headerLeft} data-launcher-role="header-left">
             <div className={classes.brand} data-launcher-role="brand">Northlight</div>
@@ -1140,18 +1137,14 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
             </button>
           </div>
           <div className={classes.status} data-launcher-role="status">
-            <div className={classes.badge} data-launcher-role="status-badge">v{status.appVersion}</div>
-            <div className={classes.badge} data-launcher-role="status-badge">{status.searchMode === 'hybrid' ? 'hybrid' : status.searchMode ?? 'catalog'}</div>
-            <div className={classes.badge} data-launcher-role="status-badge">{status.indexEntryCount.toLocaleString()} indexed</div>
-            <div className={classes.badge} data-launcher-role="status-badge">
-              {status.catalogState === 'hydrating'
-                ? 'catalog hydrating'
-                : status.catalogState === 'restoring'
-                  ? 'catalog restoring'
-                  : status.catalogState === 'ready'
-                    ? 'catalog ready'
-                    : 'catalog cold'}
+            <div
+              className={`${classes.badge} ${classes.versionBadge}`}
+              data-launcher-role="status-badge"
+              data-launcher-badge="version"
+            >
+              v{status.appVersion}
             </div>
+            <div className={classes.badge} data-launcher-role="status-badge">{status.indexEntryCount.toLocaleString()} indexed</div>
             <div className={`${classes.badge} ${classes.readyBadge}`} data-launcher-role="status-ready-badge">
               {status.isRestoring ? 'Restoring' : status.isRefreshing ? 'Refreshing' : status.indexReady ? 'Ready' : 'Cold'}
             </div>
@@ -1160,30 +1153,33 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
         <section className={classes.search} data-launcher-role="search">
           <div className={classes.searchIcon} data-launcher-role="search-icon">⌕</div>
-          <input
-            aria-label="Launcher query"
-            ref={inputRef}
-            className={classes.searchInput}
-            data-launcher-role="search-input"
-            type="text"
-            value={query}
-            placeholder="Search files, folders, apps, or type 30mph to kmh"
-            autoComplete="off"
-            spellCheck={false}
-            onChange={(event) => handleQueryChange(event.currentTarget.value)}
-          />
+          <div className={classes.searchCenter} data-launcher-role="search-center">
+            <input
+              aria-label="Launcher query"
+              ref={inputRef}
+              className={`${classes.searchInput} ${activeRefiners.length > 0 ? classes.searchInputWithRefiners : ''}`}
+              data-launcher-role="search-input"
+              data-has-refiners={activeRefiners.length > 0 ? 'true' : 'false'}
+              type="text"
+              value={query}
+              size={activeRefiners.length > 0 ? Math.max(query.length, 1) : undefined}
+              placeholder="Search files, folders, apps, or type 30mph to kmh"
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(event) => handleQueryChange(event.currentTarget.value)}
+            />
+            {activeRefiners.length > 0 ? (
+              <span className={classes.refinerBar} data-launcher-role="refiner-bar" aria-hidden="true">
+                {activeRefiners.map((token, index) => (
+                  <span key={`${token}-${index}`} className={classes.refinerChip} data-launcher-role="refiner-chip">
+                    {token === '/' ? 'folder' : token}
+                  </span>
+                ))}
+              </span>
+            ) : null}
+          </div>
           <div className={classes.searchArrow} data-launcher-role="search-arrow">→</div>
         </section>
-
-        {activeRefiners.length > 0 ? (
-          <section className={classes.refinerBar} data-launcher-role="refiner-bar" aria-label="Active search refiners">
-            {activeRefiners.map((token, index) => (
-              <span key={`${token}-${index}`} className={classes.refinerChip} data-launcher-role="refiner-chip">
-                {token === '/' ? 'folder' : token}
-              </span>
-            ))}
-          </section>
-        ) : null}
 
         <section className={`${classes.body} ${previewVisible ? classes.bodyWithPreview : ''}`} data-launcher-role="body">
           <div className={classes.resultsColumn} data-launcher-role="results-column">

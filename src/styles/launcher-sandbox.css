@@ -151,17 +151,27 @@
   color: var(--launcher-search-placeholder);
 }
 
-[data-launcher-theme='sandbox'] [data-launcher-role='refiner-bar'] {
-  margin: 0 14px 10px;
+[data-launcher-theme='sandbox'] [data-launcher-role='search-center'] {
+  min-width: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  overflow: hidden;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='refiner-bar'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='refiner-chip'] {
   display: inline-flex;
-  align-self: flex-start;
   align-items: center;
   width: fit-content;
   max-width: 100%;
@@ -174,6 +184,20 @@
   font-size: 0.73rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='search-input'] {
+  flex: 1 1 auto;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='search-input'][data-has-refiners='true'] {
+  width: auto;
+  min-width: 2ch;
+  flex: 0 1 auto;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='status-badge'][data-launcher-badge='version'] {
+  text-transform: none;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='body'] {

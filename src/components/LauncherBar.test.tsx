@@ -163,7 +163,7 @@ describe('LauncherBar', () => {
     expect(screen.getByText('30 cm = 0.98 ft')).toBeInTheDocument();
   });
 
-  it('shows active refiner chips for parsed search hints including explicit paths with spaces', async () => {
+  it('shows active refiner chips inside the search box for parsed search hints including explicit paths with spaces', async () => {
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
         <LauncherBar />
@@ -176,10 +176,11 @@ describe('LauncherBar', () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByLabelText('Active search refiners')).toBeInTheDocument();
-    expect(screen.getByText('.md')).toBeInTheDocument();
-    expect(screen.getByText('in:/Users/nm4/My Projects/Northlight')).toBeInTheDocument();
-    expect(screen.getByText('recent')).toBeInTheDocument();
+    const search = document.querySelector('[data-launcher-role="search"]');
+    expect(search).toBeTruthy();
+    expect(within(search as HTMLElement).getByText('.md')).toBeInTheDocument();
+    expect(within(search as HTMLElement).getByText('in:/Users/nm4/My Projects/Northlight')).toBeInTheDocument();
+    expect(within(search as HTMLElement).getByText('recent')).toBeInTheDocument();
   });
 
   it('renders media inside the preview pane when the preview provides it', async () => {

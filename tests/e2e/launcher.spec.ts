@@ -58,27 +58,37 @@ test('supports trailing intent refiners for folders and apps', async ({ page }) 
   await expect(page.getByRole('button', { name: /Raycast-notes\.md/i })).toHaveCount(0);
 });
 
-test('keeps folder refiner chips compact without adding a large spacer row', async ({ page }) => {
+test('shows refiner chips inside the search box without extra status badges or spacer rows', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Launcher query').fill('steel/');
 
+  await expect(page.getByText(/^hybrid$/i)).toHaveCount(0);
+  await expect(page.getByText(/^catalog ready$/i)).toHaveCount(0);
+
+  const search = page.locator('[data-launcher-role="search"]');
   const refinerChip = page.locator('[data-launcher-role="refiner-chip"]').first();
   const results = page.locator('[data-launcher-role="results"]');
+  const versionBadge = page.locator('[data-launcher-role="status-badge"]').first();
 
   await expect(refinerChip).toBeVisible();
   await expect(results.getByRole('button', { name: /steel-moodboard/i })).toBeVisible();
+  await expect(versionBadge).toHaveText(/^v\d+\.\d+\.\d+$/);
 
+  const searchBox = await search.boundingBox();
   const chipBox = await refinerChip.boundingBox();
   const resultsBox = await results.boundingBox();
 
+  expect(searchBox).not.toBeNull();
   expect(chipBox).not.toBeNull();
   expect(resultsBox).not.toBeNull();
 
-  if (!chipBox || !resultsBox) {
+  if (!searchBox || !chipBox || !resultsBox) {
     return;
   }
 
   expect(chipBox.height).toBeLessThan(40);
+  expect(chipBox.y).toBeGreaterThanOrEqual(searchBox.y);
+  expect(chipBox.y + chipBox.height).toBeLessThanOrEqual(searchBox.y + searchBox.height);
   expect(resultsBox.y - (chipBox.y + chipBox.height)).toBeLessThan(32);
 });
 
@@ -108,6 +118,17 @@ test('shows the settings view route', async ({ page }) => {
   await expect(page.getByText('⇧')).toBeVisible();
   await page.getByRole('button', { name: 'Scopes & Status' }).click();
   await expect(page.getByRole('checkbox', { name: /watch filesystem changes/i })).toBeChecked();
+});
+
+test('shows the launcher design mockup on a black review background with exact mock status text', async ({ page }) => {
+  await page.goto('/design/launcher-current-view.html');
+
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+
+  const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
+  await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('30,487 indexed');
+  await expect(frame.getByText(/^hybrid$/i)).toHaveCount(0);
+  await expect(frame.getByText(/^catalog ready$/i)).toHaveCount(0);
 });
 
 test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page }) => {

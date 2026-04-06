@@ -47,7 +47,7 @@ const settings: LauncherSettings = {
 
 const status: LauncherStatus = {
   appVersion: '0.8.1',
-  indexEntryCount: 30000,
+  indexEntryCount: 30487,
   indexReady: true,
   isRestoring: false,
   isRefreshing: false,
