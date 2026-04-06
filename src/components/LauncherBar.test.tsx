@@ -63,6 +63,36 @@ describe('LauncherBar', () => {
     expect(document.querySelector('[data-launcher-theme="original"]')).toBeTruthy();
   });
 
+  it('renders the exact indexed item count from launcher status without rounding', async () => {
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.9',
+        indexEntryCount: 30487,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      trashPath: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    await screen.findByText('30,487 indexed');
+    expect(screen.queryByText('30,000 indexed')).not.toBeInTheDocument();
+  });
+
   it('shows fixture results and updates the bottom bar for the selected row', async () => {
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">

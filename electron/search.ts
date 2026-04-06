@@ -59,6 +59,10 @@ type CatalogEntry = IndexedEntry & {
   lastSelectedAt?: number | null;
   providerId?: 'catalog';
 };
+type CatalogSnapshot = {
+  entries: CatalogEntry[];
+  totalCount?: number;
+};
 type RootConfig = (typeof FALLBACK_ROOTS)[number];
 type WalkNode = {
   path: string;
@@ -71,6 +75,7 @@ type SearchTraceContext = {
 };
 
 let fallbackIndex: CatalogEntry[] = [];
+let fallbackIndexTotalCount = 0;
 let fallbackIndexReady = false;
 let restorePromise: Promise<void> | null = null;
 let refreshPromise: Promise<void> | null = null;
@@ -255,16 +260,19 @@ async function existingRoots(scopePath?: string | null) {
 async function loadPersistedIndex() {
   try {
     const raw = await readFile(cacheFilePath(), 'utf8');
-    const parsed = JSON.parse(raw) as CatalogEntry[];
+    const parsed = JSON.parse(raw) as CatalogEntry[] | CatalogSnapshot;
+    const entries = Array.isArray(parsed) ? parsed : parsed?.entries;
+    const totalCount = Array.isArray(parsed) ? parsed.length : parsed?.totalCount ?? parsed?.entries?.length ?? 0;
 
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    if (!Array.isArray(entries) || entries.length === 0) {
       throw new Error('empty-catalog');
     }
 
-    fallbackIndex = parsed.slice(0, MAX_INDEX_ENTRIES).map((entry) => ({
+    fallbackIndex = entries.slice(0, MAX_INDEX_ENTRIES).map((entry) => ({
       ...entry,
       providerId: 'catalog'
     }));
+    fallbackIndexTotalCount = Math.max(totalCount, fallbackIndex.length);
     fallbackIndexReady = true;
     return true;
   } catch {
@@ -280,6 +288,7 @@ async function loadPersistedIndex() {
         ...entry,
         providerId: 'catalog'
       }));
+      fallbackIndexTotalCount = fallbackIndex.length;
       fallbackIndexReady = true;
       return true;
     } catch {
@@ -288,14 +297,18 @@ async function loadPersistedIndex() {
   }
 }
 
-async function persistIndex(nextIndex: CatalogEntry[]) {
+async function persistIndex(nextIndex: CatalogEntry[], totalCount = fallbackIndexTotalCount || nextIndex.length) {
   if (nextIndex.length === 0) {
     return;
   }
 
   try {
     await mkdir(app.getPath('userData'), { recursive: true });
-    await writeFile(cacheFilePath(), JSON.stringify(nextIndex), 'utf8');
+    const snapshot: CatalogSnapshot = {
+      entries: nextIndex,
+      totalCount
+    };
+    await writeFile(cacheFilePath(), JSON.stringify(snapshot), 'utf8');
   } catch {
     // Ignore persistence failures; the in-memory index still serves results.
   }
@@ -322,12 +335,14 @@ async function pruneMissingEntries(paths: string[]) {
 
   const missingSet = new Set(paths);
   const nextIndex = fallbackIndex.filter((entry) => !missingSet.has(entry.path));
+  const removedCount = fallbackIndex.length - nextIndex.length;
 
-  if (nextIndex.length === fallbackIndex.length) {
+  if (removedCount === 0) {
     return;
   }
 
   fallbackIndex = nextIndex;
+  fallbackIndexTotalCount = Math.max(0, fallbackIndexTotalCount - removedCount);
   fallbackIndexReady = fallbackIndex.length > 0;
   queryCache.clear();
   await persistIndex(fallbackIndex);
@@ -387,8 +402,9 @@ async function walkForIndex(roots: RootConfig[]) {
     maxDepth: root.maxDepth
   }));
   const indexed: IndexedEntry[] = [];
+  let totalCount = 0;
 
-  while (queue.length > 0 && indexed.length < MAX_INDEX_ENTRIES) {
+  while (queue.length > 0) {
     const current = queue.shift();
 
     if (!current || isExcludedPath(current.path)) {
@@ -399,15 +415,19 @@ async function walkForIndex(roots: RootConfig[]) {
     const looksLikeDirectory = !currentName.includes('.') || current.path.endsWith('.app');
 
     if (current.depth > 0) {
-      const modifiedAt = await safeModifiedAt(current.path);
-      indexed.push({
-        id: current.path,
-        path: current.path,
-        name: currentName,
-        kind: classifyPath(current.path, looksLikeDirectory),
-        modifiedAt,
-        providerId: 'catalog'
-      });
+      totalCount += 1;
+
+      if (indexed.length < MAX_INDEX_ENTRIES) {
+        const modifiedAt = await safeModifiedAt(current.path);
+        indexed.push({
+          id: current.path,
+          path: current.path,
+          name: currentName,
+          kind: classifyPath(current.path, looksLikeDirectory),
+          modifiedAt,
+          providerId: 'catalog'
+        });
+      }
     }
 
     if (current.depth >= current.maxDepth || current.path.endsWith('.app')) {
@@ -418,10 +438,6 @@ async function walkForIndex(roots: RootConfig[]) {
       const entries = await readdir(current.path, { withFileTypes: true });
 
       for (const entry of entries) {
-        if (indexed.length >= MAX_INDEX_ENTRIES) {
-          break;
-        }
-
         const nextPath = join(current.path, entry.name);
 
         if (isExcludedPath(nextPath)) {
@@ -441,7 +457,10 @@ async function walkForIndex(roots: RootConfig[]) {
     }
   }
 
-  return indexed;
+  return {
+    indexed,
+    totalCount
+  };
 }
 
 async function safeModifiedAt(path: string) {
@@ -746,7 +765,7 @@ async function refreshIndex() {
     });
     const scanned = await walkForIndex(roots);
 
-    if (scanned.length === 0) {
+    if (scanned.totalCount === 0) {
       recordTrace({
         subsystem: 'search',
         event: 'refresh-empty',
@@ -756,16 +775,20 @@ async function refreshIndex() {
       return;
     }
 
-    fallbackIndex = scanned.slice(0, MAX_INDEX_ENTRIES);
+    fallbackIndex = scanned.indexed.slice(0, MAX_INDEX_ENTRIES);
+    fallbackIndexTotalCount = Math.max(scanned.totalCount, fallbackIndex.length);
     fallbackIndexReady = true;
     queryCache.clear();
-    await persistIndex(fallbackIndex);
+    await persistIndex(fallbackIndex, fallbackIndexTotalCount);
     notifyIndexChanged();
     recordTrace({
       subsystem: 'search',
       event: 'refresh-complete',
       durationMs: Date.now() - startedAt,
-      resultCount: fallbackIndex.length
+      resultCount: fallbackIndex.length,
+      details: {
+        totalCount: fallbackIndexTotalCount
+      }
     });
   } catch {
     // Keep the last good index on refresh failure.
@@ -845,6 +868,7 @@ export async function recordLocalSelection(item: Pick<LocalSearchItem, 'path' | 
       providerId: 'catalog'
     });
     fallbackIndex = fallbackIndex.slice(0, MAX_INDEX_ENTRIES);
+    fallbackIndexTotalCount += 1;
     fallbackIndexReady = true;
   }
 
@@ -950,7 +974,7 @@ export function setIndexChangedListener(listener: (() => void) | null) {
 export function getSearchStatus(appVersion: string): LauncherStatus {
   return {
     appVersion,
-    indexEntryCount: fallbackIndex.length,
+    indexEntryCount: fallbackIndexTotalCount || fallbackIndex.length,
     indexReady: fallbackIndexReady,
     isRestoring: isRestoringIndex,
     isRefreshing: refreshPromise !== null,

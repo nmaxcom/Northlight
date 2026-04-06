@@ -42,7 +42,7 @@ Current built-in capabilities:
 - On macOS, dismissing the launcher now hides the Northlight app itself instead of leaving an active app with no key window behind, so the underlying app can usually keep keyboard focus without an extra click.
 - Opening the dedicated settings window from the launcher now hides only the launcher surface, not the whole app, so Settings stays accessible instead of getting hidden behind the dismiss flow.
 - Keyboard launch, typing, and live result refreshes now ignore the cursor's resting position until you actually move or use the mouse inside the launcher, so `Enter` keeps targeting the keyboard-selected result and stale hover highlights disappear as soon as you resume typing.
-- The top-right status area shows the app version, the exact indexed item count, and the current readiness state.
+- The top-right status area shows the app version, the exact current catalog count, and the current readiness state.
 - Clicking the `Theme` chip in the launcher header toggles between the fixed `Original` theme and the duplicated `Sandbox` theme for fast visual comparison.
 - The launcher keeps a single active focus model: `Tab` and stray focus events do not move focus away from the active input for the current mode.
 - A persistent bottom bar always shows the primary action for the current result and an `Actions` trigger.
