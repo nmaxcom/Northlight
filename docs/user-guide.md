@@ -69,6 +69,7 @@ Current built-in capabilities:
 - `today` means modified on the current local calendar day, `yesterday` means the previous local calendar day, and `recent` means the last 7 days by modification time.
 - Common macOS settings terms such as `settings`, `system preferences`, `keyboard`, `privacy`, `security`, `display`, `wifi`, `bluetooth`, `sound`, `notifications`, `wallpaper`, `battery`, `network`, `spotlight`, and `accessibility` surface direct settings commands in the root results.
 - The launcher shows active refiner chips below the search box so you can confirm exactly what Northlight parsed.
+- Active refiner chips stay in a compact row below the search box instead of consuming the launcher's flexible content area.
 - Intent refiners are only recognized as trailing standalone terms, so literal names like `img-tools` keep searching as plain text.
 - For a full user guide to search refiners, examples, and combinations, see `docs/search-refiners-guide.md`.
 

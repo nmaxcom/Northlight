@@ -21,6 +21,10 @@
   color: var(--launcher-text);
 }
 
+.shellWithRefiners {
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+}
+
 .header {
   display: flex;
   justify-content: space-between;

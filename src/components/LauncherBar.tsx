@@ -1117,7 +1117,10 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         focusActiveInput();
       }}
     >
-      <section className={classes.shell} data-launcher-role="shell">
+      <section
+        className={`${classes.shell} ${activeRefiners.length > 0 ? classes.shellWithRefiners : ''}`}
+        data-launcher-role="shell"
+      >
         <header className={classes.header} data-launcher-role="header">
           <div className={classes.headerLeft} data-launcher-role="header-left">
             <div className={classes.brand} data-launcher-role="brand">Northlight</div>

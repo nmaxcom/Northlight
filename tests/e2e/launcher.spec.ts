@@ -58,6 +58,30 @@ test('supports trailing intent refiners for folders and apps', async ({ page }) 
   await expect(page.getByRole('button', { name: /Raycast-notes\.md/i })).toHaveCount(0);
 });
 
+test('keeps folder refiner chips compact without adding a large spacer row', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Launcher query').fill('steel/');
+
+  const refinerChip = page.locator('[data-launcher-role="refiner-chip"]').first();
+  const results = page.locator('[data-launcher-role="results"]');
+
+  await expect(refinerChip).toBeVisible();
+  await expect(results.getByRole('button', { name: /steel-moodboard/i })).toBeVisible();
+
+  const chipBox = await refinerChip.boundingBox();
+  const resultsBox = await results.boundingBox();
+
+  expect(chipBox).not.toBeNull();
+  expect(resultsBox).not.toBeNull();
+
+  if (!chipBox || !resultsBox) {
+    return;
+  }
+
+  expect(chipBox.height).toBeLessThan(40);
+  expect(resultsBox.y - (chipBox.y + chipBox.height)).toBeLessThan(32);
+});
+
 test('filters actions inside the actions panel', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Launcher query').fill('product');
