@@ -82,15 +82,19 @@ describe('buildResults', () => {
 
     expect(settings[0]?.title).toBe('Open System Settings');
     expect(settings[0]?.iconPath).toBe('/System/Applications/System Settings.app');
+    expect(settings[0]?.iconUrl).toMatch(/^data:image\/svg\+xml/);
     expect(settings.some((result) => result.title === 'Open Northlight Settings')).toBe(true);
     expect(prefs.some((result) => result.title === 'Open Northlight Settings')).toBe(true);
     expect(keyboard[0]?.title).toBe('Open Keyboard Settings');
     expect(keyboard[0]?.iconPath).toBe('/System/Library/ExtensionKit/Extensions/KeyboardSettings.appex');
+    expect(keyboard[0]?.iconUrl).toMatch(/^data:image\/svg\+xml/);
     expect(privacy[0]?.title).toBe('Open Privacy & Security Settings');
     expect(privacy[0]?.iconPath).toBe('/System/Library/ExtensionKit/Extensions/SecurityPrivacyExtension.appex');
+    expect(privacy[0]?.iconUrl).toMatch(/^data:image\/svg\+xml/);
     expect(display[0]?.title).toBe('Open Display Settings');
     expect(wifi[0]?.title).toBe('Open Wi-Fi Settings');
     expect(wifi[0]?.iconPath).toBe('/System/Library/ExtensionKit/Extensions/Wi-Fi.appex');
+    expect(wifi[0]?.iconUrl).toMatch(/^data:image\/svg\+xml/);
   });
 
   it('supports broad macOS settings vocabulary beyond the basic examples', async () => {

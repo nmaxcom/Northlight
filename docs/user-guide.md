@@ -24,6 +24,7 @@ Current built-in capabilities:
 - Search saved aliases and snippets.
 - Search recent clipboard history when clipboard tracking is enabled.
 - Open major macOS System Settings destinations directly from search, including System Settings, Keyboard, Privacy & Security, Displays, Wi-Fi, Bluetooth, Sound, Notifications, Wallpaper, Battery, Network, Spotlight, and Accessibility.
+- System Settings command results render pane-style icons instead of generic document-like placeholders.
 - Show an inline preview pane for the selected result.
 - Open a dedicated settings window to manage ranking, preview, scopes, aliases, snippets, and clipboard history.
 

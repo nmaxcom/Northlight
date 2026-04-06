@@ -85,3 +85,20 @@ test('shows the settings view route', async ({ page }) => {
   await page.getByRole('button', { name: 'Scopes & Status' }).click();
   await expect(page.getByRole('checkbox', { name: /watch filesystem changes/i })).toBeChecked();
 });
+
+test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page }) => {
+  await page.goto('/');
+
+  const input = page.getByLabel('Launcher query');
+  await input.fill('wifi');
+
+  const wifiRow = page.getByRole('button', { name: /open wi-fi settings/i });
+  await expect(wifiRow).toBeVisible();
+  await expect(page.locator('[data-launcher-role="result"] img').first()).toHaveAttribute('src', /data:image\/svg\+xml/);
+
+  await input.fill('privacy');
+
+  const privacyRow = page.getByRole('button', { name: /open privacy & security settings/i });
+  await expect(privacyRow).toBeVisible();
+  await expect(page.locator('[data-launcher-role="result"] img').first()).toHaveAttribute('src', /data:image\/svg\+xml/);
+});
