@@ -13,15 +13,15 @@ type LauncherState = {
 
 const SETTINGS_FILENAME = 'launcher-state.json';
 const SYSTEM_APPLICATIONS_PATH = '/System/Applications';
-const DEFAULT_SCOPE_PATHS = [
-  '/Applications',
-  SYSTEM_APPLICATIONS_PATH,
-  join(homedir(), 'Applications'),
-  join(homedir(), 'Desktop'),
-  join(homedir(), 'Documents'),
-  join(homedir(), 'Downloads'),
-  join(homedir(), 'STUFF', 'Coding')
-];
+const DEFAULT_SCOPE_CONFIGS = [
+  { path: '/Applications', hot: true },
+  { path: SYSTEM_APPLICATIONS_PATH, hot: true },
+  { path: join(homedir(), 'Applications'), hot: true },
+  { path: join(homedir(), 'Desktop'), hot: true },
+  { path: join(homedir(), 'Documents'), hot: true },
+  { path: join(homedir(), 'Downloads'), hot: true },
+  { path: join(homedir(), 'STUFF', 'Coding'), hot: false }
+] as const;
 
 const DEFAULT_ALIASES: AliasEntry[] = [
   { id: 'alias-btt', trigger: 'btt', targetType: 'path', target: '/Applications/BetterTouchTool.app', note: 'BetterTouchTool' },
@@ -40,7 +40,7 @@ const DEFAULT_SNIPPETS: SnippetEntry[] = [
 const DEFAULT_SETTINGS: LauncherSettings = {
   aliases: DEFAULT_ALIASES,
   snippets: DEFAULT_SNIPPETS,
-  scopes: DEFAULT_SCOPE_PATHS.map((path, index) => ({ id: `scope-${index}`, path, enabled: true })),
+  scopes: DEFAULT_SCOPE_CONFIGS.map(({ path, hot }, index) => ({ id: `scope-${index}`, path, enabled: true, hot })),
   launcherThemeId: DEFAULT_LAUNCHER_THEME_ID,
   watchFsChangesEnabled: true,
   previewEnabled: true,
@@ -72,7 +72,11 @@ function normalizeScopes(scopes: ScopeEntry[] | undefined) {
           .map((scope, index) => ({
             id: scope.id || `scope-${index}`,
             path: scope.path.trim(),
-            enabled: scope.enabled !== false
+            enabled: scope.enabled !== false,
+            hot:
+              typeof scope.hot === 'boolean'
+                ? scope.hot
+                : DEFAULT_SCOPE_CONFIGS.some((entry) => entry.path === scope.path.trim() && entry.hot)
           }));
 
   const hasSystemApplications = baseScopes.some((scope) => scope.path === SYSTEM_APPLICATIONS_PATH);
@@ -86,7 +90,8 @@ function normalizeScopes(scopes: ScopeEntry[] | undefined) {
     {
       id: `scope-${baseScopes.length}`,
       path: SYSTEM_APPLICATIONS_PATH,
-      enabled: true
+      enabled: true,
+      hot: true
     }
   ];
 }

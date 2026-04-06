@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildConversionResult, buildImmediateResults, buildResults } from './query';
+import { buildConversionResult, buildHotResults, buildImmediateResults, buildResults } from './query';
 import { launcherRuntime } from './runtime';
 
 function installLocalSearchResults(results: Array<{ id: string; path: string; name: string; kind: 'file' | 'folder' | 'app'; score: number }>) {
@@ -57,6 +57,42 @@ describe('buildResults', () => {
     const results = buildImmediateResults('15% of 240');
 
     expect(results[0]?.title).toContain('36');
+  });
+
+  it('keeps clipboard-only matches out of the immediate provisional tier', () => {
+    window.launcher = {
+      getClipboardHistory: vi.fn().mockResolvedValue([
+        {
+          id: 'clip-1',
+          text: 'textedit release notes',
+          copiedAt: Date.now()
+        }
+      ])
+    } as never;
+
+    expect(buildImmediateResults('textedit').map((result) => result.kind)).not.toContain('clipboard');
+  });
+
+  it('uses the hot local search tier for early app/file recall', async () => {
+    const searchLocalHot = vi.fn().mockResolvedValue([
+      {
+        id: '/System/Applications/TextEdit.app',
+        path: '/System/Applications/TextEdit.app',
+        name: 'TextEdit.app',
+        kind: 'app',
+        score: 118
+      }
+    ]);
+
+    window.launcher = {
+      searchLocalHot,
+      getClipboardHistory: vi.fn().mockResolvedValue([])
+    } as never;
+
+    const results = await buildHotResults('textedit');
+
+    expect(searchLocalHot).toHaveBeenCalledWith('textedit', undefined, null, undefined);
+    expect(results[0]?.title).toBe('TextEdit.app');
   });
 
   it('returns fuzzy app matches for abbreviations', async () => {

@@ -46,6 +46,15 @@ test('supports fuzzy app matches and folder quick actions', async ({ page }) => 
   await expect(panel.getByText('Copy Name')).toBeVisible();
 });
 
+test('surfaces common system apps from the fast tier without empty intermediate state', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByLabel('Launcher query');
+  await input.fill('textedit');
+
+  await expect(page.getByRole('button', { name: /TextEdit\.app/i })).toBeVisible();
+  await expect(page.getByText('No matching result')).toHaveCount(0);
+});
+
 test('supports trailing intent refiners for folders and apps', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Launcher query').fill('steel/');
@@ -118,6 +127,7 @@ test('shows the settings view route', async ({ page }) => {
   await expect(page.getByText('⇧')).toBeVisible();
   await page.getByRole('button', { name: 'Scopes & Status' }).click();
   await expect(page.getByRole('checkbox', { name: /watch filesystem changes/i })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Fast Path' }).first()).toBeVisible();
 });
 
 test('shows the launcher design mockup on a black review background with exact mock status text', async ({ page }) => {
@@ -142,7 +152,7 @@ test('shows the sandbox selected row with the hover treatment in the launcher mo
 
   await expect(selectedRow).toBeVisible();
 
-  const selectedColor = await selectedRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+  const selectedColor = await selectedRow.evaluate((element) => globalThis.getComputedStyle(element).backgroundColor);
   expect(selectedColor).toBe('rgba(105, 123, 255, 0.21)');
 });
 
@@ -182,7 +192,7 @@ test('allows mouse text selection inside the launcher preview in the mockup', as
   await page.mouse.up();
 
   const frame = page.frames().find((candidate) => candidate.url().includes('/design/launcher-current-view-frame.html'));
-  const selection = await frame?.evaluate(() => window.getSelection()?.toString() ?? '');
+  const selection = await frame?.evaluate(() => globalThis.getSelection()?.toString() ?? '');
   expect(selection && selection.length > 0).toBeTruthy();
 });
 

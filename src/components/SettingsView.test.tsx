@@ -37,8 +37,8 @@ describe('SettingsView', () => {
       getSettings: vi.fn().mockResolvedValue({
         ...launcherRuntime.getSettingsSnapshot(),
         scopes: [
-          { id: 'scope-0', path: '/Applications', enabled: true },
-          { id: 'scope-1', path: '/Users/nm4/Documents', enabled: true }
+          { id: 'scope-0', path: '/Applications', enabled: true, hot: true },
+          { id: 'scope-1', path: '/Users/nm4/Documents', enabled: true, hot: true }
         ]
       }),
       getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
@@ -70,7 +70,7 @@ describe('SettingsView', () => {
     window.launcher = {
       getSettings: vi.fn().mockResolvedValue({
         ...launcherRuntime.getSettingsSnapshot(),
-        scopes: [{ id: 'scope-0', path: '/Applications', enabled: true }]
+        scopes: [{ id: 'scope-0', path: '/Applications', enabled: true, hot: true }]
       }),
       getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
       saveSettings: vi.fn().mockImplementation(async (settings) => settings),
@@ -126,6 +126,46 @@ describe('SettingsView', () => {
     });
 
     expect(saveSettings.mock.calls.at(-1)?.[0].watchFsChangesEnabled).toBe(false);
+  });
+
+  it('lets the user promote a custom scope into the fast path tier and persists it', async () => {
+    const saveSettings = vi.fn().mockImplementation(async (settings) => settings);
+
+    window.launcher = {
+      getSettings: vi.fn().mockResolvedValue({
+        ...launcherRuntime.getSettingsSnapshot(),
+        scopes: [{ id: 'scope-0', path: '/Users/nm4/Work', enabled: true, hot: false }]
+      }),
+      getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
+      saveSettings,
+      onSettingsChanged: vi.fn().mockReturnValue(() => {})
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <SettingsView />
+      </MantineProvider>
+    );
+
+    await screen.findByText('Northlight Settings');
+    fireEvent.click(screen.getByRole('button', { name: 'Scopes & Status' }));
+
+    const toggle = await screen.findByRole('checkbox', { name: 'Fast Path' });
+    expect(toggle).not.toBeChecked();
+
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    await waitFor(() => {
+      expect(saveSettings).toHaveBeenCalled();
+    });
+
+    expect(saveSettings.mock.calls.at(-1)?.[0].scopes[0]).toEqual(
+      expect.objectContaining({
+        path: '/Users/nm4/Work',
+        hot: true
+      })
+    );
   });
 
   it('shows visible saving feedback while settings are being persisted', async () => {

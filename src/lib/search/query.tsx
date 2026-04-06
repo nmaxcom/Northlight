@@ -66,6 +66,21 @@ function buildLocalResults(items: LocalSearchItem[], context: QueryContext = {})
   return items.map((item) => buildLocalResult(item, context));
 }
 
+function mergeLocalItems(...groups: LocalSearchItem[][]) {
+  const merged = new Map<string, LocalSearchItem>();
+
+  for (const group of groups) {
+    for (const item of group) {
+      const existing = merged.get(item.path);
+      if (!existing || item.score > existing.score) {
+        merged.set(item.path, item);
+      }
+    }
+  }
+
+  return Array.from(merged.values()).sort((left, right) => right.score - left.score || left.name.localeCompare(right.name));
+}
+
 function buildCalculationResults(query: string): LauncherResult[] {
   return buildDeterministicResult(query).map((result) => ({
     ...result,
@@ -357,7 +372,13 @@ export function buildImmediateResults(query: string, context: QueryContext = {})
     return [];
   }
 
-  const localResults = buildLocalResults(launcherRuntime.getCachedLocal(trimmed, context.scopePath, parsedQuery.intent), context);
+  const localResults = buildLocalResults(
+    mergeLocalItems(
+      launcherRuntime.getCachedLocalHot(trimmed, context.scopePath, parsedQuery.intent),
+      launcherRuntime.getCachedLocal(trimmed, context.scopePath, parsedQuery.intent)
+    ),
+    context
+  );
   if (parsedQuery.intent) {
     return localResults.sort((a, b) => b.score - a.score);
   }
@@ -367,8 +388,32 @@ export function buildImmediateResults(query: string, context: QueryContext = {})
     ...withCommandIcons(buildSystemSettingsCommandResults(trimmed)),
     ...buildSettingsCommandResult(trimmed),
     ...buildCalculationResults(trimmed),
-    ...buildSnippetResults(trimmed),
-    ...buildClipboardResults(trimmed),
+    ...localResults
+  ].sort((a, b) => b.score - a.score);
+}
+
+export async function buildHotResults(query: string, context: QueryContext = {}): Promise<LauncherResult[]> {
+  const parsedQuery = parseIntentQuery(query);
+  const trimmed = parsedQuery.searchText.trim();
+
+  if (!trimmed) {
+    return [];
+  }
+
+  const localResults = buildLocalResults(
+    await launcherRuntime.searchLocalHot(trimmed, context.scopePath, parsedQuery.intent, context.traceRequestId),
+    context
+  );
+
+  if (parsedQuery.intent) {
+    return localResults.sort((a, b) => b.score - a.score);
+  }
+
+  return [
+    ...buildAliasResults(trimmed),
+    ...withCommandIcons(buildSystemSettingsCommandResults(trimmed)),
+    ...buildSettingsCommandResult(trimmed),
+    ...buildCalculationResults(trimmed),
     ...localResults
   ].sort((a, b) => b.score - a.score);
 }

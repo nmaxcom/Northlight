@@ -85,7 +85,8 @@ function createScope(): ScopeEntry {
   return {
     id: `scope-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     path: '',
-    enabled: true
+    enabled: true,
+    hot: false
   };
 }
 
@@ -773,7 +774,7 @@ export function SettingsView() {
                     <div className={classes.scopeComposerHeader}>
                       <div>
                         <div className={classes.scopeComposerTitle}>Add Custom Scope</div>
-                        <div className={classes.scopeComposerHint}>Paste a folder path, then add it to the list.</div>
+                        <div className={classes.scopeComposerHint}>Paste a folder path, then add it to the list. You can promote it to fast search afterward.</div>
                       </div>
                       <button className={classes.scopeComposerCancel} type="button" onClick={() => {
                         setIsAddingScope(false);
@@ -869,6 +870,7 @@ export function SettingsView() {
                             <div className={classes.toggleLabel}>Enabled</div>
                             <input
                               type="checkbox"
+                              aria-label="Enabled"
                               checked={scope.enabled}
                               onChange={(event) => {
                                 const checked = event.currentTarget.checked;
@@ -882,6 +884,28 @@ export function SettingsView() {
                             />
                           </div>
                           <div className={classes.toggleHelp}>Disabled scopes stay saved but are ignored by search.</div>
+                        </label>
+                        <label className={classes.scopeToggle}>
+                          <div className={classes.scopeToggleHeader}>
+                            <div className={classes.toggleLabel}>Fast Path</div>
+                            <input
+                              type="checkbox"
+                              aria-label="Fast Path"
+                              checked={scope.hot}
+                              onChange={(event) => {
+                                const checked = event.currentTarget.checked;
+                                updateSettings((current) => ({
+                                  ...current,
+                                  scopes: current.scopes.map((entry) =>
+                                    entry.id === scope.id ? { ...entry, hot: checked } : entry
+                                  )
+                                }));
+                              }}
+                            />
+                          </div>
+                          <div className={classes.toggleHelp}>
+                            Fast paths are searched in the immediate tier, like Desktop and Applications.
+                          </div>
                         </label>
                       </div>
                     </div>
@@ -916,8 +940,10 @@ export function SettingsView() {
                 <div className={classes.cardTitle}>Scope Guidance</div>
                 <div className={classes.cardSubtitle}>A few rules that matter when you widen hybrid search coverage.</div>
                 <ul className={classes.hintList}>
+                  <li>Fast paths are optimized for immediate recall. Use them for apps, Desktop-like folders, and high-frequency workspaces.</li>
                   <li>`~/Library` is usually the highest-value expansion if you want app support files, settings, plugins, or preferences.</li>
                   <li>Disabled scopes stay in settings but stop feeding the local catalog and scoped fallback search until you enable them again.</li>
+                  <li>Do not promote huge or noisy trees to fast paths unless they are part of your everyday workflow.</li>
                   <li>Larger scopes take longer to hydrate and tend to push more low-value files into results, even when Spotlight recall is available.</li>
                   <li>Watching filesystem changes helps stale results disappear faster, but it also makes broad scope sets busier.</li>
                   <li>The `/` scope is a power-user option. It broadens recall, but it is the slowest and noisiest choice.</li>

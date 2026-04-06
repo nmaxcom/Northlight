@@ -16,6 +16,7 @@ import type {
 } from './types';
 
 const queryCache = new Map<string, LocalSearchItem[]>();
+const hotQueryCache = new Map<string, LocalSearchItem[]>();
 const defaultSettings: LauncherSettings = {
   aliases: [
     { id: 'alias-btt', trigger: 'btt', targetType: 'path', target: '/Applications/BetterTouchTool.app', note: 'BetterTouchTool' },
@@ -30,13 +31,13 @@ const defaultSettings: LauncherSettings = {
     }
   ],
   scopes: [
-    { id: 'scope-0', path: '/Applications', enabled: true },
-    { id: 'scope-1', path: '/System/Applications', enabled: true },
-    { id: 'scope-2', path: '/Users/nm4/Applications', enabled: true },
-    { id: 'scope-3', path: '/Users/nm4/Desktop', enabled: true },
-    { id: 'scope-4', path: '/Users/nm4/Documents', enabled: true },
-    { id: 'scope-5', path: '/Users/nm4/Downloads', enabled: true },
-    { id: 'scope-6', path: '/Users/nm4/STUFF/Coding', enabled: true }
+    { id: 'scope-0', path: '/Applications', enabled: true, hot: true },
+    { id: 'scope-1', path: '/System/Applications', enabled: true, hot: true },
+    { id: 'scope-2', path: '/Users/nm4/Applications', enabled: true, hot: true },
+    { id: 'scope-3', path: '/Users/nm4/Desktop', enabled: true, hot: true },
+    { id: 'scope-4', path: '/Users/nm4/Documents', enabled: true, hot: true },
+    { id: 'scope-5', path: '/Users/nm4/Downloads', enabled: true, hot: true },
+    { id: 'scope-6', path: '/Users/nm4/STUFF/Coding', enabled: true, hot: false }
   ],
   launcherThemeId: DEFAULT_LAUNCHER_THEME_ID,
   watchFsChangesEnabled: true,
@@ -61,15 +62,17 @@ let traceStateCache: LauncherTraceState = {
 
 function clearTransientCaches() {
   queryCache.clear();
+  hotQueryCache.clear();
   previewCache.clear();
 }
 
 function clearVisibleSearchState() {
   queryCache.clear();
+  hotQueryCache.clear();
 }
 
-function cacheKey(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
-  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${searchIntentKey(intent)}`;
+function cacheKey(query: string, scopePath?: string | null, intent?: SearchIntent | null, tier: 'all' | 'hot' = 'all') {
+  return `${tier}::${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${searchIntentKey(intent)}`;
 }
 
 function filterByScope(items: LocalSearchItem[], scopePath?: string | null) {
@@ -299,6 +302,15 @@ export const launcherRuntime = {
   getCachedLocal(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
     return searchCachedLocal(query, scopePath, intent);
   },
+  getCachedLocalHot(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
+    const trimmed = query.trim();
+
+    if (trimmed.length < 2) {
+      return [];
+    }
+
+    return hotQueryCache.get(cacheKey(trimmed, scopePath, intent, 'hot')) ?? [];
+  },
   getRecentLocalItems() {
     const merged = new Map<string, LocalSearchItem>();
 
@@ -323,7 +335,7 @@ export const launcherRuntime = {
   },
   searchLocal(query: string, scopePath?: string | null, intent?: SearchIntent | null, requestId?: string) {
     if (window.launcher?.searchLocal) {
-      return window.launcher.searchLocal(query, scopePath, intent, requestId).then((results) => {
+      return Promise.resolve(window.launcher.searchLocal(query, scopePath, intent, requestId)).then((results) => {
         const ranked = rankItems(query.trim(), filterByScope(results, scopePath), intent);
 
         if (ranked.length > 0) {
@@ -337,6 +349,26 @@ export const launcherRuntime = {
     return searchFixtureIndex(query, scopePath, intent).then((results) => {
       if (results.length > 0) {
         queryCache.set(cacheKey(query, scopePath, intent), results);
+      }
+      return results;
+    });
+  },
+  searchLocalHot(query: string, scopePath?: string | null, intent?: SearchIntent | null, requestId?: string) {
+    if (window.launcher?.searchLocalHot) {
+      return Promise.resolve(window.launcher.searchLocalHot(query, scopePath, intent, requestId)).then((results) => {
+        const ranked = rankItems(query.trim(), filterByScope(results, scopePath), intent);
+
+        if (ranked.length > 0) {
+          hotQueryCache.set(cacheKey(query, scopePath, intent, 'hot'), ranked);
+        }
+
+        return ranked;
+      });
+    }
+
+    return searchFixtureIndex(query, scopePath, intent).then((results) => {
+      if (results.length > 0) {
+        hotQueryCache.set(cacheKey(query, scopePath, intent, 'hot'), results);
       }
       return results;
     });
@@ -367,6 +399,7 @@ export const launcherRuntime = {
     recordSelection(normalized.path);
     void window.launcher?.recordLocalSelection?.(normalized);
     queryCache.clear();
+    hotQueryCache.clear();
   },
   openPath(path: string) {
     return window.launcher?.openPath(path) ?? Promise.resolve();

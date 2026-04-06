@@ -27,6 +27,7 @@ export type ScopeEntry = {
   id: string;
   path: string;
   enabled: boolean;
+  hot: boolean;
 };
 
 export type ClipboardEntry = {
@@ -305,6 +306,12 @@ export type LauncherResult = {
 };
 
 export type LauncherBridge = {
+  searchLocalHot?: (
+    query: string,
+    scopePath?: string | null,
+    intent?: SearchIntent | null,
+    requestId?: string
+  ) => Promise<LocalSearchItem[]>;
   searchLocal: (
     query: string,
     scopePath?: string | null,

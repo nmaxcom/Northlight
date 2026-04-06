@@ -9,7 +9,7 @@ import type {
   ResultKind
 } from '../lib/search/types';
 import { parseIntentQuery } from '../lib/search/intentParser';
-import { buildImmediateResults, buildResults } from '../lib/search/query';
+import { buildHotResults, buildImmediateResults, buildResults } from '../lib/search/query';
 import { launcherRuntime } from '../lib/search/runtime';
 import { getLauncherTheme, getLauncherThemeStyle, getNextLauncherThemeId } from '../launcherTheme';
 import classes from './LauncherBar.module.css';
@@ -203,6 +203,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const actionsRef = useRef<HTMLDivElement | null>(null);
   const searchRequestRef = useRef(0);
+  const hotSearchRequestRef = useRef(0);
   const traceRequestSequenceRef = useRef(0);
   const visibleResultsCountRef = useRef(results.length);
   const previewRequestRef = useRef(0);
@@ -688,14 +689,8 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       return;
     }
 
-    if (immediateResults.length > 0) {
-      setResults(immediateResults);
-      setIsResolving(false);
-      return;
-    }
-
-    setResults([]);
-    setIsResolving(true);
+    setResults(immediateResults);
+    setIsResolving(immediateResults.length === 0);
     return () => {
       if (idleSummaryTimerRef.current) {
         window.clearTimeout(idleSummaryTimerRef.current);
@@ -716,8 +711,8 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       return;
     }
 
-    const traceRequestId = nextTraceRequestId('search-query');
-    const requestId = ++searchRequestRef.current;
+    const traceRequestId = nextTraceRequestId('search-hot');
+    const requestId = ++hotSearchRequestRef.current;
     const startedAt = Date.now();
     setIsResolving((current) => current || visibleResultsCountRef.current === 0);
     void traceEvent({
@@ -726,7 +721,63 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       requestId: traceRequestId,
       query,
       details: {
-        reason: 'query-change'
+        reason: 'query-change-hot'
+      }
+    });
+    void buildHotResults(query, { traceRequestId }).then((nextResults) => {
+      if (!canceled && requestId === hotSearchRequestRef.current) {
+        if (nextResults.length > 0) {
+          setResults(nextResults);
+          setIsResolving(false);
+        }
+        void traceEvent({
+          subsystem: 'search',
+          event: 'complete',
+          requestId: traceRequestId,
+          query,
+          durationMs: Date.now() - startedAt,
+          resultCount: nextResults.length
+        });
+        return;
+      }
+
+      void traceEvent({
+        subsystem: 'search',
+        event: 'cancel',
+        requestId: traceRequestId,
+        query,
+        durationMs: Date.now() - startedAt,
+        outcome: 'obsolete'
+      });
+    });
+
+    return () => {
+      canceled = true;
+    };
+  }, [isMock, nextTraceRequestId, query, settings, traceEvent]);
+
+  useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
+    let canceled = false;
+
+    if (!query.trim()) {
+      setIsResolving(false);
+      return;
+    }
+
+    const traceRequestId = nextTraceRequestId('search-query');
+    const requestId = ++searchRequestRef.current;
+    const startedAt = Date.now();
+    void traceEvent({
+      subsystem: 'search',
+      event: 'start',
+      requestId: traceRequestId,
+      query,
+      details: {
+        reason: 'query-change-deep'
       }
     });
     void buildResults(query, { traceRequestId }).then((nextResults) => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { modifiedAtMatchesIntentTime, pathMatchesIntentScope, RECENT_TIME_WINDOW_MS, resolveIntentScopePath } from './intentScope';
 
 const scopes = [
-  { id: 'scope-0', path: '/Applications', enabled: true },
+  { id: 'scope-0', path: '/Applications', enabled: true, hot: true },
   { id: 'scope-1', path: '/Users/nm4/Documents', enabled: true }
 ];
 

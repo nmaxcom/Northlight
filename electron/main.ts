@@ -12,7 +12,16 @@ import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/s
 import type { LauncherPreview, LauncherSettings, LocalSearchItem, SearchIntent } from '../src/lib/search/types';
 import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
 import { getIdleTraceSummary, getTraceDump, getTraceState, ingestRendererTrace, recordTrace, setTraceEnabled, traceSpan, writeTraceDumpFile } from './diagnostics';
-import { configureIndexWatchers, getSearchStatus, recordLocalSelection, requestSearchRefresh, searchIndexedPaths, setIndexChangedListener, warmSearchIndex } from './search';
+import {
+  configureIndexWatchers,
+  getSearchStatus,
+  recordLocalSelection,
+  requestSearchRefresh,
+  searchHotPaths,
+  searchIndexedPaths,
+  setIndexChangedListener,
+  warmSearchIndex
+} from './search';
 import {
   ensureLauncherState,
   getClipboardHistory,
@@ -921,6 +930,24 @@ app.whenReady().then(async () => {
     await openLauncherTarget(path);
   });
 
+  ipcMain.handle(
+    'launcher:search-local-hot',
+    async (_event, query: string, scopePath?: string | null, intent?: SearchIntent | null, requestId?: string) => {
+      const traceRequestId = requestId || nextRequestId('search-hot');
+
+      return traceSpan(
+        {
+          subsystem: 'ipc',
+          event: 'search-local-hot',
+          requestId: traceRequestId,
+          query,
+          scopePath,
+          localFilter: intent?.localFilter
+        },
+        async () => searchHotPaths(query, scopePath, intent, { requestId: traceRequestId })
+      );
+    }
+  );
   ipcMain.handle(
     'launcher:search-local',
     async (_event, query: string, scopePath?: string | null, intent?: SearchIntent | null, requestId?: string) => {

@@ -2,6 +2,12 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { LauncherSettings, LauncherTraceEvent, LocalSearchItem, SearchIntent } from '../src/lib/search/types';
 
 const launcherApi = {
+  searchLocalHot: (
+    query: string,
+    scopePath?: string | null,
+    intent?: SearchIntent | null,
+    requestId?: string
+  ) => ipcRenderer.invoke('launcher:search-local-hot', query, scopePath, intent, requestId),
   searchLocal: (
     query: string,
     scopePath?: string | null,

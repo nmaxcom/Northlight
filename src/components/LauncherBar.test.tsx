@@ -114,6 +114,77 @@ describe('LauncherBar', () => {
     expect(screen.getByRole('button', { name: /actions ⌘ k/i })).toBeEnabled();
   });
 
+  it('does not flash clipboard-first provisional results when a hot app result is resolving', async () => {
+    let resolveHotSearch: ((value: Array<{ id: string; path: string; name: string; kind: 'app'; score: number }>) => void) | undefined;
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      searchLocalHot: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveHotSearch = resolve;
+          })
+      ),
+      searchLocal: vi.fn().mockResolvedValue([
+        {
+          id: '/System/Applications/TextEdit.app',
+          path: '/System/Applications/TextEdit.app',
+          name: 'TextEdit.app',
+          kind: 'app',
+          score: 126
+        }
+      ]),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.9',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([
+        {
+          id: 'clip-1',
+          text: 'textedit scratch note',
+          copiedAt: Date.now()
+        }
+      ]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Launcher query'), { target: { value: 'textedit' } });
+
+    expect(screen.queryByText('Clipboard item')).not.toBeInTheDocument();
+    expect(screen.queryByText('textedit scratch note')).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveHotSearch?.([
+        {
+          id: '/System/Applications/TextEdit.app',
+          path: '/System/Applications/TextEdit.app',
+          name: 'TextEdit.app',
+          kind: 'app',
+          score: 126
+        }
+      ]);
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('TextEdit.app').length).toBeGreaterThan(0);
+    });
+  });
+
   it('switches launcher themes from the header without clearing the active query or results', async () => {
     const saveSettings = vi.fn().mockImplementation(async (settings) => settings);
 

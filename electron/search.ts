@@ -20,15 +20,15 @@ const CATALOG_CACHE_FILENAME = 'local-search-catalog.json';
 const LEGACY_INDEX_CACHE_FILENAME = 'local-search-index.json';
 const SPOTLIGHT_TIMEOUT_MS = 1200;
 const MAX_SPOTLIGHT_CANDIDATES = 120;
-const FALLBACK_ROOTS = [
-  { path: '/Applications', maxDepth: 2 },
-  { path: '/System/Applications', maxDepth: 2 },
-  { path: join(homedir(), 'Applications'), maxDepth: 2 },
-  { path: join(homedir(), 'Desktop'), maxDepth: 5 },
-  { path: join(homedir(), 'Documents'), maxDepth: 5 },
-  { path: join(homedir(), 'Downloads'), maxDepth: 4 },
-  { path: join(homedir(), 'STUFF', 'Coding'), maxDepth: 6 }
-];
+const DEFAULT_SCOPE_CONFIGS = [
+  { path: '/Applications', maxDepth: 2, hot: true },
+  { path: '/System/Applications', maxDepth: 2, hot: true },
+  { path: join(homedir(), 'Applications'), maxDepth: 2, hot: true },
+  { path: join(homedir(), 'Desktop'), maxDepth: 5, hot: true },
+  { path: join(homedir(), 'Documents'), maxDepth: 5, hot: true },
+  { path: join(homedir(), 'Downloads'), maxDepth: 4, hot: true },
+  { path: join(homedir(), 'STUFF', 'Coding'), maxDepth: 6, hot: false }
+] as const;
 const EXCLUDED_SEGMENTS = [
   '/.git/',
   '/node_modules/',
@@ -63,7 +63,10 @@ type CatalogSnapshot = {
   entries: CatalogEntry[];
   totalCount?: number;
 };
-type RootConfig = (typeof FALLBACK_ROOTS)[number];
+type RootConfig = {
+  path: string;
+  maxDepth: number;
+};
 type WalkNode = {
   path: string;
   depth: number;
@@ -74,9 +77,19 @@ type SearchTraceContext = {
   requestId?: string;
 };
 
+type SearchTier = 'all' | 'hot' | 'deep';
+type ExistingRootsOptions = {
+  tier?: SearchTier;
+};
+type TargetedSearchOptions = {
+  roots?: RootConfig[];
+  maxDepthCap?: number;
+};
+
 let fallbackIndex: CatalogEntry[] = [];
 let fallbackIndexTotalCount = 0;
 let fallbackIndexReady = false;
+const hotQueryCache = new Map<string, LocalSearchItem[]>();
 let restorePromise: Promise<void> | null = null;
 let refreshPromise: Promise<void> | null = null;
 let isRestoringIndex = false;
@@ -210,14 +223,49 @@ function filterByScope<T extends { path: string }>(items: T[], scopePath?: strin
   return items.filter((item) => item.path.startsWith(scopePath.endsWith('/') ? scopePath : `${scopePath}/`) || item.path === scopePath);
 }
 
-function cacheKey(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
-  return `${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${searchIntentKey(intent)}`;
+function filterByRoots<T extends { path: string }>(items: T[], roots: RootConfig[]) {
+  if (roots.length === 0) {
+    return [];
+  }
+
+  return items.filter((item) =>
+    roots.some((root) => item.path === root.path || item.path.startsWith(root.path.endsWith('/') ? root.path : `${root.path}/`))
+  );
 }
 
-async function existingRoots(scopePath?: string | null) {
+function cacheKey(query: string, scopePath?: string | null, intent?: SearchIntent | null, tier: SearchTier = 'all') {
+  return `${tier}::${scopePath ?? '__global__'}::${query.trim().toLowerCase()}::${searchIntentKey(intent)}`;
+}
+
+function defaultHotScope(path: string) {
+  return DEFAULT_SCOPE_CONFIGS.some((scope) => scope.path === path && scope.hot);
+}
+
+function rootMatchesTier(hot: boolean, tier: SearchTier) {
+  if (tier === 'hot') {
+    return hot;
+  }
+
+  if (tier === 'deep') {
+    return !hot;
+  }
+
+  return true;
+}
+
+async function existingRoots(scopePath?: string | null, options: ExistingRootsOptions = {}) {
+  const tier = options.tier ?? 'all';
+
   if (scopePath) {
     try {
       await access(scopePath);
+      if (tier === 'deep') {
+        const settings = await getLauncherSettings();
+        const matchingScope = settings.scopes.find((scope) => scope.path === scopePath);
+        if (matchingScope?.hot ?? defaultHotScope(scopePath)) {
+          return [];
+        }
+      }
       return [{ path: scopePath, maxDepth: 5 }];
     } catch {
       return [];
@@ -230,7 +278,12 @@ async function existingRoots(scopePath?: string | null) {
       configuredScopes.map(async (scope) => {
         try {
           await access(scope.path);
-          return { path: scope.path, maxDepth: scope.path.endsWith('.app') ? 1 : 6 };
+          const hot = scope.hot ?? defaultHotScope(scope.path);
+          if (!rootMatchesTier(hot, tier)) {
+            return null;
+          }
+
+          return { path: scope.path, maxDepth: scope.path.endsWith('.app') ? 1 : hot ? 5 : 6 };
         } catch {
           return null;
         }
@@ -244,10 +297,10 @@ async function existingRoots(scopePath?: string | null) {
   }
 
   const checks = await Promise.all(
-    FALLBACK_ROOTS.map(async (root) => {
+    DEFAULT_SCOPE_CONFIGS.filter((root) => rootMatchesTier(root.hot, tier)).map(async (root) => {
       try {
         await access(root.path);
-        return root;
+        return { path: root.path, maxDepth: root.maxDepth };
       } catch {
         return null;
       }
@@ -345,6 +398,7 @@ async function pruneMissingEntries(paths: string[]) {
   fallbackIndexTotalCount = Math.max(0, fallbackIndexTotalCount - removedCount);
   fallbackIndexReady = fallbackIndex.length > 0;
   queryCache.clear();
+  hotQueryCache.clear();
   await persistIndex(fallbackIndex);
   notifyIndexChanged();
 }
@@ -390,6 +444,56 @@ function searchFallbackIndex(query: string, scopePath?: string | null, intent?: 
     localFilter: intent?.localFilter,
     durationMs: Date.now() - startedAt,
     resultCount: results.length
+  });
+
+  return results;
+}
+
+function searchFallbackIndexInRoots(query: string, roots: RootConfig[], scopePath?: string | null, intent?: SearchIntent | null) {
+  const startedAt = Date.now();
+  const normalizedQuery = query.trim();
+
+  if (!fallbackIndexReady || normalizedQuery.length < 2 || roots.length === 0) {
+    recordTrace({
+      subsystem: 'search',
+      event: 'fallback-index-hot-skip',
+      query,
+      scopePath,
+      localFilter: intent?.localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: 0,
+      details: {
+        fallbackReady: fallbackIndexReady,
+        tooShort: normalizedQuery.length < 2,
+        rootCount: roots.length
+      }
+    });
+    return [];
+  }
+
+  const results = filterByRoots(filterByScope(fallbackIndex, scopePath), roots)
+    .filter((entry) => matchesLocalIntent(entry, intent?.localFilter))
+    .filter((entry) => modifiedAtMatchesIntentTime(entry.modifiedAt, intent?.timeToken))
+    .map((entry) => ({
+      ...entry,
+      providerId: 'catalog' as const,
+      score: rankItem(normalizedQuery, entry)
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name))
+    .slice(0, MAX_RESULTS);
+
+  recordTrace({
+    subsystem: 'search',
+    event: 'fallback-index-hot-complete',
+    query,
+    scopePath,
+    localFilter: intent?.localFilter,
+    durationMs: Date.now() - startedAt,
+    resultCount: results.length,
+    details: {
+      rootCount: roots.length
+    }
   });
 
   return results;
@@ -620,10 +724,11 @@ async function searchTargetedPaths(
   query: string,
   scopePath?: string | null,
   intent?: SearchIntent | null,
-  traceContext: SearchTraceContext = {}
+  traceContext: SearchTraceContext = {},
+  options: TargetedSearchOptions = {}
 ) {
   const startedAt = Date.now();
-  const roots = await existingRoots(resolveSearchScopePath(scopePath, intent));
+  const roots = options.roots ?? (await existingRoots(resolveSearchScopePath(scopePath, intent)));
 
   if (roots.length === 0) {
     recordTrace({
@@ -645,7 +750,7 @@ async function searchTargetedPaths(
   const queue: WalkNode[] = roots.map((root) => ({
     path: root.path,
     depth: 0,
-    maxDepth: Math.min(root.maxDepth, 4)
+    maxDepth: Math.min(root.maxDepth, options.maxDepthCap ?? 4)
   }));
   const matches: LocalSearchItem[] = [];
 
@@ -779,6 +884,7 @@ async function refreshIndex() {
     fallbackIndexTotalCount = Math.max(scanned.totalCount, fallbackIndex.length);
     fallbackIndexReady = true;
     queryCache.clear();
+    hotQueryCache.clear();
     await persistIndex(fallbackIndex, fallbackIndexTotalCount);
     notifyIndexChanged();
     recordTrace({
@@ -872,6 +978,8 @@ export async function recordLocalSelection(item: Pick<LocalSearchItem, 'path' | 
     fallbackIndexReady = true;
   }
 
+  queryCache.clear();
+  hotQueryCache.clear();
   await persistIndex(fallbackIndex);
 }
 
@@ -881,6 +989,7 @@ function scheduleWatcherRefresh() {
     event: 'schedule-watcher-refresh'
   });
   queryCache.clear();
+  hotQueryCache.clear();
   notifyIndexChanged();
 
   if (watcherDebounce) {
@@ -981,6 +1090,130 @@ export function getSearchStatus(appVersion: string): LauncherStatus {
     searchMode: 'hybrid',
     catalogState: isRestoringIndex ? 'restoring' : refreshPromise ? 'hydrating' : fallbackIndexReady ? 'ready' : 'cold'
   };
+}
+
+export async function searchHotPaths(
+  query: string,
+  scopePath?: string | null,
+  intent?: SearchIntent | null,
+  traceContext: SearchTraceContext = {}
+): Promise<LocalSearchItem[]> {
+  const startedAt = Date.now();
+  const trimmed = query.trim();
+
+  if (trimmed.length < 2) {
+    recordTrace({
+      subsystem: 'search',
+      event: 'search-hot-skip',
+      requestId: traceContext.requestId,
+      query,
+      scopePath,
+      localFilter: intent?.localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: 0,
+      details: {
+        reason: 'too-short'
+      }
+    });
+    return [];
+  }
+
+  await warmSearchIndex();
+
+  const key = cacheKey(trimmed, scopePath, intent, 'hot');
+  const cached = hotQueryCache.get(key);
+
+  if (cached) {
+    recordTrace({
+      subsystem: 'search',
+      event: 'search-hot-complete',
+      requestId: traceContext.requestId,
+      query,
+      scopePath,
+      localFilter: intent?.localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: cached.length,
+      cacheState: 'hit',
+      details: {
+        source: 'query-cache'
+      }
+    });
+    return cached;
+  }
+
+  const resolvedScopePath = resolveSearchScopePath(scopePath, intent);
+  const roots = await existingRoots(resolvedScopePath, { tier: 'hot' });
+
+  if (roots.length === 0) {
+    recordTrace({
+      subsystem: 'search',
+      event: 'search-hot-complete',
+      requestId: traceContext.requestId,
+      query,
+      scopePath,
+      localFilter: intent?.localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: 0,
+      cacheState: 'miss',
+      details: {
+        source: 'empty-roots'
+      }
+    });
+    return [];
+  }
+
+  const indexedResults = searchFallbackIndexInRoots(trimmed, roots, resolvedScopePath, intent);
+  const { results: existingIndexed, removedPaths } = await stripMissingResults(indexedResults);
+
+  if (removedPaths.length > 0) {
+    await pruneMissingEntries(removedPaths);
+  }
+
+  if (existingIndexed.length > 0) {
+    hotQueryCache.set(key, existingIndexed);
+    recordTrace({
+      subsystem: 'search',
+      event: 'search-hot-complete',
+      requestId: traceContext.requestId,
+      query,
+      scopePath,
+      localFilter: intent?.localFilter,
+      durationMs: Date.now() - startedAt,
+      resultCount: existingIndexed.length,
+      cacheState: 'miss',
+      details: {
+        source: 'catalog-hot'
+      }
+    });
+    return existingIndexed;
+  }
+
+  const targetedResults = await searchTargetedPaths(trimmed, scopePath, intent, traceContext, {
+    roots,
+    maxDepthCap: 3
+  });
+  const { results: existingTargeted } = await stripMissingResults(targetedResults);
+
+  if (existingTargeted.length > 0) {
+    hotQueryCache.set(key, existingTargeted);
+  }
+
+  recordTrace({
+    subsystem: 'search',
+    event: 'search-hot-complete',
+    requestId: traceContext.requestId,
+    query,
+    scopePath,
+    localFilter: intent?.localFilter,
+    durationMs: Date.now() - startedAt,
+    resultCount: existingTargeted.length,
+    cacheState: 'miss',
+    details: {
+      source: existingTargeted.length > 0 ? 'targeted-hot' : 'empty'
+    }
+  });
+
+  return existingTargeted;
 }
 
 export async function searchIndexedPaths(
