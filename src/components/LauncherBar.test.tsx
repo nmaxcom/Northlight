@@ -499,6 +499,7 @@ describe('LauncherBar', () => {
 
     const iconContainer = document.querySelector('[data-launcher-role="result-icon"]') as HTMLElement | null;
     expect(iconContainer?.className).not.toContain('resultIconImageBacked');
+    expect(document.querySelector('[data-launcher-role="result-icon-image"]')).toBeFalsy();
   });
 
   it('dismisses after running an enter action that requests dismissal', async () => {

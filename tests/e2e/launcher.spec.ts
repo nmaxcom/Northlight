@@ -118,5 +118,6 @@ test('removes the decorative tile behind image-backed icons', async ({ page }) =
 
   const glyphIcon = page.locator('[data-launcher-role="result-icon"]').first();
   await expect(glyphIcon).toBeVisible();
+  await expect(glyphIcon).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await expect(glyphIcon.locator('img')).toHaveCount(0);
 });

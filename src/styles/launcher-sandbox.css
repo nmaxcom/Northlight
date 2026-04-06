@@ -280,11 +280,11 @@
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='folder'] {
-  background: var(--launcher-icon-folder-bg);
+  background: none;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='app'] {
-  background: var(--launcher-icon-app-bg);
+  background: none;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='file'] {
@@ -292,23 +292,23 @@
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='conversion'] {
-  background: var(--launcher-icon-conversion-bg);
+  background: none;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='clipboard'] {
-  background: var(--launcher-icon-clipboard-bg);
+  background: none;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='snippet'] {
-  background: var(--launcher-icon-snippet-bg);
+  background: none;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='command'] {
-  background: var(--launcher-icon-command-bg);
+  background: none;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-icon'][data-launcher-kind='alias'] {
-  background: var(--launcher-icon-alias-bg);
+  background: none;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-icon-image'] {
@@ -316,7 +316,7 @@
   height: 100%;
   object-fit: contain;
   display: block;
-  padding: 4px;
+  padding: 0;
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='result-copy'] {
