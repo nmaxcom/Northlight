@@ -13,6 +13,11 @@ describe('SettingsView', () => {
         ...launcherRuntime.getSettingsSnapshot(),
         launcherHotkey: ''
       }),
+      getSearchPerformance: vi.fn().mockResolvedValue({
+        samples: [],
+        summary: launcherRuntime.getSearchPerformanceSnapshot().summary
+      }),
+      getScopeInsights: vi.fn().mockResolvedValue([]),
       getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
       saveSettings: vi.fn().mockImplementation(async (settings) => settings),
       onSettingsChanged: vi.fn().mockReturnValue(() => {})
@@ -41,6 +46,21 @@ describe('SettingsView', () => {
           { id: 'scope-1', path: '/Users/nm4/Documents', enabled: true, hot: true }
         ]
       }),
+      getSearchPerformance: vi.fn().mockResolvedValue({
+        samples: [],
+        summary: launcherRuntime.getSearchPerformanceSnapshot().summary
+      }),
+      getScopeInsights: vi.fn().mockResolvedValue([
+        {
+          id: 'scope-0',
+          path: '/Applications',
+          enabled: true,
+          hot: true,
+          estimatedItems: 120,
+          cost: 'low',
+          recommendation: 'Good for Fast Path.'
+        }
+      ]),
       getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
       saveSettings: vi.fn().mockImplementation(async (settings) => settings),
       onSettingsChanged: vi.fn().mockReturnValue(() => {})
@@ -72,6 +92,11 @@ describe('SettingsView', () => {
         ...launcherRuntime.getSettingsSnapshot(),
         scopes: [{ id: 'scope-0', path: '/Applications', enabled: true, hot: true }]
       }),
+      getSearchPerformance: vi.fn().mockResolvedValue({
+        samples: [],
+        summary: launcherRuntime.getSearchPerformanceSnapshot().summary
+      }),
+      getScopeInsights: vi.fn().mockResolvedValue([]),
       getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
       saveSettings: vi.fn().mockImplementation(async (settings) => settings),
       onSettingsChanged: vi.fn().mockReturnValue(() => {})
@@ -101,6 +126,11 @@ describe('SettingsView', () => {
         ...launcherRuntime.getSettingsSnapshot(),
         watchFsChangesEnabled: true
       }),
+      getSearchPerformance: vi.fn().mockResolvedValue({
+        samples: [],
+        summary: launcherRuntime.getSearchPerformanceSnapshot().summary
+      }),
+      getScopeInsights: vi.fn().mockResolvedValue([]),
       getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
       saveSettings,
       onSettingsChanged: vi.fn().mockReturnValue(() => {})
@@ -136,6 +166,21 @@ describe('SettingsView', () => {
         ...launcherRuntime.getSettingsSnapshot(),
         scopes: [{ id: 'scope-0', path: '/Users/nm4/Work', enabled: true, hot: false }]
       }),
+      getSearchPerformance: vi.fn().mockResolvedValue({
+        samples: [],
+        summary: launcherRuntime.getSearchPerformanceSnapshot().summary
+      }),
+      getScopeInsights: vi.fn().mockResolvedValue([
+        {
+          id: 'scope-0',
+          path: '/Users/nm4/Work',
+          enabled: true,
+          hot: false,
+          estimatedItems: 9400,
+          cost: 'medium',
+          recommendation: 'Good candidate for deep search unless you need very fast recall.'
+        }
+      ]),
       getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
       saveSettings,
       onSettingsChanged: vi.fn().mockReturnValue(() => {})
@@ -179,6 +224,11 @@ describe('SettingsView', () => {
 
     window.launcher = {
       getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getSearchPerformance: vi.fn().mockResolvedValue({
+        samples: [],
+        summary: launcherRuntime.getSearchPerformanceSnapshot().summary
+      }),
+      getScopeInsights: vi.fn().mockResolvedValue([]),
       getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
       saveSettings,
       onSettingsChanged: vi.fn().mockReturnValue(() => {})
@@ -205,5 +255,60 @@ describe('SettingsView', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Save Settings' })).toBeDisabled();
     });
+  });
+
+  it('renders scope cost guidance and recent search performance summaries', async () => {
+    window.launcher = {
+      getSettings: vi.fn().mockResolvedValue({
+        ...launcherRuntime.getSettingsSnapshot(),
+        scopes: [{ id: 'scope-0', path: '/Users/nm4', enabled: true, hot: false }]
+      }),
+      getSearchPerformance: vi.fn().mockResolvedValue({
+        samples: [],
+        summary: {
+          sampleCount: 12,
+          hotAverageMs: 24,
+          hotP95Ms: 41,
+          deepAverageMs: 138,
+          deepP95Ms: 260,
+          firstVisibleAverageMs: 12,
+          firstUsefulAverageMs: 19,
+          topReplacementRate: 0.08,
+          clipboardFirstFlashRate: 0.02,
+          lastRecordedAt: Date.now()
+        }
+      }),
+      getScopeInsights: vi.fn().mockResolvedValue([
+        {
+          id: 'scope-0',
+          path: '/Users/nm4',
+          enabled: true,
+          hot: false,
+          estimatedItems: 31500,
+          cost: 'high',
+          recommendation: 'Better kept as deep search.'
+        }
+      ]),
+      getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
+      saveSettings: vi.fn().mockImplementation(async (settings) => settings),
+      onSettingsChanged: vi.fn().mockReturnValue(() => {})
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <SettingsView />
+      </MantineProvider>
+    );
+
+    await screen.findByText('Northlight Settings');
+    fireEvent.click(screen.getByRole('button', { name: 'Scopes & Status' }));
+
+    expect(screen.getByText('Search Performance')).toBeInTheDocument();
+    expect(screen.getByText('Hot Avg')).toBeInTheDocument();
+    expect(screen.getByText('24 ms')).toBeInTheDocument();
+    expect(screen.getByText('8%')).toBeInTheDocument();
+    expect(screen.getByText('HIGH')).toBeInTheDocument();
+    expect(screen.getByText(/31,500 indexed items/i)).toBeInTheDocument();
+    expect(screen.getByText('Better kept as deep search.')).toBeInTheDocument();
   });
 });

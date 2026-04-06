@@ -66,6 +66,7 @@ Current built-in capabilities:
 - Search is local-first and favors common personal locations such as `/Applications`, `/System/Applications`, `~/Desktop`, `~/Documents`, `~/Downloads`, and `~/STUFF/Coding`.
 - Northlight now searches in tiers: fast paths such as apps, macOS settings commands, deterministic answers, and visible personal folders resolve first, while broader or noisier locations can expand the list slightly later.
 - Clipboard and snippets no longer hijack the first visible rows for common app/file intent just because they are cheaper to fetch.
+- Northlight records local search-performance samples so you can see how the hot and deep tiers behave on your own machine instead of guessing from feel alone.
 - Trailing intent refiners stay optional: Northlight first searches broadly, then lets you tighten the result type with suffixes like `/`, `img`, `.jpg`, `.pdf`, `.md`, `app`, `file`, or `folder`.
 - A trailing slash such as `lw/` is parsed as a folder refiner and appears as a `folder` chip inside the search box, to the right of the typed query.
 - Scope refiners let you narrow broad queries with `in:downloads`, `in:documents`, `in:desktop`, `in:library`, `in:home`, or a concrete path such as `in:/Users/nm4/STUFF/Coding/Northlight` or `in:~/Documents`.
@@ -131,6 +132,7 @@ The settings window is the control center for launcher preferences.
 - Create reusable text snippets.
 - Enable or disable indexed scope paths.
 - Mark a scope as `Fast Path` when it should behave like `~/Desktop` or `/Applications` and participate in the immediate search tier.
+- Scope rows now show a rough search-cost label and indexed-item estimate so you can judge whether a path is a good `Fast Path` candidate.
 - Use scope presets like `~/Library`, Home, or `/` to broaden search coverage without typing full paths by hand.
 - `Add Scope` now opens a dedicated add-path composer instead of inserting a blank invalid scope row.
 - Save actions now show an explicit `Saving…` state, and settings buttons have visible pressed/disabled feedback.
@@ -139,6 +141,7 @@ The settings window is the control center for launcher preferences.
 - The scopes view explains the hybrid model: wider roots help the local catalog and scoped fallback search, but they increase hydration cost and usually add more low-value results.
 - `Fast Path` is best reserved for high-frequency folders you want to feel immediate, such as an active workspace or project root.
 - Broader paths such as `~/Library`, hidden folders, or giant trees can stay enabled without being `Fast Path`; they still contribute results, just not on the first latency-sensitive tier.
+- The `Search Performance` card reports recent hot-tier latency, deep-tier latency, first-visible timing, first-useful timing, top-result replacements, and clipboard-first flashes from real queries.
 - If you add Home or `~/Library`, Northlight now ignores its own internal support files so broad scopes do not keep retriggering the index on self-writes.
 - Very broad scopes such as Home, `~/Library`, and `/` are still indexed, but Northlight no longer attaches recursive live watchers to them because macOS background churn would keep forcing refresh loops.
 - In development, you can enable diagnostics tracing with `NORTHLIGHT_TRACE=1 npm run dev` to capture structured search, status, preview, icon, watcher, and clipboard activity.

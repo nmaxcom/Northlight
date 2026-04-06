@@ -14,6 +14,7 @@ import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/
 import { getIdleTraceSummary, getTraceDump, getTraceState, ingestRendererTrace, recordTrace, setTraceEnabled, traceSpan, writeTraceDumpFile } from './diagnostics';
 import {
   configureIndexWatchers,
+  getScopeInsights,
   getSearchStatus,
   recordLocalSelection,
   requestSearchRefresh,
@@ -26,7 +27,9 @@ import {
   ensureLauncherState,
   getClipboardHistory,
   getLauncherStateSnapshot,
+  getSearchPerformance,
   getLauncherSettings,
+  recordSearchPerformanceSample,
   saveLauncherSettings,
   startClipboardMonitor
 } from './settings';
@@ -989,6 +992,11 @@ app.whenReady().then(async () => {
     return status;
   });
   ipcMain.handle('launcher:get-settings', async () => getLauncherSettings());
+  ipcMain.handle('launcher:get-search-performance', async () => getSearchPerformance());
+  ipcMain.handle('launcher:record-search-performance', async (_event, sample) => {
+    await recordSearchPerformanceSample(sample);
+  });
+  ipcMain.handle('launcher:get-scope-insights', async () => getScopeInsights());
   ipcMain.handle('launcher:get-effective-shortcut', async () => resolveLauncherShortcut(launcherSettingsCache.launcherHotkey, app.isPackaged));
   ipcMain.handle('launcher:get-trace-state', async () => getTraceState());
   ipcMain.handle('launcher:set-trace-enabled', async (_event, enabled: boolean) => setTraceEnabled(enabled));

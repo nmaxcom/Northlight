@@ -185,6 +185,69 @@ describe('LauncherBar', () => {
     });
   });
 
+  it('records search performance samples after deep completion', async () => {
+    const recordSearchPerformance = vi.fn().mockResolvedValue(undefined);
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      searchLocalHot: vi.fn().mockResolvedValue([
+        {
+          id: '/System/Applications/TextEdit.app',
+          path: '/System/Applications/TextEdit.app',
+          name: 'TextEdit.app',
+          kind: 'app',
+          score: 126
+        }
+      ]),
+      searchLocal: vi.fn().mockResolvedValue([
+        {
+          id: '/System/Applications/TextEdit.app',
+          path: '/System/Applications/TextEdit.app',
+          name: 'TextEdit.app',
+          kind: 'app',
+          score: 126
+        }
+      ]),
+      recordSearchPerformance,
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.9',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Launcher query'), { target: { value: 'textedit' } });
+
+    await waitFor(() => {
+      expect(recordSearchPerformance).toHaveBeenCalled();
+    });
+
+    expect(recordSearchPerformance.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        query: 'textedit',
+        hotResultCount: expect.any(Number),
+        deepResultCount: expect.any(Number),
+        topReplacementCount: expect.any(Number),
+        clipboardFirstFlash: false
+      })
+    );
+  });
+
   it('switches launcher themes from the header without clearing the active query or results', async () => {
     const saveSettings = vi.fn().mockImplementation(async (settings) => settings);
 

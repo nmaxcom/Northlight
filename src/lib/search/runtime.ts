@@ -5,7 +5,17 @@ import { adaptiveRankBoost } from './adaptiveRanking';
 import { composedSearchScore } from './scoring';
 import { resolveLauncherShortcut } from '../shortcuts';
 import { modifiedAtMatchesIntentTime, pathMatchesIntentScope } from './intentScope';
-import type { ClipboardEntry, LauncherPreview, LauncherSettings, LauncherStatus, LocalSearchItem, SearchIntent } from './types';
+import type {
+  ClipboardEntry,
+  LauncherPreview,
+  LauncherSettings,
+  LauncherStatus,
+  LocalSearchItem,
+  ScopePerformanceInsight,
+  SearchIntent,
+  SearchPerformanceSample,
+  SearchPerformanceSummary
+} from './types';
 import { DEFAULT_LAUNCHER_THEME_ID } from '../../launcherTheme';
 import type {
   LauncherTraceDump,
@@ -54,6 +64,22 @@ const defaultSettings: LauncherSettings = {
 };
 let settingsCache: LauncherSettings = defaultSettings;
 let clipboardCache: ClipboardEntry[] = [];
+let searchPerformanceCache: { samples: SearchPerformanceSample[]; summary: SearchPerformanceSummary } = {
+  samples: [],
+  summary: {
+    sampleCount: 0,
+    hotAverageMs: null,
+    hotP95Ms: null,
+    deepAverageMs: null,
+    deepP95Ms: null,
+    firstVisibleAverageMs: null,
+    firstUsefulAverageMs: null,
+    topReplacementRate: 0,
+    clipboardFirstFlashRate: 0,
+    lastRecordedAt: null
+  }
+};
+let scopeInsightsCache: ScopePerformanceInsight[] = [];
 const previewCache = new Map<string, LauncherPreview | null>();
 let traceStateCache: LauncherTraceState = {
   enabled: false,
@@ -214,6 +240,39 @@ export const launcherRuntime = {
   },
   getSettingsSnapshot() {
     return settingsCache;
+  },
+  getSearchPerformance() {
+    if (!window.launcher?.getSearchPerformance) {
+      return Promise.resolve(searchPerformanceCache);
+    }
+
+    return window.launcher.getSearchPerformance().then((value) => {
+      searchPerformanceCache = value;
+      return value;
+    });
+  },
+  getSearchPerformanceSnapshot() {
+    return searchPerformanceCache;
+  },
+  recordSearchPerformance(sample: Omit<SearchPerformanceSample, 'id' | 'recordedAt'>) {
+    if (!window.launcher?.recordSearchPerformance) {
+      return Promise.resolve(searchPerformanceCache);
+    }
+
+    return window.launcher.recordSearchPerformance(sample).then(() => launcherRuntime.getSearchPerformance());
+  },
+  getScopeInsights() {
+    if (!window.launcher?.getScopeInsights) {
+      return Promise.resolve(scopeInsightsCache);
+    }
+
+    return window.launcher.getScopeInsights().then((insights) => {
+      scopeInsightsCache = insights;
+      return insights;
+    });
+  },
+  getScopeInsightsSnapshot() {
+    return scopeInsightsCache;
   },
   getEffectiveShortcut() {
     return window.launcher?.getEffectiveShortcut?.() ?? Promise.resolve(resolveLauncherShortcut(settingsCache.launcherHotkey, false));

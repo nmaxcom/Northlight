@@ -2,13 +2,22 @@ import { app, clipboard } from 'electron';
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import type { ClipboardEntry, LauncherSettings, ScopeEntry, SnippetEntry, AliasEntry } from '../src/lib/search/types';
+import type {
+  ClipboardEntry,
+  LauncherSettings,
+  ScopeEntry,
+  SnippetEntry,
+  AliasEntry,
+  SearchPerformanceSample,
+  SearchPerformanceSummary
+} from '../src/lib/search/types';
 import { DEFAULT_LAUNCHER_THEME_ID, normalizeLauncherThemeId } from '../src/launcherTheme';
 import { recordTrace } from './diagnostics';
 
 type LauncherState = {
   settings: LauncherSettings;
   clipboardHistory: ClipboardEntry[];
+  searchPerformance: SearchPerformanceSample[];
 };
 
 const SETTINGS_FILENAME = 'launcher-state.json';
@@ -58,6 +67,7 @@ const DEFAULT_SETTINGS: LauncherSettings = {
 let stateCache: LauncherState | null = null;
 let clipboardMonitor: ReturnType<typeof setInterval> | null = null;
 let lastClipboardText = '';
+const MAX_SEARCH_PERFORMANCE_SAMPLES = 60;
 
 function stateFilePath() {
   return join(app.getPath('userData'), SETTINGS_FILENAME);
@@ -142,6 +152,29 @@ function normalizeClipboardHistory(history: ClipboardEntry[] | undefined, maxIte
     }));
 }
 
+function normalizeSearchPerformance(samples: SearchPerformanceSample[] | undefined) {
+  if (!Array.isArray(samples)) {
+    return [];
+  }
+
+  return samples
+    .filter((sample) => typeof sample?.query === 'string' && sample.query.trim().length > 0)
+    .slice(0, MAX_SEARCH_PERFORMANCE_SAMPLES)
+    .map((sample, index) => ({
+      id: sample.id || `perf-${index}`,
+      query: sample.query.trim(),
+      recordedAt: Number(sample.recordedAt) || Date.now(),
+      firstVisibleMs: typeof sample.firstVisibleMs === 'number' ? sample.firstVisibleMs : null,
+      firstUsefulMs: typeof sample.firstUsefulMs === 'number' ? sample.firstUsefulMs : null,
+      hotCompleteMs: typeof sample.hotCompleteMs === 'number' ? sample.hotCompleteMs : null,
+      deepCompleteMs: typeof sample.deepCompleteMs === 'number' ? sample.deepCompleteMs : null,
+      hotResultCount: Math.max(0, Number(sample.hotResultCount) || 0),
+      deepResultCount: Math.max(0, Number(sample.deepResultCount) || 0),
+      topReplacementCount: Math.max(0, Number(sample.topReplacementCount) || 0),
+      clipboardFirstFlash: sample.clipboardFirstFlash === true
+    }));
+}
+
 function normalizeLauncherHotkey(hotkey?: string) {
   const trimmed = hotkey?.trim();
   if (!trimmed) {
@@ -223,7 +256,48 @@ function normalizeState(input?: Partial<LauncherState>): LauncherState {
 
   return {
     settings,
-    clipboardHistory: normalizeClipboardHistory(input?.clipboardHistory, settings.maxClipboardItems)
+    clipboardHistory: normalizeClipboardHistory(input?.clipboardHistory, settings.maxClipboardItems),
+    searchPerformance: normalizeSearchPerformance(input?.searchPerformance)
+  };
+}
+
+function average(values: number[]) {
+  if (values.length === 0) {
+    return null;
+  }
+
+  return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1));
+}
+
+function p95(values: number[]) {
+  if (values.length === 0) {
+    return null;
+  }
+
+  const sorted = [...values].sort((left, right) => left - right);
+  const index = Math.min(sorted.length - 1, Math.max(0, Math.ceil(sorted.length * 0.95) - 1));
+  return Number(sorted[index].toFixed(1));
+}
+
+export function summarizeSearchPerformance(samples: SearchPerformanceSample[]): SearchPerformanceSummary {
+  const hotValues = samples.flatMap((sample) => (typeof sample.hotCompleteMs === 'number' ? [sample.hotCompleteMs] : []));
+  const deepValues = samples.flatMap((sample) => (typeof sample.deepCompleteMs === 'number' ? [sample.deepCompleteMs] : []));
+  const firstVisibleValues = samples.flatMap((sample) => (typeof sample.firstVisibleMs === 'number' ? [sample.firstVisibleMs] : []));
+  const firstUsefulValues = samples.flatMap((sample) => (typeof sample.firstUsefulMs === 'number' ? [sample.firstUsefulMs] : []));
+  const replacementSamples = samples.filter((sample) => sample.topReplacementCount > 0).length;
+  const clipboardFlashSamples = samples.filter((sample) => sample.clipboardFirstFlash).length;
+
+  return {
+    sampleCount: samples.length,
+    hotAverageMs: average(hotValues),
+    hotP95Ms: p95(hotValues),
+    deepAverageMs: average(deepValues),
+    deepP95Ms: p95(deepValues),
+    firstVisibleAverageMs: average(firstVisibleValues),
+    firstUsefulAverageMs: average(firstUsefulValues),
+    topReplacementRate: samples.length > 0 ? Number((replacementSamples / samples.length).toFixed(3)) : 0,
+    clipboardFirstFlashRate: samples.length > 0 ? Number((clipboardFlashSamples / samples.length).toFixed(3)) : 0,
+    lastRecordedAt: samples[0]?.recordedAt ?? null
   };
 }
 
@@ -275,6 +349,32 @@ export async function saveLauncherSettings(settings: LauncherSettings) {
 
 export async function getClipboardHistory() {
   return (await ensureLauncherState()).clipboardHistory;
+}
+
+export async function getSearchPerformance() {
+  const current = await ensureLauncherState();
+  return {
+    samples: current.searchPerformance,
+    summary: summarizeSearchPerformance(current.searchPerformance)
+  };
+}
+
+export async function recordSearchPerformanceSample(sample: Omit<SearchPerformanceSample, 'id' | 'recordedAt'>) {
+  const current = await ensureLauncherState();
+  const nextSamples = normalizeSearchPerformance([
+    {
+      ...sample,
+      id: `perf-${Date.now()}`,
+      recordedAt: Date.now()
+    },
+    ...current.searchPerformance
+  ]).slice(0, MAX_SEARCH_PERFORMANCE_SAMPLES);
+
+  stateCache = {
+    ...current,
+    searchPerformance: nextSamples
+  };
+  await persistState();
 }
 
 async function pushClipboardText(text: string) {

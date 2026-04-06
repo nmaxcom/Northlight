@@ -209,6 +209,20 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const previewRequestRef = useRef(0);
   const previewTargetRef = useRef<string | null>(null);
   const lastStableQueryRef = useRef('');
+  const searchMetricsRef = useRef<{
+    query: string;
+    startedAt: number;
+    firstVisibleMs: number | null;
+    firstUsefulMs: number | null;
+    hotCompleteMs: number | null;
+    deepCompleteMs: number | null;
+    hotResultCount: number;
+    deepResultCount: number;
+    topReplacementCount: number;
+    firstTopResultId: string | null;
+    lastTopResultId: string | null;
+    initialTopWasClipboard: boolean;
+  } | null>(null);
   const idleSummaryTimerRef = useRef<number | null>(null);
   const pointerSelectionEnabledRef = useRef(false);
   const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null);
@@ -312,6 +326,23 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     (nextQuery: string) => {
       resetPointerSelection();
       setQuery(nextQuery);
+      const trimmed = nextQuery.trim();
+      searchMetricsRef.current = trimmed
+        ? {
+            query: trimmed,
+            startedAt: Date.now(),
+            firstVisibleMs: null,
+            firstUsefulMs: null,
+            hotCompleteMs: null,
+            deepCompleteMs: null,
+            hotResultCount: 0,
+            deepResultCount: 0,
+            topReplacementCount: 0,
+            firstTopResultId: null,
+            lastTopResultId: null,
+            initialTopWasClipboard: false
+          }
+        : null;
     },
     [resetPointerSelection]
   );
@@ -368,6 +399,33 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     },
     [focusActiveInput, isMock, showFeedback]
   );
+
+  useEffect(() => {
+    const metrics = searchMetricsRef.current;
+    if (!metrics || metrics.query !== query.trim() || results.length === 0) {
+      return;
+    }
+
+    const elapsed = Date.now() - metrics.startedAt;
+    const topResult = results[0];
+    const usefulResult = results.find((result) => result.kind !== 'clipboard' && result.kind !== 'snippet');
+
+    if (metrics.firstVisibleMs === null) {
+      metrics.firstVisibleMs = elapsed;
+      metrics.firstTopResultId = topResult?.id ?? null;
+      metrics.lastTopResultId = topResult?.id ?? null;
+      metrics.initialTopWasClipboard = topResult?.kind === 'clipboard' || topResult?.kind === 'snippet';
+    } else if (topResult?.id && metrics.lastTopResultId && topResult.id !== metrics.lastTopResultId) {
+      metrics.topReplacementCount += 1;
+      metrics.lastTopResultId = topResult.id;
+    } else if (topResult?.id && !metrics.lastTopResultId) {
+      metrics.lastTopResultId = topResult.id;
+    }
+
+    if (metrics.firstUsefulMs === null && usefulResult) {
+      metrics.firstUsefulMs = elapsed;
+    }
+  }, [query, results]);
 
   useEffect(() => {
     if (isMock) {
@@ -726,6 +784,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     });
     void buildHotResults(query, { traceRequestId }).then((nextResults) => {
       if (!canceled && requestId === hotSearchRequestRef.current) {
+        const metrics = searchMetricsRef.current;
+        if (metrics && metrics.query === query.trim()) {
+          metrics.hotCompleteMs = Date.now() - metrics.startedAt;
+          metrics.hotResultCount = nextResults.length;
+        }
         if (nextResults.length > 0) {
           setResults(nextResults);
           setIsResolving(false);
@@ -782,8 +845,30 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     });
     void buildResults(query, { traceRequestId }).then((nextResults) => {
       if (!canceled && requestId === searchRequestRef.current) {
+        const metrics = searchMetricsRef.current;
+        if (metrics && metrics.query === query.trim()) {
+          metrics.deepCompleteMs = Date.now() - metrics.startedAt;
+          metrics.deepResultCount = nextResults.length;
+        }
         setResults(nextResults);
         setIsResolving(false);
+        if (metrics && metrics.query === query.trim()) {
+          void launcherRuntime.recordSearchPerformance({
+            query: metrics.query,
+            firstVisibleMs: metrics.firstVisibleMs,
+            firstUsefulMs: metrics.firstUsefulMs,
+            hotCompleteMs: metrics.hotCompleteMs,
+            deepCompleteMs: metrics.deepCompleteMs,
+            hotResultCount: metrics.hotResultCount,
+            deepResultCount: metrics.deepResultCount,
+            topReplacementCount: metrics.topReplacementCount,
+            clipboardFirstFlash:
+              metrics.initialTopWasClipboard &&
+              Boolean(nextResults[0]) &&
+              nextResults[0].kind !== 'clipboard' &&
+              nextResults[0].kind !== 'snippet'
+          });
+        }
         void traceEvent({
           subsystem: 'search',
           event: 'complete',

@@ -11,7 +11,16 @@ import { isPrivateNorthlightPath } from '../src/lib/search/searchExclusions';
 import { composedSearchScore } from '../src/lib/search/scoring';
 import { matchesLocalIntent, searchIntentKey } from '../src/lib/search/intentParser';
 import { isWatchableScope } from '../src/lib/search/watchScopePolicy';
-import type { LauncherStatus, LocalSearchItem, ResultKind, SearchContext, SearchIntent, SearchProvider, SearchProviderResult } from '../src/lib/search/types';
+import type {
+  LauncherStatus,
+  LocalSearchItem,
+  ResultKind,
+  ScopePerformanceInsight,
+  SearchContext,
+  SearchIntent,
+  SearchProvider,
+  SearchProviderResult
+} from '../src/lib/search/types';
 import { getLauncherSettings, getLauncherStateSnapshot } from './settings';
 
 const MAX_RESULTS = 12;
@@ -171,6 +180,34 @@ function preferredBoost(path: string) {
   }
 
   return 0;
+}
+
+function estimatedItemsForScope(path: string) {
+  return fallbackIndex.filter((entry) => entry.path === path || entry.path.startsWith(path.endsWith('/') ? path : `${path}/`)).length;
+}
+
+function classifyScopeCost(path: string, estimatedItems: number): ScopePerformanceInsight['cost'] {
+  if (path === '/' || path === homedir() || path.includes('/Library') || estimatedItems > 25_000) {
+    return 'high';
+  }
+
+  if (estimatedItems > 5_000 || /\/Users\/[^/]+$/.test(path)) {
+    return 'medium';
+  }
+
+  return 'low';
+}
+
+function recommendationForScope(path: string, hot: boolean, cost: ScopePerformanceInsight['cost']) {
+  if (cost === 'high') {
+    return hot ? 'Fast Path may become slower here; better kept as deep search.' : 'Better kept as deep search.';
+  }
+
+  if (cost === 'medium') {
+    return hot ? 'Useful as Fast Path if this is an everyday workspace.' : 'Good candidate for deep search unless you need very fast recall.';
+  }
+
+  return hot ? 'Good for Fast Path.' : 'Can be promoted to Fast Path if you use it daily.';
 }
 
 function systemPenalty(path: string) {
@@ -1090,6 +1127,26 @@ export function getSearchStatus(appVersion: string): LauncherStatus {
     searchMode: 'hybrid',
     catalogState: isRestoringIndex ? 'restoring' : refreshPromise ? 'hydrating' : fallbackIndexReady ? 'ready' : 'cold'
   };
+}
+
+export async function getScopeInsights(): Promise<ScopePerformanceInsight[]> {
+  await warmSearchIndex();
+  const settings = await getLauncherSettings();
+
+  return settings.scopes.map((scope) => {
+    const estimatedItems = estimatedItemsForScope(scope.path);
+    const cost = classifyScopeCost(scope.path, estimatedItems);
+
+    return {
+      id: scope.id,
+      path: scope.path,
+      enabled: scope.enabled,
+      hot: scope.hot,
+      estimatedItems,
+      cost,
+      recommendation: recommendationForScope(scope.path, scope.hot, cost)
+    };
+  });
 }
 
 export async function searchHotPaths(

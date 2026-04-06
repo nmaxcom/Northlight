@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { shortcutTokens } from '../lib/shortcuts';
-import type { AliasEntry, LauncherSettings, ScopeEntry, SnippetEntry } from '../lib/search/types';
+import type {
+  AliasEntry,
+  LauncherSettings,
+  ScopeEntry,
+  ScopePerformanceInsight,
+  SearchPerformanceSummary,
+  SnippetEntry
+} from '../lib/search/types';
 import { launcherRuntime } from '../lib/search/runtime';
 import classes from './SettingsView.module.css';
 
@@ -145,6 +152,8 @@ function validate(settings: LauncherSettings): ValidationState {
 
 export function SettingsView() {
   const [settings, setSettings] = useState<LauncherSettings | null>(null);
+  const [searchPerformance, setSearchPerformance] = useState<SearchPerformanceSummary | null>(null);
+  const [scopeInsights, setScopeInsights] = useState<ScopePerformanceInsight[]>([]);
   const [effectiveShortcut, setEffectiveShortcut] = useState('');
   const [saveState, setSaveState] = useState('Loading settings...');
   const [isSaving, setIsSaving] = useState(false);
@@ -165,6 +174,16 @@ export function SettingsView() {
         setSaveState('Ready');
       }
     });
+    void launcherRuntime.getSearchPerformance().then((nextPerformance) => {
+      if (!cancelled) {
+        setSearchPerformance(nextPerformance.summary);
+      }
+    });
+    void launcherRuntime.getScopeInsights().then((nextInsights) => {
+      if (!cancelled) {
+        setScopeInsights(nextInsights);
+      }
+    });
     void launcherRuntime.getEffectiveShortcut().then((nextShortcut) => {
       if (!cancelled) {
         setEffectiveShortcut(nextShortcut);
@@ -174,6 +193,16 @@ export function SettingsView() {
     const unsubscribe = launcherRuntime.onSettingsChanged((nextSettings) => {
       setSettings(cloneSettings(nextSettings));
       setSaveState('Updated from another window');
+      void launcherRuntime.getScopeInsights().then((nextInsights) => {
+        if (!cancelled) {
+          setScopeInsights(nextInsights);
+        }
+      });
+      void launcherRuntime.getSearchPerformance().then((nextPerformance) => {
+        if (!cancelled) {
+          setSearchPerformance(nextPerformance.summary);
+        }
+      });
       void launcherRuntime.getEffectiveShortcut().then((nextShortcut) => {
         if (!cancelled) {
           setEffectiveShortcut(nextShortcut);
@@ -227,8 +256,12 @@ export function SettingsView() {
     try {
       const nextSettings = await launcherRuntime.saveSettings(settings);
       const nextEffectiveShortcut = await launcherRuntime.getEffectiveShortcut();
+      const nextInsights = await launcherRuntime.getScopeInsights();
+      const nextPerformance = await launcherRuntime.getSearchPerformance();
       setSettings(cloneSettings(nextSettings));
       setEffectiveShortcut(nextEffectiveShortcut);
+      setScopeInsights(nextInsights);
+      setSearchPerformance(nextPerformance.summary);
       setSaveState('Saved');
     } finally {
       setIsSaving(false);
@@ -317,6 +350,9 @@ export function SettingsView() {
   const enabledScopes = settings.scopes.filter((scope) => scope.enabled).length;
   const statusTone = validation.hasErrors ? 'error' : saveState === 'Saved' || saveState === 'Ready' ? 'ready' : 'pending';
   const hasUnsavedChanges = saveState === 'Unsaved changes';
+  const insightById = new Map(scopeInsights.map((insight) => [insight.id, insight]));
+  const formatMs = (value: number | null) => (typeof value === 'number' ? `${Math.round(value)} ms` : 'No data yet');
+  const formatRate = (value: number) => `${Math.round(value * 100)}%`;
 
   return (
     <main className={classes.page}>
@@ -827,7 +863,12 @@ export function SettingsView() {
                 {scopeFeedback ? <div className={classes.scopeFeedback}>{scopeFeedback}</div> : null}
 
                 <div className={classes.scopeList} ref={scopeListRef}>
-                  {settings.scopes.map((scope, index) => (
+                  {settings.scopes.map((scope, index) => {
+                    const insight = insightById.get(scope.id);
+                    const costClass =
+                      insight?.cost === 'high' ? classes.scopeCostHigh : insight?.cost === 'medium' ? classes.scopeCostMedium : classes.scopeCostLow;
+
+                    return (
                     <div key={scope.id} className={classes.scopeRow}>
                       <div className={classes.rowHeader}>
                         <div>
@@ -908,8 +949,19 @@ export function SettingsView() {
                           </div>
                         </label>
                       </div>
+                      {insight ? (
+                        <div className={classes.scopeInsightRow}>
+                          <span className={`${classes.scopeCostPill} ${costClass}`}>
+                            {insight.cost.toUpperCase()}
+                          </span>
+                          <span className={classes.scopeInsightMeta}>
+                            {insight.estimatedItems.toLocaleString()} indexed items
+                          </span>
+                          <span className={classes.scopeInsightText}>{insight.recommendation}</span>
+                        </div>
+                      ) : null}
                     </div>
-                  ))}
+                  );})}
                 </div>
               </section>
               ) : null}
@@ -937,9 +989,55 @@ export function SettingsView() {
 
               {activeTab === 'scopes' ? (
               <section className={classes.card}>
+                <div className={classes.cardTitle}>Search Performance</div>
+                <div className={classes.cardSubtitle}>Recent measurements from real launcher queries on this machine.</div>
+                <div className={classes.performanceGrid}>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Samples</span>
+                    <span className={classes.performanceValue}>{searchPerformance?.sampleCount ?? 0}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Hot Avg</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.hotAverageMs ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Hot P95</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.hotP95Ms ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Deep Avg</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.deepAverageMs ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Deep P95</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.deepP95Ms ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>First Visible</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.firstVisibleAverageMs ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>First Useful</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.firstUsefulAverageMs ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Top Replacements</span>
+                    <span className={classes.performanceValue}>{formatRate(searchPerformance?.topReplacementRate ?? 0)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Clipboard Flashes</span>
+                    <span className={classes.performanceValue}>{formatRate(searchPerformance?.clipboardFirstFlashRate ?? 0)}</span>
+                  </div>
+                </div>
+              </section>
+              ) : null}
+
+              {activeTab === 'scopes' ? (
+              <section className={classes.card}>
                 <div className={classes.cardTitle}>Scope Guidance</div>
                 <div className={classes.cardSubtitle}>A few rules that matter when you widen hybrid search coverage.</div>
                 <ul className={classes.hintList}>
+                  <li>`Fast Path` means Northlight tries that scope on the low-latency tier before deep search finishes.</li>
                   <li>Fast paths are optimized for immediate recall. Use them for apps, Desktop-like folders, and high-frequency workspaces.</li>
                   <li>`~/Library` is usually the highest-value expansion if you want app support files, settings, plugins, or preferences.</li>
                   <li>Disabled scopes stay in settings but stop feeding the local catalog and scoped fallback search until you enable them again.</li>

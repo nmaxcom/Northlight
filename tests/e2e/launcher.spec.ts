@@ -128,6 +128,8 @@ test('shows the settings view route', async ({ page }) => {
   await page.getByRole('button', { name: 'Scopes & Status' }).click();
   await expect(page.getByRole('checkbox', { name: /watch filesystem changes/i })).toBeChecked();
   await expect(page.getByRole('checkbox', { name: 'Fast Path' }).first()).toBeVisible();
+  await expect(page.getByText('Search Performance')).toBeVisible();
+  await expect(page.getByText(/low-latency tier before deep search finishes/i)).toBeVisible();
 });
 
 test('shows the launcher design mockup on a black review background with exact mock status text', async ({ page }) => {

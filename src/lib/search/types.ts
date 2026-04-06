@@ -36,6 +36,45 @@ export type ClipboardEntry = {
   copiedAt: number;
 };
 
+export type SearchPerformanceSample = {
+  id: string;
+  query: string;
+  recordedAt: number;
+  firstVisibleMs: number | null;
+  firstUsefulMs: number | null;
+  hotCompleteMs: number | null;
+  deepCompleteMs: number | null;
+  hotResultCount: number;
+  deepResultCount: number;
+  topReplacementCount: number;
+  clipboardFirstFlash: boolean;
+};
+
+export type SearchPerformanceSummary = {
+  sampleCount: number;
+  hotAverageMs: number | null;
+  hotP95Ms: number | null;
+  deepAverageMs: number | null;
+  deepP95Ms: number | null;
+  firstVisibleAverageMs: number | null;
+  firstUsefulAverageMs: number | null;
+  topReplacementRate: number;
+  clipboardFirstFlashRate: number;
+  lastRecordedAt: number | null;
+};
+
+export type ScopeCostLevel = 'low' | 'medium' | 'high';
+
+export type ScopePerformanceInsight = {
+  id: string;
+  path: string;
+  enabled: boolean;
+  hot: boolean;
+  estimatedItems: number;
+  cost: ScopeCostLevel;
+  recommendation: string;
+};
+
 export type LauncherPosition = {
   x: number;
   y: number;
@@ -322,6 +361,12 @@ export type LauncherBridge = {
   getSettings: () => Promise<LauncherSettings>;
   getEffectiveShortcut?: () => Promise<string>;
   saveSettings: (settings: LauncherSettings) => Promise<LauncherSettings>;
+  getSearchPerformance?: () => Promise<{
+    samples: SearchPerformanceSample[];
+    summary: SearchPerformanceSummary;
+  }>;
+  recordSearchPerformance?: (sample: Omit<SearchPerformanceSample, 'id' | 'recordedAt'>) => Promise<void>;
+  getScopeInsights?: () => Promise<ScopePerformanceInsight[]>;
   getClipboardHistory: () => Promise<ClipboardEntry[]>;
   openSettings: () => Promise<void>;
   openSystemSettings?: (url: string) => Promise<void>;

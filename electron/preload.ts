@@ -1,5 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { LauncherSettings, LauncherTraceEvent, LocalSearchItem, SearchIntent } from '../src/lib/search/types';
+import type {
+  LauncherSettings,
+  LauncherTraceEvent,
+  LocalSearchItem,
+  ScopePerformanceInsight,
+  SearchIntent,
+  SearchPerformanceSample,
+  SearchPerformanceSummary
+} from '../src/lib/search/types';
 
 const launcherApi = {
   searchLocalHot: (
@@ -16,6 +24,11 @@ const launcherApi = {
   ) => ipcRenderer.invoke('launcher:search-local', query, scopePath, intent, requestId),
   getStatus: (requestId?: string) => ipcRenderer.invoke('launcher:get-status', requestId),
   getSettings: () => ipcRenderer.invoke('launcher:get-settings'),
+  getSearchPerformance: (): Promise<{ samples: SearchPerformanceSample[]; summary: SearchPerformanceSummary }> =>
+    ipcRenderer.invoke('launcher:get-search-performance'),
+  recordSearchPerformance: (sample: Omit<SearchPerformanceSample, 'id' | 'recordedAt'>) =>
+    ipcRenderer.invoke('launcher:record-search-performance', sample),
+  getScopeInsights: (): Promise<ScopePerformanceInsight[]> => ipcRenderer.invoke('launcher:get-scope-insights'),
   getEffectiveShortcut: () => ipcRenderer.invoke('launcher:get-effective-shortcut'),
   saveSettings: (settings: LauncherSettings) => ipcRenderer.invoke('launcher:save-settings', settings),
   getClipboardHistory: () => ipcRenderer.invoke('launcher:get-clipboard-history'),
