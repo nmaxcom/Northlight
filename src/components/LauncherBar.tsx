@@ -1110,7 +1110,13 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       onMouseDownCapture={(event) => {
         const target = event.target as HTMLElement;
 
-        if (target.closest('button') || target.closest('input') || target.closest('textarea') || target.closest('select')) {
+        if (
+          target.closest('button') ||
+          target.closest('input') ||
+          target.closest('textarea') ||
+          target.closest('select') ||
+          target.closest('[data-launcher-selectable="true"]')
+        ) {
           return;
         }
 
@@ -1269,19 +1275,19 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
               </div>
               {preview ? (
                 <div className={classes.previewContent} data-launcher-role="preview-content">
-                  <div className={classes.previewTitle} data-launcher-role="preview-title">{preview.title}</div>
-                  <div className={classes.previewSubtitle} data-launcher-role="preview-subtitle">{preview.subtitle}</div>
+                  <div className={classes.previewTitle} data-launcher-role="preview-title" data-launcher-selectable="true">{preview.title}</div>
+                  <div className={classes.previewSubtitle} data-launcher-role="preview-subtitle" data-launcher-selectable="true">{preview.subtitle}</div>
                   {preview.mediaUrl ? (
                     <div className={classes.previewMediaFrame} data-launcher-role="preview-media-frame">
                       <img className={classes.previewMediaImage} data-launcher-role="preview-media-image" src={preview.mediaUrl} alt={preview.mediaAlt ?? ''} />
                     </div>
                   ) : null}
-                  {preview.body ? <pre className={classes.previewBody} data-launcher-role="preview-body">{preview.body}</pre> : null}
+                  {preview.body ? <pre className={classes.previewBody} data-launcher-role="preview-body" data-launcher-selectable="true">{preview.body}</pre> : null}
                   <div className={classes.previewMeta} data-launcher-role="preview-meta">
                     {preview.sections.map((section) => (
                       <div key={`${section.label}-${section.value}`} className={classes.previewMetaRow} data-launcher-role="preview-meta-row">
-                        <span className={classes.previewMetaLabel} data-launcher-role="preview-meta-label">{section.label}</span>
-                        <span className={classes.previewMetaValue} data-launcher-role="preview-meta-value">{section.value}</span>
+                        <span className={classes.previewMetaLabel} data-launcher-role="preview-meta-label" data-launcher-selectable="true">{section.label}</span>
+                        <span className={classes.previewMetaValue} data-launcher-role="preview-meta-value" data-launcher-selectable="true">{section.value}</span>
                       </div>
                     ))}
                   </div>

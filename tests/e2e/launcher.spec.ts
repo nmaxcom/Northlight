@@ -163,6 +163,29 @@ test('renders launcher preview text as selectable in the launcher mockup', async
   await expect(previewMetaValue).toHaveCSS('user-select', 'text');
 });
 
+test('allows mouse text selection inside the launcher preview in the mockup', async ({ page }) => {
+  await page.goto('/design/launcher-current-view.html');
+
+  const previewBody = page.frameLocator('iframe[title="Northlight launcher current view"]').locator('[data-launcher-role="preview-body"]');
+  await expect(previewBody).toBeVisible();
+
+  const box = await previewBody.boundingBox();
+  expect(box).not.toBeNull();
+
+  if (!box) {
+    return;
+  }
+
+  await page.mouse.move(box.x + 18, box.y + 18);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 240, box.y + 90, { steps: 12 });
+  await page.mouse.up();
+
+  const frame = page.frames().find((candidate) => candidate.url().includes('/design/launcher-current-view-frame.html'));
+  const selection = await frame?.evaluate(() => window.getSelection()?.toString() ?? '');
+  expect(selection && selection.length > 0).toBeTruthy();
+});
+
 test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page }) => {
   await page.goto('/');
 
