@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { basename, extname, join } from 'node:path';
 import { platform } from 'node:process';
 import packageJson from '../package.json';
+import { shouldHideLauncherApp } from '../src/lib/launcher/dismissBehavior';
 import { getLauncherOpenStrategy } from '../src/lib/launcher/openTarget';
 import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/shortcuts';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem, SearchIntent } from '../src/lib/search/types';
@@ -329,7 +330,9 @@ function hideLauncher() {
   mainWindow.hide();
   mainWindow.webContents.send('launcher:visibility-changed', false);
 
-  if (platform === 'darwin') {
+  const hasVisibleSettingsWindow = Boolean(settingsWindow && !settingsWindow.isDestroyed() && settingsWindow.isVisible());
+
+  if (shouldHideLauncherApp(platform, hasVisibleSettingsWindow)) {
     app.hide();
   }
 }
