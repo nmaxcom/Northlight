@@ -108,6 +108,7 @@ Current built-in capabilities:
 - Native app icons and image previews are loaded from real macOS assets so they render consistently inside the launcher.
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.
+- In the `Sandbox` theme, the keyboard-selected result row uses the same background treatment as hover so list states stay visually aligned while iterating.
 - When the selected result stays the same across background refreshes, the preview remains pinned instead of flashing back to a fallback state.
 - Result rows and the bottom action bar are intentionally compact so more hits fit on screen at once.
 

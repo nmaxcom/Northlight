@@ -284,7 +284,7 @@
 
 [data-launcher-theme='sandbox'][data-pointer-active='true'] [data-launcher-role='result']:hover,
 [data-launcher-theme='sandbox'] [data-launcher-role='result'][data-selected='true'] {
-  background: #121e2a;
+  background: #697bff36;
 }
 
 [data-launcher-theme='sandbox'][data-pointer-active='true'] [data-launcher-role='result']:hover {
