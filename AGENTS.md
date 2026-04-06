@@ -31,6 +31,7 @@
 - Before committing in a dirty worktree, stage only files from the current task.
 - Make a commit for each significant completed slice that changes user-visible behavior, architecture, or persisted settings; avoid commits for tiny churn or half-finished noise.
 - Commit only files or hunks created or modified by the current task; never bundle unrelated user edits.
+- Any visual change that affects the launcher or settings must be verified with Playwright before the task is considered complete.
 - Any user-visible behavior change must update `docs/user-guide.md` in the same task and commit.
 - Any shipped user-visible or behavior-affecting change must also bump the app semver in `package.json` in the same task and commit.
 
