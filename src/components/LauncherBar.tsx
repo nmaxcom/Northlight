@@ -15,7 +15,7 @@ import { getLauncherTheme, getLauncherThemeStyle, getNextLauncherThemeId } from 
 import classes from './LauncherBar.module.css';
 
 const shortcutLabelMap: Record<string, string> = {
-  Cmd: 'Cmd',
+  Cmd: '⌘',
   Ctrl: 'Ctrl',
   Shift: 'Shift',
   Alt: 'Alt',

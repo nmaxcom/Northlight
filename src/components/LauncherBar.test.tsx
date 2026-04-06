@@ -81,7 +81,7 @@ describe('LauncherBar', () => {
     expect(scrollContainer).toBeTruthy();
     expect(scrollContainer?.getAttribute('tabindex')).toBeNull();
     expect(screen.getAllByText('Open File').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /actions cmd k/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /actions ⌘ k/i })).toBeEnabled();
   });
 
   it('switches launcher themes from the header without clearing the active query or results', async () => {
