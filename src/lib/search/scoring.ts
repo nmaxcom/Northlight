@@ -92,8 +92,9 @@ export function baseSearchScore(query: string, item: Pick<LocalSearchItem, 'name
   return score;
 }
 
-function providerCarryScore(score: number, hasDirectTextualMatch: boolean) {
-  const capped = Math.max(0, Math.min(score, hasDirectTextualMatch ? 28 : 72));
+function providerCarryScore(score: number | null | undefined, hasDirectTextualMatch: boolean) {
+  const normalized = typeof score === 'number' && Number.isFinite(score) ? score : 0;
+  const capped = Math.max(0, Math.min(normalized, hasDirectTextualMatch ? 28 : 72));
   return capped;
 }
 

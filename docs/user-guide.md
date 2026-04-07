@@ -188,3 +188,4 @@ Examples:
 - Launcher show/hide avoids async settings reads on the hot path, so shortcut-to-window appearance stays more consistent.
 - Diagnostics traces are development-only and stay off by default, so normal launcher sessions do not pay the extra logging overhead.
 - This guide must be updated whenever visible launcher behavior changes.
+- Catalog-backed results now default missing provider scores to `0`, so hot-path app recall stays consistent with Spotlight-backed results instead of silently dropping exact app matches.

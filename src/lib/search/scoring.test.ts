@@ -78,4 +78,19 @@ describe('baseSearchScore', () => {
 
     expect(app).toBeGreaterThan(noisyFile);
   });
+
+  it('does not drop exact catalog-style hits when the incoming provider score is missing', () => {
+    const app = composedSearchScore(
+      'calendar',
+      {
+        name: 'Calendar.app',
+        path: '/System/Applications/Calendar.app',
+        kind: 'app',
+        score: undefined
+      },
+      { appFirstEnabled: true }
+    );
+
+    expect(app).toBeGreaterThan(0);
+  });
 });
