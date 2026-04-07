@@ -52,7 +52,7 @@ Current built-in capabilities:
 - `npm run design` serves the shared renderer mockups, prints the available design URLs in the terminal, and exposes an index at `/design/`.
 - The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css) as a linked stylesheet in the launcher renderer and launcher design frame, so Chrome DevTools shows it as a normal CSS file instead of an injected `<style>` block.
 - During `npm run design`, Northlight also serves Chrome DevTools automatic workspace metadata at `/.well-known/appspecific/com.chrome.devtools.json`, so `Sources > Workspaces` can connect directly to this repo and persist `Styles` edits back into the local files.
-- The shared launcher mockup includes a file-preview state with selectable title, path, code body, and metadata text so you can copy directly from the preview while iterating visual design.
+- The shared launcher mockup now opens in the clean empty launcher state, with the current version badge and a precise indexed-count badge visible in the header so visual shell work starts from the same baseline each time.
 
 ## Search Behavior
 
@@ -96,7 +96,7 @@ Current built-in capabilities:
 - `Cmd+K`: open the current result's `Actions` panel.
 - `Cmd+,`: open the settings window.
 - `Arrow Up` / `Arrow Down`: move through results.
-- `Escape`: clear the query if there is text; otherwise hide the launcher.
+- `Escape`: clear the query if there is text; otherwise hide the launcher cleanly without letting the dismiss keypress fall through into macOS.
 
 ## Result Behavior
 

@@ -1159,6 +1159,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
           return;
         }
 
+        event.preventDefault();
         await launcherRuntime.hide();
         return;
       }

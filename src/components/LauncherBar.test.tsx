@@ -1016,6 +1016,20 @@ describe('LauncherBar', () => {
 
     expect(input.value).toBe('');
     expect(hide).not.toHaveBeenCalled();
+
+    const dismissEvent = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true
+    });
+
+    await act(async () => {
+      window.dispatchEvent(dismissEvent);
+      await Promise.resolve();
+    });
+
+    expect(dismissEvent.defaultPrevented).toBe(true);
+    expect(hide).toHaveBeenCalledTimes(1);
   });
 
   it('shows result actions in the actions panel', async () => {
