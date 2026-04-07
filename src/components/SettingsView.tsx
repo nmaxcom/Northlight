@@ -357,25 +357,24 @@ export function SettingsView() {
   return (
     <main className={classes.page}>
       <div className={classes.shell}>
-        <header className={classes.header}>
-          <div>
+        <header className={classes.header} data-settings-role="header">
+          <div className={classes.headerCopy} data-settings-role="header-copy">
             <div className={classes.title}>Northlight Settings</div>
             <div className={classes.subtitle}>
               Control ranking, preview, clipboard history, snippets, aliases, scopes, and launcher utility-window behavior in one place.
             </div>
           </div>
-          <div className={classes.actions}>
-            <button className={classes.secondaryButton} type="button" onClick={() => setSettings(cloneSettings(launcherRuntime.getSettingsSnapshot()))}>
+          <div className={classes.actions} data-settings-role="header-actions">
+            <button className={classes.secondaryButton} data-settings-role="secondary-button" type="button" onClick={() => setSettings(cloneSettings(launcherRuntime.getSettingsSnapshot()))}>
               Revert
             </button>
-            <button className={classes.button} type="button" disabled={isSaving || (!hasUnsavedChanges && !validation.hasErrors)} onClick={() => void save()}>
+            <button className={classes.button} data-settings-role="primary-button" type="button" disabled={isSaving || (!hasUnsavedChanges && !validation.hasErrors)} onClick={() => void save()}>
               {isSaving ? 'Saving…' : 'Save Settings'}
             </button>
           </div>
         </header>
 
-        <div className={classes.content}>
-          <nav className={classes.tabs} aria-label="Settings sections">
+        <nav className={classes.tabs} data-settings-role="tabs" aria-label="Settings sections" role="tablist">
             {[
               ['overview', 'Overview'],
               ['content', 'Aliases & Snippets'],
@@ -385,13 +384,24 @@ export function SettingsView() {
                 key={id}
                 type="button"
                 className={`${classes.tab} ${activeTab === id ? classes.tabActive : ''}`}
+                data-settings-role="tab"
+                role="tab"
+                aria-selected={activeTab === id}
+                aria-controls={`settings-panel-${id}`}
                 onClick={() => setActiveTab(id as 'overview' | 'content' | 'scopes')}
               >
                 {label}
               </button>
             ))}
-          </nav>
-          <div className={`${classes.grid} ${activeTab === 'scopes' ? classes.gridWithSidebar : classes.gridSingle}`}>
+        </nav>
+
+        <div className={classes.content} data-settings-role="content">
+          <div
+            id={`settings-panel-${activeTab}`}
+            className={`${classes.grid} ${activeTab === 'scopes' ? classes.gridWithSidebar : classes.gridSingle}`}
+            data-settings-role="panel"
+            role="tabpanel"
+          >
             <div className={classes.leftColumn}>
               {activeTab === 'overview' ? (
               <section className={classes.card}>

@@ -120,16 +120,76 @@ test('shows the settings view route', async ({ page }) => {
 
   await expect(page.getByText('Northlight Settings')).toBeVisible();
   await expect(page.getByRole('button', { name: /save settings/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Overview' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible();
   await expect(page.getByText('Search And Ranking')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Launcher shortcut' })).toBeVisible();
   await expect(page.getByText('⌘')).toBeVisible();
   await expect(page.getByText('⇧')).toBeVisible();
-  await page.getByRole('button', { name: 'Scopes & Status' }).click();
+  await page.getByRole('tab', { name: 'Scopes & Status' }).click();
   await expect(page.getByRole('checkbox', { name: /watch filesystem changes/i })).toBeChecked();
   await expect(page.getByRole('checkbox', { name: 'Fast Path' }).first()).toBeVisible();
   await expect(page.getByText('Search Performance')).toBeVisible();
   await expect(page.getByText(/low-latency tier before deep search finishes/i)).toBeVisible();
+});
+
+test('keeps settings tabs outside the content scroll region', async ({ page }) => {
+  await page.goto('/?view=settings');
+
+  const tabs = page.locator('[data-settings-role="tabs"]');
+  const content = page.locator('[data-settings-role="content"]');
+
+  await expect(tabs).toBeVisible();
+  await expect(content).toBeVisible();
+
+  await page.getByRole('tab', { name: 'Scopes & Status' }).click();
+
+  const before = await tabs.boundingBox();
+  expect(before).not.toBeNull();
+
+  await content.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+
+  const after = await tabs.boundingBox();
+  expect(after).not.toBeNull();
+
+  if (!before || !after) {
+    return;
+  }
+
+  expect(after.y).toBe(before.y);
+});
+
+test('shows the shared settings mockup with persistent tabs and refreshed controls', async ({ page }) => {
+  await page.goto('/design/settings-current-view.html');
+
+  const frame = page.frameLocator('iframe[title="Northlight settings current view"]');
+  const tabs = frame.locator('[data-settings-role="tabs"]');
+  const content = frame.locator('[data-settings-role="content"]');
+  const primaryButton = frame.locator('[data-settings-role="primary-button"]');
+
+  await expect(tabs).toBeVisible();
+  await expect(content).toBeVisible();
+  await expect(primaryButton).toBeVisible();
+  await expect(primaryButton).toHaveCSS('border-top-left-radius', '12px');
+  await expect(primaryButton).toHaveCSS('min-height', '38px');
+
+  const before = await tabs.boundingBox();
+  expect(before).not.toBeNull();
+
+  await frame.getByRole('tab', { name: 'Scopes & Status' }).click();
+  await content.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+
+  const after = await tabs.boundingBox();
+  expect(after).not.toBeNull();
+
+  if (!before || !after) {
+    return;
+  }
+
+  expect(after.y).toBe(before.y);
 });
 
 test('shows the launcher design mockup on a black review background with exact mock status text', async ({ page }) => {

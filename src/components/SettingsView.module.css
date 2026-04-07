@@ -13,9 +13,9 @@
   max-width: 1040px;
   height: 100%;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 14px;
   min-height: 0;
 }
 
@@ -23,36 +23,51 @@
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  align-items: flex-start;
-  padding: 14px 8px 4px;
+  align-items: center;
+  padding: 12px 10px 2px;
+  -webkit-app-region: drag;
+}
+
+.headerCopy {
+  min-width: 0;
 }
 
 .content {
   min-height: 0;
   overflow: auto;
-  padding: 4px 8px 8px;
+  padding: 2px 10px 10px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(170, 192, 214, 0.06);
 }
 
 .tabs {
   display: flex;
-  gap: 8px;
-  padding: 0 8px 14px;
+  gap: 10px;
+  padding: 0 10px;
+  align-items: center;
+  min-height: 44px;
+  -webkit-app-region: no-drag;
 }
 
 .tab {
-  min-height: 34px;
-  padding: 0 13px;
+  min-height: 38px;
+  padding: 0 15px;
   border-radius: 999px;
-  border: 1px solid rgba(170, 192, 214, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(245, 247, 250, 0.72);
+  border: 1px solid rgba(170, 192, 214, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+  color: rgba(245, 247, 250, 0.64);
   cursor: pointer;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
 
 .tabActive {
-  background: linear-gradient(180deg, rgba(51, 72, 94, 0.9), rgba(30, 42, 55, 0.96));
+  background: linear-gradient(180deg, rgba(66, 92, 121, 0.92), rgba(38, 54, 72, 0.98));
   color: #f5f7fa;
-  border-color: rgba(170, 192, 214, 0.2);
+  border-color: rgba(170, 192, 214, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .content::-webkit-scrollbar {
@@ -83,25 +98,32 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  -webkit-app-region: no-drag;
 }
 
 .button,
 .secondaryButton {
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 11px;
-  border: 1px solid rgba(170, 192, 214, 0.16);
+  min-height: 38px;
+  padding: 0 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(170, 192, 214, 0.14);
   color: #f5f7fa;
   cursor: pointer;
   user-select: none;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, box-shadow 120ms ease, filter 120ms ease;
 }
 
 .button {
-  background: linear-gradient(180deg, #314559, #22313f);
+  background: linear-gradient(180deg, #3c5974, #26394b);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .secondaryButton {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.035));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.03));
 }
 
 .button:hover,
@@ -113,6 +135,8 @@
 .iconButton:hover,
 .tab:hover {
   border-color: rgba(170, 192, 214, 0.24);
+  background-position: 0 0;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
 }
 
 .button:active,
@@ -163,7 +187,7 @@
 .card {
   border-radius: 16px;
   border: 1px solid rgba(170, 192, 214, 0.06);
-  background: rgba(255, 255, 255, 0.015);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.012));
   padding: 14px 16px 16px;
 }
 
@@ -739,6 +763,17 @@ select:focus-visible,
 textarea:focus,
 textarea:focus-visible {
   outline: none;
+}
+
+.button:focus-visible,
+.secondaryButton:focus-visible,
+.scopeActionButton:focus-visible,
+.scopePresetButton:focus-visible,
+.scopeComposerAdd:focus-visible,
+.scopeComposerCancel:focus-visible,
+.iconButton:focus-visible,
+.tab:focus-visible {
+  box-shadow: 0 0 0 2px rgba(133, 174, 221, 0.34);
 }
 
 @media (max-width: 960px) {

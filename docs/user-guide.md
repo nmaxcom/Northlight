@@ -122,6 +122,10 @@ Current built-in capabilities:
 
 The settings window is the control center for launcher preferences.
 
+- The settings header acts as a drag region so you can reposition the window without grabbing inside the form content.
+- Section tabs stay fixed outside the scrolling content area, so long sections no longer push the navigation out of view.
+- Settings tabs now use a clearer desktop-style segmented control treatment with explicit active, hover, pressed, and focus states.
+- Primary and secondary settings buttons now have stronger visual feedback for hover, pressed, disabled, and saving states.
 - Toggle best match, app-first ranking, preview, quick look, snippets, and clipboard history.
 - Capture a new global launcher shortcut directly by pressing the combination in settings, or clear it entirely to disable the launcher hotkey.
 - During `npm run dev`, a cleared launcher shortcut still falls back to `Cmd+Shift+Space` for that session so the launcher cannot strand itself hidden while you are iterating.

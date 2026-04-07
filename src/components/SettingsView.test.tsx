@@ -37,6 +37,37 @@ describe('SettingsView', () => {
     expect(screen.getByText(/dev-session fallback shortcut/i)).toBeInTheDocument();
   });
 
+  it('renders settings tabs outside the scrollable content region and marks the active tab', async () => {
+    window.launcher = {
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getSearchPerformance: vi.fn().mockResolvedValue({
+        samples: [],
+        summary: launcherRuntime.getSearchPerformanceSnapshot().summary
+      }),
+      getScopeInsights: vi.fn().mockResolvedValue([]),
+      getEffectiveShortcut: vi.fn().mockResolvedValue(DEFAULT_LAUNCHER_SHORTCUT),
+      saveSettings: vi.fn().mockImplementation(async (settings) => settings),
+      onSettingsChanged: vi.fn().mockReturnValue(() => {})
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <SettingsView />
+      </MantineProvider>
+    );
+
+    await screen.findByText('Northlight Settings');
+
+    const tabs = screen.getByRole('tablist', { name: /settings sections/i });
+    const panel = screen.getByRole('tabpanel');
+    const activeTab = screen.getByRole('tab', { name: 'Overview' });
+
+    expect(tabs).toBeInTheDocument();
+    expect(panel).toBeInTheDocument();
+    expect(activeTab).toHaveAttribute('aria-selected', 'true');
+    expect(panel).not.toContainElement(tabs);
+  });
+
   it('shows scope guidance and adds the library preset without duplicating it', async () => {
     window.launcher = {
       getSettings: vi.fn().mockResolvedValue({
@@ -73,7 +104,7 @@ describe('SettingsView', () => {
     );
 
     await screen.findByText('Northlight Settings');
-    fireEvent.click(screen.getByRole('button', { name: 'Scopes & Status' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
     expect(screen.getByText(/choose which roots northlight hydrates and prefers/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add ~\/library/i })).toBeInTheDocument();
@@ -109,7 +140,7 @@ describe('SettingsView', () => {
     );
 
     await screen.findByText('Northlight Settings');
-    fireEvent.click(screen.getByRole('button', { name: 'Scopes & Status' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add Scope' }));
 
@@ -143,7 +174,7 @@ describe('SettingsView', () => {
     );
 
     await screen.findByText('Northlight Settings');
-    fireEvent.click(screen.getByRole('button', { name: 'Scopes & Status' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
     const toggle = await screen.findByRole('checkbox', { name: /watch filesystem changes/i });
     expect(toggle).toBeChecked();
@@ -193,7 +224,7 @@ describe('SettingsView', () => {
     );
 
     await screen.findByText('Northlight Settings');
-    fireEvent.click(screen.getByRole('button', { name: 'Scopes & Status' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
     const toggle = await screen.findByRole('checkbox', { name: 'Fast Path' });
     expect(toggle).not.toBeChecked();
@@ -301,7 +332,7 @@ describe('SettingsView', () => {
     );
 
     await screen.findByText('Northlight Settings');
-    fireEvent.click(screen.getByRole('button', { name: 'Scopes & Status' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
     expect(screen.getByText('Search Performance')).toBeInTheDocument();
     expect(screen.getByText('Hot Avg')).toBeInTheDocument();
