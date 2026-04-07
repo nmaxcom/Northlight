@@ -207,17 +207,20 @@ test('shows the launcher design mockup on a black review background with a reali
   const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
   await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
   await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('box-shadow', 'none');
-  await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('123,344 indexed');
+  await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('101,398 indexed');
   await expect(frame.getByText(/^hybrid$/i)).toHaveCount(0);
   await expect(frame.getByText(/^catalog ready$/i)).toHaveCount(0);
   await expect(frame.locator('[data-launcher-role="search-input"]')).toHaveValue('str');
   await expect(frame.getByRole('button', { name: /Stremio\.app/i })).toBeVisible();
   await expect(frame.getByRole('button', { name: /Keyboard Maestro\.app/i })).toBeVisible();
-  await expect(frame.getByRole('button', { name: /Strong Contrast \(RGB\)\.acv/i })).toBeVisible();
-  await expect(frame.getByRole('button', { name: /stripe\.com/i })).toBeVisible();
-  await expect(frame.locator('[data-launcher-role="result"]')).toHaveCount(6);
+  await expect(frame.getByRole('button', { name: /strace\.md/i })).toBeVisible();
+  await expect(frame.getByRole('button', { name: /strings\.cc/i })).toBeVisible();
+  await expect(frame.getByRole('button', { name: /stripe/i })).toBeVisible();
+  await expect(frame.locator('[data-launcher-role="result"]')).toHaveCount(10);
+  await expect(frame.locator('[data-launcher-role="result-icon-image"]')).toHaveCount(10);
   await expect(frame.locator('[data-launcher-role="preview-title"]')).toHaveText('Stremio');
   await expect(frame.locator('[data-launcher-role="preview-subtitle"]')).toHaveText('/Applications/Stremio.app');
+  await expect(frame.locator('[data-launcher-role="preview-body"]')).toHaveText('macOS application bundle');
   await expect(frame.locator('[data-launcher-role="preview-meta-value"]').filter({ hasText: '5.1.14' })).toBeVisible();
 });
 
