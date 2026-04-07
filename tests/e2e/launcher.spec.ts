@@ -199,7 +199,7 @@ test('shows the shared settings mockup with persistent tabs and refreshed contro
   expect(after.y).toBe(before.y);
 });
 
-test('shows the launcher design mockup on a black review background with the empty launcher state', async ({ page }) => {
+test('shows the launcher design mockup on a black review background with a realistic populated state', async ({ page }) => {
   await page.goto('/design/launcher-current-view.html');
 
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
@@ -210,9 +210,15 @@ test('shows the launcher design mockup on a black review background with the emp
   await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('123,344 indexed');
   await expect(frame.getByText(/^hybrid$/i)).toHaveCount(0);
   await expect(frame.getByText(/^catalog ready$/i)).toHaveCount(0);
-  await expect(frame.getByText('Start typing to search')).toBeVisible();
-  await expect(frame.getByText('Select a result to inspect it here.')).toBeVisible();
-  await expect(frame.locator('[data-launcher-role="result"]')).toHaveCount(0);
+  await expect(frame.locator('[data-launcher-role="search-input"]')).toHaveValue('str');
+  await expect(frame.getByRole('button', { name: /Stremio\.app/i })).toBeVisible();
+  await expect(frame.getByRole('button', { name: /Keyboard Maestro\.app/i })).toBeVisible();
+  await expect(frame.getByRole('button', { name: /Strong Contrast \(RGB\)\.acv/i })).toBeVisible();
+  await expect(frame.getByRole('button', { name: /stripe\.com/i })).toBeVisible();
+  await expect(frame.locator('[data-launcher-role="result"]')).toHaveCount(6);
+  await expect(frame.locator('[data-launcher-role="preview-title"]')).toHaveText('Stremio');
+  await expect(frame.locator('[data-launcher-role="preview-subtitle"]')).toHaveText('/Applications/Stremio.app');
+  await expect(frame.locator('[data-launcher-role="preview-meta-value"]').filter({ hasText: '5.1.14' })).toBeVisible();
 });
 
 test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page }) => {
