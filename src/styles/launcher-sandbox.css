@@ -13,36 +13,12 @@
 */
 
 [data-launcher-theme='sandbox'][data-launcher-role='window'] {
-  position: relative;
-  overflow: hidden;
   border: 1px solid rgb(106 123 255 / 35%);
   box-shadow: none;
-  background:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.84), rgba(5, 8, 12, 0.78)),
-    rgba(6, 8, 14, 0.82);
-  backdrop-filter: blur(26px) saturate(145%);
-  -webkit-backdrop-filter: blur(26px) saturate(145%);
-}
-
-[data-launcher-theme='sandbox'][data-launcher-role='window']::before {
-  content: '';
-  position: absolute;
-  inset: -12%;
-  pointer-events: none;
-  opacity: 0.42;
-  background:
-    radial-gradient(circle at 17% 78%, rgba(236, 58, 255, 0.48), transparent 22%),
-    radial-gradient(circle at 46% 28%, rgba(128, 186, 255, 0.44), transparent 25%),
-    radial-gradient(circle at 72% 24%, rgba(36, 255, 244, 0.5), transparent 21%),
-    radial-gradient(circle at 63% 74%, rgba(33, 225, 255, 0.42), transparent 19%),
-    linear-gradient(132deg, rgba(52, 18, 148, 0.92), rgba(21, 31, 180, 0.82) 45%, rgba(13, 18, 74, 0.94));
-  filter: blur(48px) saturate(125%);
-  transform: scale(1.08);
+  background: var(--launcher-window-bg);
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='shell'] {
-  position: relative;
-  z-index: 1;
   color: var(--launcher-text);
 }
 

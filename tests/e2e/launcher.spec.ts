@@ -207,7 +207,6 @@ test('shows the launcher design mockup on a black review background with the emp
   const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
   await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
   await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('box-shadow', 'none');
-  await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('backdrop-filter', 'blur(26px) saturate(1.45)');
   await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('123,344 indexed');
   await expect(frame.getByText(/^hybrid$/i)).toHaveCount(0);
   await expect(frame.getByText(/^catalog ready$/i)).toHaveCount(0);
