@@ -86,6 +86,13 @@ export const fileFixtures: LocalSearchItem[] = [
     score: 0
   },
   {
+    id: '/System/Applications/Calendar.app',
+    path: '/System/Applications/Calendar.app',
+    name: 'Calendar.app',
+    kind: 'app',
+    score: 0
+  },
+  {
     id: '/System/Applications/Notes.app',
     path: '/System/Applications/Notes.app',
     name: 'Notes.app',

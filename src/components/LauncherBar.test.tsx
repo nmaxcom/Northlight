@@ -2,10 +2,10 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { within } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LauncherBar } from './LauncherBar';
+import { LauncherBar, type LauncherBarMockState } from './LauncherBar';
 import { launcherRuntime } from '../lib/search/runtime';
 import { theme } from '../theme';
-import type { LauncherSettings } from '../lib/search/types';
+import type { LauncherPreview, LauncherResult, LauncherSettings } from '../lib/search/types';
 
 describe('LauncherBar', () => {
   beforeEach(() => {
@@ -22,7 +22,7 @@ describe('LauncherBar', () => {
 
     expect(screen.getByLabelText('Launcher query')).toBeInTheDocument();
     expect(screen.getByText('Start typing to search')).toBeInTheDocument();
-    await screen.findByText('14 indexed');
+    await screen.findByText('15 indexed');
     expect(screen.getByText('v0.8.9')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /actions/i })).toBeDisabled();
     expect(screen.queryByText('Best Match')).not.toBeInTheDocument();
@@ -348,46 +348,54 @@ describe('LauncherBar', () => {
   });
 
   it('renders media inside the preview pane when the preview provides it', async () => {
-    const getPathPreview = vi.fn().mockResolvedValue({
+    const previewSettings = {
+      ...launcherRuntime.getSettingsSnapshot(),
+      quickLookStartsOpen: true
+    };
+    const preview: LauncherPreview = {
       title: 'product-brief.md',
       subtitle: '/Users/test/product-brief.md',
       mediaUrl: 'data:image/png;base64,abc',
       mediaAlt: 'product-brief.md',
       sections: [{ label: 'Type', value: 'PNG' }]
-    });
-
-    window.launcher = {
-      ready: vi.fn().mockResolvedValue(undefined),
-      getPathPreview,
-      getStatus: vi.fn().mockResolvedValue({
+    };
+    const result: LauncherResult = {
+      id: '/Users/test/product-brief.md',
+      title: 'product-brief.md',
+      subtitle: '/Users/test/product-brief.md',
+      path: '/Users/test/product-brief.md',
+      icon: null,
+      kind: 'file',
+      source: 'local',
+      score: 140,
+      actions: [],
+      preview
+    };
+    const mockState: LauncherBarMockState = {
+      query: 'product',
+      results: [result],
+      selectedIndex: 0,
+      pointerActive: false,
+      isResolving: false,
+      isActionsOpen: false,
+      actionQuery: '',
+      actionSelectedIndex: 0,
+      preview,
+      settings: previewSettings,
+      status: {
         appVersion: '0.8.9',
         indexEntryCount: 10,
         indexReady: true,
         isRestoring: false,
         isRefreshing: false
-      }),
-      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
-      getClipboardHistory: vi.fn().mockResolvedValue([]),
-      openPath: vi.fn().mockResolvedValue(undefined),
-      revealPath: vi.fn().mockResolvedValue(undefined),
-      openInTerminal: vi.fn().mockResolvedValue(undefined),
-      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
-      trashPath: vi.fn().mockResolvedValue(undefined),
-      hide: vi.fn().mockResolvedValue(undefined)
-    } as never;
+      }
+    };
 
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
-        <LauncherBar />
+        <LauncherBar mockState={mockState} />
       </MantineProvider>
     );
-
-    const input = screen.getByLabelText('Launcher query');
-    fireEvent.change(input, { target: { value: 'product' } });
-
-    await waitFor(() => {
-      expect(screen.getAllByText('product-brief.md').length).toBeGreaterThan(0);
-    });
 
     const image = await screen.findByAltText('product-brief.md');
     expect(image).toHaveAttribute('src', 'data:image/png;base64,abc');
@@ -427,7 +435,7 @@ describe('LauncherBar', () => {
     );
 
     const input = screen.getByLabelText('Launcher query');
-    await screen.findByText('14 indexed');
+    await screen.findByText('15 indexed');
     fireEvent.mouseDown(document.querySelector('[data-results-scroll="true"]')!);
 
     expect(input).toHaveFocus();
@@ -441,7 +449,7 @@ describe('LauncherBar', () => {
     );
 
     const input = screen.getByLabelText('Launcher query');
-    await screen.findByText('14 indexed');
+    await screen.findByText('15 indexed');
 
     fireEvent.keyDown(window, { key: 'Tab' });
 
@@ -593,7 +601,7 @@ describe('LauncherBar', () => {
     );
 
     const input = screen.getByLabelText('Launcher query');
-    await screen.findByText('14 indexed');
+    await screen.findByText('15 indexed');
     fireEvent.change(input, { target: { value: 'steel' } });
 
     await waitFor(() => {
@@ -1193,6 +1201,10 @@ describe('LauncherBar', () => {
   });
 
   it('keeps the resolved preview visible while the same result refreshes', async () => {
+    const previewSettings = {
+      ...launcherRuntime.getSettingsSnapshot(),
+      quickLookStartsOpen: true
+    };
     let onIndexChanged: (() => void) | undefined;
     let resolveRefresh: ((items: Array<{ id: string; path: string; name: string; kind: 'file'; score: number }>) => void) | undefined;
     const getPathPreview = vi
@@ -1240,7 +1252,7 @@ describe('LauncherBar', () => {
         isRestoring: false,
         isRefreshing: false
       }),
-      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getSettings: vi.fn().mockResolvedValue(previewSettings),
       getClipboardHistory: vi.fn().mockResolvedValue([]),
       onIndexChanged: vi.fn().mockImplementation((callback) => {
         onIndexChanged = callback;
@@ -1261,6 +1273,14 @@ describe('LauncherBar', () => {
     );
 
     fireEvent.change(screen.getByLabelText('Launcher query'), { target: { value: 'product' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('product-brief.md').length).toBeGreaterThan(0);
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: /product-brief\.md/i })[0]);
+    await waitFor(() => {
+      expect(getPathPreview).toHaveBeenCalled();
+    });
 
     const image = await screen.findByAltText('product-brief.md');
     expect(image).toHaveAttribute('src', 'data:image/png;base64,stable');

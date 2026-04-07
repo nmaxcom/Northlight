@@ -308,12 +308,11 @@ export const launcherRuntime = {
       return Promise.resolve(cacheEntry);
     }
 
-    return (
-      window.launcher?.getPathPreview?.(path, kind, requestId).then((preview) => {
+    const previewRequest = window.launcher?.getPathPreview?.(path, kind, requestId);
+    return Promise.resolve(previewRequest ?? null).then((preview) => {
         previewCache.set(`${kind}:${path}`, preview);
         return preview;
-      }) ?? Promise.resolve(null)
-    );
+      });
   },
   getPathIcon(path: string, requestId?: string): Promise<string | null> {
     return window.launcher?.getPathIcon?.(path, requestId) ?? Promise.resolve(null);
@@ -395,7 +394,7 @@ export const launcherRuntime = {
   searchLocal(query: string, scopePath?: string | null, intent?: SearchIntent | null, requestId?: string) {
     if (window.launcher?.searchLocal) {
       return Promise.resolve(window.launcher.searchLocal(query, scopePath, intent, requestId)).then((results) => {
-        const ranked = rankItems(query.trim(), filterByScope(results, scopePath), intent);
+        const ranked = rankItems(query.trim(), filterByScope(results ?? [], scopePath), intent);
 
         if (ranked.length > 0) {
           queryCache.set(cacheKey(query, scopePath, intent), ranked);
@@ -415,7 +414,7 @@ export const launcherRuntime = {
   searchLocalHot(query: string, scopePath?: string | null, intent?: SearchIntent | null, requestId?: string) {
     if (window.launcher?.searchLocalHot) {
       return Promise.resolve(window.launcher.searchLocalHot(query, scopePath, intent, requestId)).then((results) => {
-        const ranked = rankItems(query.trim(), filterByScope(results, scopePath), intent);
+        const ranked = rankItems(query.trim(), filterByScope(results ?? [], scopePath), intent);
 
         if (ranked.length > 0) {
           hotQueryCache.set(cacheKey(query, scopePath, intent, 'hot'), ranked);

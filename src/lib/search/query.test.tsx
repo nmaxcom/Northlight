@@ -108,6 +108,13 @@ describe('buildResults', () => {
     expect(results[0]?.path).toBe('/System/Applications/TextEdit.app');
   });
 
+  it('returns Calendar.app from default Apple app fixtures', async () => {
+    const results = await buildResults('calendar');
+
+    expect(results[0]?.title).toBe('Calendar.app');
+    expect(results[0]?.path).toBe('/System/Applications/Calendar.app');
+  });
+
   it('returns system settings commands for common launcher queries', async () => {
     const settings = await buildResults('settings');
     const keyboard = await buildResults('keyboard');
@@ -233,12 +240,63 @@ describe('buildResults', () => {
         name: 'notes.md',
         kind: 'file',
         score: 158
+      },
+      {
+        id: '/System/Applications/Calendar.app',
+        path: '/System/Applications/Calendar.app',
+        name: 'Calendar.app',
+        kind: 'app',
+        score: 110
+      },
+      {
+        id: '/Users/nm4/Documents/calendar-template.pdf',
+        path: '/Users/nm4/Documents/calendar-template.pdf',
+        name: 'calendar-template.pdf',
+        kind: 'file',
+        score: 166
       }
     ]);
 
     expect((await buildResults('preview'))[0]?.title).toBe('Preview.app');
     expect((await buildResults('safari'))[0]?.title).toBe('Safari.app');
     expect((await buildResults('notes'))[0]?.title).toBe('Notes.app');
+    expect((await buildResults('calendar'))[0]?.title).toBe('Calendar.app');
+  });
+
+  it('preserves strong hot-tier app matches when the deeper provider set misses them', async () => {
+    window.launcher = {
+      searchLocalHot: vi.fn().mockResolvedValue([
+        {
+          id: '/System/Applications/Calendar.app',
+          path: '/System/Applications/Calendar.app',
+          name: 'Calendar.app',
+          kind: 'app',
+          score: 122
+        }
+      ]),
+      searchLocal: vi.fn().mockResolvedValue([
+        {
+          id: '/Users/nm4/Documents/calendar-template.pdf',
+          path: '/Users/nm4/Documents/calendar-template.pdf',
+          name: 'calendar-template.pdf',
+          kind: 'file',
+          score: 170
+        },
+        {
+          id: '/Users/nm4/Documents/family-calendar.xlsx',
+          path: '/Users/nm4/Documents/family-calendar.xlsx',
+          name: 'family-calendar.xlsx',
+          kind: 'file',
+          score: 162
+        }
+      ]),
+      getClipboardHistory: vi.fn().mockResolvedValue([])
+    } as never;
+
+    const results = await buildResults('calendar');
+
+    expect(results[0]?.title).toBe('Calendar.app');
+    expect(results.some((result) => result.title === 'calendar-template.pdf')).toBe(true);
   });
 
   it('keeps direct app intent above noisy support files under Library containers', async () => {

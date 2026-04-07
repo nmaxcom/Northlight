@@ -426,10 +426,11 @@ export async function buildResults(query: string, context: QueryContext = {}): P
     return [];
   }
 
-  const localResults = buildLocalResults(
-    await launcherRuntime.searchLocal(trimmed, context.scopePath, parsedQuery.intent, context.traceRequestId),
-    context
-  );
+  const [hotLocal, deepLocal] = await Promise.all([
+    launcherRuntime.searchLocalHot(trimmed, context.scopePath, parsedQuery.intent, context.traceRequestId),
+    launcherRuntime.searchLocal(trimmed, context.scopePath, parsedQuery.intent, context.traceRequestId)
+  ]);
+  const localResults = buildLocalResults(mergeLocalItems(hotLocal, deepLocal), context);
 
   if (parsedQuery.intent) {
     return localResults.sort((a, b) => b.score - a.score);

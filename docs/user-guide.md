@@ -61,6 +61,7 @@ Current built-in capabilities:
 - Apps are ranked above low-value system matches when names compete.
 - Direct app-name intent is ranked ahead of noisy support files and app-bundle resources, so queries like `text`, `preview`, `notes`, and `safari` favor the corresponding app when available.
 - Strong app hits from the fast tier are preserved when deeper search expands the list, so common apps such as `Calendar.app` do not disappear just because slower file results arrive later.
+- Core Apple apps under `/System/Applications` are part of the default recall fixtures and regression coverage, so direct queries like `calendar` are protected against silent drops in the launcher pipeline.
 - macOS local recall is hybrid: Spotlight supplies broad candidates, then Northlight reranks them with personal signals from its local catalog.
 - Aliases rank above generic fuzzy matches when the trigger matches exactly.
 - Snippets and clipboard items can participate in search without overriding stronger file or app matches for broad queries.
