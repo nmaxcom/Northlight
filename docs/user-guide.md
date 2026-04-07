@@ -112,6 +112,7 @@ Current built-in capabilities:
 - File results now expose stronger default actions such as `Quick Look` and `Copy Markdown Link` in addition to open, reveal, and copy-path flows.
 - The preview pane can show real image previews, PDF page thumbnails, plain-text/code contents for text-like files, folder contents, app bundle info, clipboard contents, and deterministic calculation details.
 - Preview titles, paths, code/text bodies, and metadata are selectable, so you can copy directly from the preview pane with the mouse.
+- App previews no longer show the redundant generic `macOS application bundle` body block when there is no useful app-specific text to display.
 - Native app icons and image previews are loaded from real macOS assets so they render consistently inside the launcher.
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.

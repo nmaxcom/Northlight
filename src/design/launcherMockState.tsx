@@ -53,8 +53,6 @@ const appPreview: LauncherPreview = {
   ),
   mediaAlt: 'Stremio app icon',
   mediaKind: 'image',
-  body: 'macOS application bundle',
-  bodyMode: 'plain',
   sections: [
     { label: 'Type', value: 'Application' },
     { label: 'Bundle', value: 'Stremio.app' },

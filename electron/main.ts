@@ -567,7 +567,6 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind'], reque
       const preview = {
         title: basename(path).replace(/\.app$/i, ''),
         subtitle: path,
-        body: 'macOS application bundle',
         mediaUrl: media ?? undefined,
         mediaKind: media ? 'image' : undefined,
         mediaAlt: basename(path),

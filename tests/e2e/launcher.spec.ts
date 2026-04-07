@@ -220,7 +220,7 @@ test('shows the launcher design mockup on a black review background with a reali
   await expect(frame.locator('[data-launcher-role="result-icon-image"]')).toHaveCount(10);
   await expect(frame.locator('[data-launcher-role="preview-title"]')).toHaveText('Stremio');
   await expect(frame.locator('[data-launcher-role="preview-subtitle"]')).toHaveText('/Applications/Stremio.app');
-  await expect(frame.locator('[data-launcher-role="preview-body"]')).toHaveText('macOS application bundle');
+  await expect(frame.locator('[data-launcher-role="preview-body"]')).toHaveCount(0);
   await expect(frame.locator('[data-launcher-role="preview-meta-value"]').filter({ hasText: '5.1.14' })).toBeVisible();
 });
 
