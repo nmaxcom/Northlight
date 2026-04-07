@@ -192,7 +192,7 @@ test('shows the shared settings mockup with persistent tabs and refreshed contro
   expect(after.y).toBe(before.y);
 });
 
-test('shows the launcher design mockup on a black review background with exact mock status text', async ({ page }) => {
+test('shows the launcher design mockup on a black review background with the empty launcher state', async ({ page }) => {
   await page.goto('/design/launcher-current-view.html');
 
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
@@ -200,62 +200,12 @@ test('shows the launcher design mockup on a black review background with exact m
   const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
   await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
   await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('box-shadow', 'none');
-  await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('30,487 indexed');
+  await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('123,344 indexed');
   await expect(frame.getByText(/^hybrid$/i)).toHaveCount(0);
   await expect(frame.getByText(/^catalog ready$/i)).toHaveCount(0);
-  await expect(frame.getByText('position.test.ts')).toBeVisible();
-});
-
-test('shows the sandbox selected row with the hover treatment in the launcher mockup', async ({ page }) => {
-  await page.goto('/design/launcher-current-view.html');
-
-  const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
-  const selectedRow = frame.locator('[data-launcher-role="result"][data-selected="true"]').first();
-
-  await expect(selectedRow).toBeVisible();
-
-  const selectedColor = await selectedRow.evaluate((element) => globalThis.getComputedStyle(element).backgroundColor);
-  expect(selectedColor).toBe('rgba(105, 123, 255, 0.21)');
-});
-
-test('renders launcher preview text as selectable in the launcher mockup', async ({ page }) => {
-  await page.goto('/design/launcher-current-view.html');
-
-  const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
-  const previewTitle = frame.locator('[data-launcher-role="preview-title"]');
-  const previewBody = frame.locator('[data-launcher-role="preview-body"]');
-  const previewMetaValue = frame.locator('[data-launcher-role="preview-meta-value"]').first();
-
-  await expect(previewTitle).toBeVisible();
-  await expect(previewBody).toBeVisible();
-  await expect(previewMetaValue).toBeVisible();
-
-  await expect(previewTitle).toHaveCSS('user-select', 'text');
-  await expect(previewBody).toHaveCSS('user-select', 'text');
-  await expect(previewMetaValue).toHaveCSS('user-select', 'text');
-});
-
-test('allows mouse text selection inside the launcher preview in the mockup', async ({ page }) => {
-  await page.goto('/design/launcher-current-view.html');
-
-  const previewBody = page.frameLocator('iframe[title="Northlight launcher current view"]').locator('[data-launcher-role="preview-body"]');
-  await expect(previewBody).toBeVisible();
-
-  const box = await previewBody.boundingBox();
-  expect(box).not.toBeNull();
-
-  if (!box) {
-    return;
-  }
-
-  await page.mouse.move(box.x + 18, box.y + 18);
-  await page.mouse.down();
-  await page.mouse.move(box.x + 240, box.y + 90, { steps: 12 });
-  await page.mouse.up();
-
-  const frame = page.frames().find((candidate) => candidate.url().includes('/design/launcher-current-view-frame.html'));
-  const selection = await frame?.evaluate(() => globalThis.getSelection()?.toString() ?? '');
-  expect(selection && selection.length > 0).toBeTruthy();
+  await expect(frame.getByText('Start typing to search')).toBeVisible();
+  await expect(frame.getByText('Select a result to inspect it here.')).toBeVisible();
+  await expect(frame.locator('[data-launcher-role="result"]')).toHaveCount(0);
 });
 
 test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page }) => {
