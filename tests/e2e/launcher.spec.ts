@@ -163,16 +163,23 @@ test('keeps settings tabs outside the content scroll region', async ({ page }) =
 test('shows the shared settings mockup with persistent tabs and refreshed controls', async ({ page }) => {
   await page.goto('/design/settings-current-view.html');
 
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+
   const frame = page.frameLocator('iframe[title="Northlight settings current view"]');
   const tabs = frame.locator('[data-settings-role="tabs"]');
   const content = frame.locator('[data-settings-role="content"]');
   const primaryButton = frame.locator('[data-settings-role="primary-button"]');
+  const titlebar = frame.locator('[data-settings-role="titlebar"]');
+  const header = frame.locator('[data-settings-role="header"]');
 
   await expect(tabs).toBeVisible();
   await expect(content).toBeVisible();
   await expect(primaryButton).toBeVisible();
+  await expect(titlebar).toBeVisible();
   await expect(primaryButton).toHaveCSS('border-top-left-radius', '12px');
   await expect(primaryButton).toHaveCSS('min-height', '38px');
+  await expect(titlebar).toHaveCSS('-webkit-app-region', 'drag');
+  await expect(header).toHaveCSS('-webkit-app-region', 'no-drag');
 
   const before = await tabs.boundingBox();
   expect(before).not.toBeNull();
@@ -200,6 +207,7 @@ test('shows the launcher design mockup on a black review background with the emp
   const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
   await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
   await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('box-shadow', 'none');
+  await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('backdrop-filter', 'blur(26px) saturate(1.45)');
   await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('123,344 indexed');
   await expect(frame.getByText(/^hybrid$/i)).toHaveCount(0);
   await expect(frame.getByText(/^catalog ready$/i)).toHaveCount(0);

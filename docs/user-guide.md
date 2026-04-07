@@ -49,6 +49,7 @@ Current built-in capabilities:
 - `Cmd+,` opens the Northlight settings window.
 - Clicking away from the launcher hides it again.
 - The launcher mockup in `design/launcher-current-view.html` is calibrated to the native launcher content size of `1120×760` for visual design checks.
+- In the `Sandbox` theme, the shared launcher mockup can layer a low-opacity frosted gradient treatment behind the shell so you can evaluate translucent backdrop ideas directly in DevTools.
 - `npm run design` serves the shared renderer mockups, prints the available design URLs in the terminal, and exposes an index at `/design/`.
 - The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css) as a linked stylesheet in the launcher renderer and launcher design frame, so Chrome DevTools shows it as a normal CSS file instead of an injected `<style>` block.
 - During `npm run design`, Northlight also serves Chrome DevTools automatic workspace metadata at `/.well-known/appspecific/com.chrome.devtools.json`, so `Sources > Workspaces` can connect directly to this repo and persist `Styles` edits back into the local files.
@@ -124,10 +125,11 @@ Current built-in capabilities:
 
 The settings window is the control center for launcher preferences.
 
-- The settings header acts as a drag region so you can reposition the window without grabbing inside the form content.
+- Settings is only draggable from its dedicated top title bar, so the visible header and form controls behave like a normal window surface instead of acting as a giant drag target.
 - Section tabs stay fixed outside the scrolling content area, so long sections no longer push the navigation out of view.
 - Settings tabs now use a clearer desktop-style segmented control treatment with explicit active, hover, pressed, and focus states.
 - Primary and secondary settings buttons now have stronger visual feedback for hover, pressed, disabled, and saving states.
+- The settings mockup review page now uses a black outer background like the launcher review page, so both design frames sit on the same neutral surround.
 - Toggle best match, app-first ranking, preview, quick look, snippets, and clipboard history.
 - Capture a new global launcher shortcut directly by pressing the combination in settings, or clear it entirely to disable the launcher hotkey.
 - During `npm run dev`, a cleared launcher shortcut still falls back to `Cmd+Shift+Space` for that session so the launcher cannot strand itself hidden while you are iterating.

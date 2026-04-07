@@ -357,6 +357,7 @@ export function SettingsView() {
   return (
     <main className={classes.page}>
       <div className={classes.shell}>
+        <div className={classes.titlebar} data-settings-role="titlebar" aria-hidden="true" />
         <header className={classes.header} data-settings-role="header">
           <div className={classes.headerCopy} data-settings-role="header-copy">
             <div className={classes.title}>Northlight Settings</div>
