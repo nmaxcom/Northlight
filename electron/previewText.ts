@@ -16,6 +16,70 @@ export const codePreviewExtensions = new Set([
 const TEXT_PREVIEW_BYTE_LIMIT = 12_000;
 const replacementCharacter = '\uFFFD';
 const utf8Decoder = new TextDecoder('utf-8');
+const utf16LeDecoder = new TextDecoder('utf-16le');
+const utf16BeDecoder = new TextDecoder('utf-16be');
+
+type TextEncoding = 'utf8' | 'utf16le' | 'utf16be';
+
+function stripBom(text: string) {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+}
+
+function countZeroBytes(buffer: Buffer, parity: 0 | 1) {
+  let count = 0;
+  for (let index = parity; index < buffer.length; index += 2) {
+    if (buffer[index] === 0) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+function detectUtf16Encoding(buffer: Buffer): TextEncoding | null {
+  if (buffer.length < 2) {
+    return null;
+  }
+
+  if (buffer[0] === 0xff && buffer[1] === 0xfe) {
+    return 'utf16le';
+  }
+
+  if (buffer[0] === 0xfe && buffer[1] === 0xff) {
+    return 'utf16be';
+  }
+
+  if (buffer.length < 8) {
+    return null;
+  }
+
+  const evenZeros = countZeroBytes(buffer, 0);
+  const oddZeros = countZeroBytes(buffer, 1);
+  const pairCount = Math.floor(buffer.length / 2);
+  const threshold = Math.max(3, Math.floor(pairCount * 0.4));
+
+  if (oddZeros >= threshold && evenZeros <= Math.max(2, Math.floor(pairCount * 0.08))) {
+    return 'utf16le';
+  }
+
+  if (evenZeros >= threshold && oddZeros <= Math.max(2, Math.floor(pairCount * 0.08))) {
+    return 'utf16be';
+  }
+
+  return null;
+}
+
+function decodeWithEncoding(buffer: Buffer, encoding: TextEncoding) {
+  switch (encoding) {
+    case 'utf16le':
+      return stripBom(utf16LeDecoder.decode(buffer));
+    case 'utf16be':
+      return stripBom(utf16BeDecoder.decode(buffer));
+    case 'utf8':
+    default:
+      return stripBom(utf8Decoder.decode(buffer));
+  }
+}
 
 function countSuspiciousControls(text: string) {
   let count = 0;
@@ -29,16 +93,7 @@ function countSuspiciousControls(text: string) {
   return count;
 }
 
-export function isProbablyPlainText(buffer: Buffer, extension = '') {
-  if (buffer.length === 0) {
-    return true;
-  }
-
-  if (buffer.includes(0)) {
-    return false;
-  }
-
-  const decoded = utf8Decoder.decode(buffer);
+function isDecodedTextLikelyPlain(decoded: string, extension = '') {
   const replacementCount = decoded.split(replacementCharacter).length - 1;
   const suspiciousControls = countSuspiciousControls(decoded);
   const knownTextExtension = textPreviewExtensions.has(extension);
@@ -51,6 +106,29 @@ export function isProbablyPlainText(buffer: Buffer, extension = '') {
     replacementCount <= Math.max(1, Math.floor(decoded.length * 0.01)) &&
     suspiciousControls <= Math.max(2, Math.floor(decoded.length * 0.02))
   );
+}
+
+export function detectPlainTextEncoding(buffer: Buffer, extension = ''): TextEncoding | null {
+  if (buffer.length === 0) {
+    return 'utf8';
+  }
+
+  const utf16Encoding = detectUtf16Encoding(buffer);
+  if (utf16Encoding) {
+    const decoded = decodeWithEncoding(buffer, utf16Encoding);
+    return isDecodedTextLikelyPlain(decoded, extension) ? utf16Encoding : null;
+  }
+
+  if (buffer.includes(0)) {
+    return null;
+  }
+
+  const decoded = decodeWithEncoding(buffer, 'utf8');
+  return isDecodedTextLikelyPlain(decoded, extension) ? 'utf8' : null;
+}
+
+export function isProbablyPlainText(buffer: Buffer, extension = '') {
+  return detectPlainTextEncoding(buffer, extension) !== null;
 }
 
 async function readLeadingBytes(path: string, byteLimit = TEXT_PREVIEW_BYTE_LIMIT) {
@@ -66,12 +144,13 @@ async function readLeadingBytes(path: string, byteLimit = TEXT_PREVIEW_BYTE_LIMI
 
 export async function readFileTextPreview(path: string, extension: string) {
   const sample = await readLeadingBytes(path);
-  if (!isProbablyPlainText(sample, extension)) {
+  const encoding = detectPlainTextEncoding(sample, extension);
+  if (!encoding) {
     return null;
   }
 
   return {
-    body: utf8Decoder.decode(sample),
+    body: decodeWithEncoding(sample, encoding),
     bodyMode: codePreviewExtensions.has(extension) ? ('code' as const) : ('plain' as const)
   };
 }
