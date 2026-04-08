@@ -9,6 +9,7 @@ import '@mantine/core/styles.css';
 import { theme } from '../theme';
 
 document.body.dataset.nativeShell = 'true';
+document.body.dataset.designHosted = 'true';
 logAvailableDesigns(window.location.pathname);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
