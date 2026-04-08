@@ -34,7 +34,9 @@ export default defineConfig({
       input: {
         app: resolve(__dirname, 'index.html'),
         designIndex: resolve(__dirname, 'design/index.html'),
+        launcherCurrentViewLive: resolve(__dirname, 'design/launcher-current-view.live.html'),
         launcherCurrentView: resolve(__dirname, 'design/launcher-current-view.html'),
+        settingsCurrentViewLive: resolve(__dirname, 'design/settings-current-view.live.html'),
         settingsCurrentView: resolve(__dirname, 'design/settings-current-view.html')
       }
     }
