@@ -33,6 +33,7 @@ import {
   saveLauncherSettings,
   startClipboardMonitor
 } from './settings';
+import { buildFilePreview } from './filePreview';
 import { readFileTextPreview } from './previewText';
 
 const WINDOW_WIDTH = 1120;
@@ -50,8 +51,6 @@ let blurSuppressionDeadline = 0;
 let pendingLauncherPositionSave: ReturnType<typeof setTimeout> | null = null;
 const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
-const imagePreviewExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tiff', '.tif', '.svg', '.avif']);
-const pdfPreviewExtensions = new Set(['.pdf']);
 let mainRequestSequence = 0;
 const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -585,98 +584,23 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind'], reque
       return preview;
     }
 
-    const info = await stat(path);
     const extension = extname(path).toLowerCase();
-    const displayExtension = extension.replace(/^\./, '') || 'unknown';
-    const sections = [
-      { label: 'Type', value: displayExtension.toUpperCase() },
-      { label: 'Size', value: formatBytes(info.size) },
-      { label: 'Modified', value: formatDate(info.mtime) }
-    ];
+    const preview = await buildFilePreview(path, {
+      getImagePreview: (filePath) => getImagePreview(filePath, requestId),
+      getPdfPreview: (filePath) => getPdfPreview(filePath, requestId),
+      readTextPreview: (filePath, fileExtension) =>
+        traceSpan(
+          {
+            subsystem: 'preview',
+            event: 'text-preview-read',
+            requestId,
+            path: filePath,
+            kind: fileExtension || 'text'
+          },
+          async () => readFileTextPreview(filePath, fileExtension)
+        )
+    });
 
-    if (imagePreviewExtensions.has(extension)) {
-      const media = await getImagePreview(path, requestId);
-      const preview = {
-        title: basename(path),
-        subtitle: path,
-        mediaUrl: media?.mediaUrl,
-        mediaKind: media?.mediaKind,
-        mediaAlt: media?.mediaAlt,
-        sections
-      };
-      previewCache.set(previewKey, preview);
-      recordTrace({
-        subsystem: 'preview',
-        event: 'preview-complete',
-        requestId,
-        path,
-        kind,
-        cacheState: 'miss',
-        durationMs: Date.now() - startedAt
-      });
-      return preview;
-    }
-
-    if (pdfPreviewExtensions.has(extension)) {
-      const media = await getPdfPreview(path, requestId);
-      const preview = {
-        title: basename(path),
-        subtitle: path,
-        mediaUrl: media?.mediaUrl,
-        mediaKind: media?.mediaKind,
-        mediaAlt: media?.mediaAlt,
-        sections
-      };
-      previewCache.set(previewKey, preview);
-      recordTrace({
-        subsystem: 'preview',
-        event: 'preview-complete',
-        requestId,
-        path,
-        kind,
-        cacheState: 'miss',
-        durationMs: Date.now() - startedAt
-      });
-      return preview;
-    }
-
-    const textPreview = await traceSpan(
-      {
-        subsystem: 'preview',
-        event: 'text-preview-read',
-        requestId,
-        path,
-        kind: extension || 'text'
-      },
-      async () => readFileTextPreview(path, extension)
-    );
-
-    if (textPreview) {
-      const preview = {
-        title: basename(path),
-        subtitle: path,
-        body: textPreview.body,
-        bodyMode: textPreview.bodyMode,
-        sections
-      };
-      previewCache.set(previewKey, preview);
-      recordTrace({
-        subsystem: 'preview',
-        event: 'preview-complete',
-        requestId,
-        path,
-        kind,
-        cacheState: 'miss',
-        durationMs: Date.now() - startedAt
-      });
-      return preview;
-    }
-
-    const preview = {
-      title: basename(path),
-      subtitle: path,
-      sections
-    };
     previewCache.set(previewKey, preview);
     recordTrace({
       subsystem: 'preview',
