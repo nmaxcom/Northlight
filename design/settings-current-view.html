@@ -49,11 +49,15 @@
       .frame {
         width: 980px;
         height: 760px;
-        border: 0;
         border-radius: 12px;
         overflow: hidden;
-        display: block;
+        display: grid;
         box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+      }
+
+      #root {
+        width: 100%;
+        height: 100%;
       }
     </style>
   </head>
@@ -62,9 +66,12 @@
       <div class="title">Settings Mockup</div>
       <div class="note">Exact settings viewport: 980×760.</div>
     </header>
-    <iframe class="frame" src="/design/settings-current-view-frame.html" title="Northlight settings current view"></iframe>
+    <main class="frame" title="Northlight settings current view">
+      <div id="root"></div>
+    </main>
     <script type="module">
       import { logAvailableDesigns } from '/src/design/logAvailableDesigns.ts';
+      import '/src/design/settings-current-view.tsx';
       logAvailableDesigns(window.location.pathname);
     </script>
   </body>
