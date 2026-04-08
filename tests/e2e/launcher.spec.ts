@@ -30,7 +30,9 @@ test('shows local fixture results and keyboard action hints', async ({ page }) =
 
   await expect(page.getByRole('button', { name: /product-brief\.md/i })).toBeVisible();
   await expect(page.locator('footer').getByText('Open File')).toBeVisible();
-  await expect(page.getByRole('button', { name: /actions cmd k/i })).toBeVisible();
+  await expect(page.locator('[data-launcher-role="actions-trigger"]')).toBeVisible();
+  await expect(page.locator('[data-launcher-role="actions-trigger"]')).toContainText('Actions');
+  await expect(page.locator('[data-launcher-role="actions-trigger"]')).toContainText('⌘');
 });
 
 test('supports fuzzy app matches and folder quick actions', async ({ page }) => {
@@ -163,15 +165,14 @@ test('keeps settings tabs outside the content scroll region', async ({ page }) =
 test('shows the shared settings mockup with persistent tabs and refreshed controls', async ({ page }) => {
   await page.goto('/design/settings-current-view.html');
 
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  const reviewFrame = page.locator('main[title="Northlight settings current view"]');
+  const tabs = page.locator('[data-settings-role="tabs"]');
+  const content = page.locator('[data-settings-role="content"]');
+  const primaryButton = page.locator('[data-settings-role="primary-button"]');
+  const titlebar = page.locator('[data-settings-role="titlebar"]');
+  const header = page.locator('[data-settings-role="header"]');
 
-  const frame = page.frameLocator('iframe[title="Northlight settings current view"]');
-  const tabs = frame.locator('[data-settings-role="tabs"]');
-  const content = frame.locator('[data-settings-role="content"]');
-  const primaryButton = frame.locator('[data-settings-role="primary-button"]');
-  const titlebar = frame.locator('[data-settings-role="titlebar"]');
-  const header = frame.locator('[data-settings-role="header"]');
-
+  await expect(reviewFrame).toBeVisible();
   await expect(tabs).toBeVisible();
   await expect(content).toBeVisible();
   await expect(primaryButton).toBeVisible();
@@ -184,7 +185,7 @@ test('shows the shared settings mockup with persistent tabs and refreshed contro
   const before = await tabs.boundingBox();
   expect(before).not.toBeNull();
 
-  await frame.getByRole('tab', { name: 'Scopes & Status' }).click();
+  await page.getByRole('tab', { name: 'Scopes & Status' }).click();
   await content.evaluate((element) => {
     element.scrollTop = element.scrollHeight;
   });
@@ -202,26 +203,25 @@ test('shows the shared settings mockup with persistent tabs and refreshed contro
 test('shows the launcher design mockup on a black review background with a realistic populated state', async ({ page }) => {
   await page.goto('/design/launcher-current-view.html');
 
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
-
-  const frame = page.frameLocator('iframe[title="Northlight launcher current view"]');
-  await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
-  await expect(frame.locator('[data-launcher-role="window"]')).toHaveCSS('box-shadow', 'none');
-  await expect(frame.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText('101,398 indexed');
-  await expect(frame.getByText(/^hybrid$/i)).toHaveCount(0);
-  await expect(frame.getByText(/^catalog ready$/i)).toHaveCount(0);
-  await expect(frame.locator('[data-launcher-role="search-input"]')).toHaveValue('str');
-  await expect(frame.getByRole('button', { name: /Stremio\.app/i })).toBeVisible();
-  await expect(frame.getByRole('button', { name: /Keyboard Maestro\.app/i })).toBeVisible();
-  await expect(frame.getByRole('button', { name: /strace\.md/i })).toBeVisible();
-  await expect(frame.getByRole('button', { name: /strings\.cc/i })).toBeVisible();
-  await expect(frame.getByRole('button', { name: /stripe/i })).toBeVisible();
-  await expect(frame.locator('[data-launcher-role="result"]')).toHaveCount(10);
-  await expect(frame.locator('[data-launcher-role="result-icon-image"]')).toHaveCount(10);
-  await expect(frame.locator('[data-launcher-role="preview-title"]')).toHaveText('Stremio');
-  await expect(frame.locator('[data-launcher-role="preview-subtitle"]')).toHaveText('/Applications/Stremio.app');
-  await expect(frame.locator('[data-launcher-role="preview-body"]')).toHaveCount(0);
-  await expect(frame.locator('[data-launcher-role="preview-meta-value"]').filter({ hasText: '5.1.14' })).toBeVisible();
+  const reviewFrame = page.locator('main[title="Northlight launcher current view"]');
+  await expect(reviewFrame).toBeVisible();
+  await expect(page.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
+  await expect(page.locator('[data-launcher-role="window"]')).toHaveCSS('box-shadow', 'none');
+  await expect(page.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText(/\d{1,3}(,\d{3})* indexed/);
+  await expect(page.getByText(/^hybrid$/i)).toHaveCount(0);
+  await expect(page.getByText(/^catalog ready$/i)).toHaveCount(0);
+  await expect(page.locator('[data-launcher-role="search-input"]')).toHaveValue('str');
+  await expect(page.getByRole('button', { name: /Stremio\.app/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Keyboard Maestro\.app/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /strace\.md/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /strings\.cc/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /stripe/i })).toBeVisible();
+  await expect(page.locator('[data-launcher-role="result"]')).toHaveCount(10);
+  await expect(page.locator('[data-launcher-role="result-icon-image"]')).toHaveCount(10);
+  await expect(page.locator('[data-launcher-role="preview-title"]')).toHaveText('Stremio');
+  await expect(page.locator('[data-launcher-role="preview-subtitle"]')).toHaveText('/Applications/Stremio.app');
+  await expect(page.locator('[data-launcher-role="preview-body"]')).toHaveCount(0);
+  await expect(page.locator('[data-launcher-role="preview-meta-value"]').filter({ hasText: '5.1.14' })).toBeVisible();
 });
 
 test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page }) => {

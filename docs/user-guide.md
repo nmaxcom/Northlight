@@ -111,6 +111,7 @@ Current built-in capabilities:
 - The `Actions` panel opens above the bottom bar, lists all actions for the selected result, shows shortcuts when an action has one, and filters live as you type.
 - File results now expose stronger default actions such as `Quick Look` and `Copy Markdown Link` in addition to open, reveal, and copy-path flows.
 - The preview pane can show real image previews, PDF page thumbnails, plain-text/code contents for text-like files, folder contents, app bundle info, clipboard contents, and deterministic calculation details.
+- File previews now fall back to content-based text detection, so extensionless documents and files with unusual extensions still show readable plain-text bodies when their contents are actually text.
 - Preview titles, paths, code/text bodies, and metadata are selectable, so you can copy directly from the preview pane with the mouse.
 - App previews no longer show the redundant generic `macOS application bundle` body block when there is no useful app-specific text to display.
 - Native app icons and image previews are loaded from real macOS assets so they render consistently inside the launcher.

@@ -33,6 +33,7 @@ import {
   saveLauncherSettings,
   startClipboardMonitor
 } from './settings';
+import { readFileTextPreview } from './previewText';
 
 const WINDOW_WIDTH = 1120;
 const WINDOW_HEIGHT = 760;
@@ -49,12 +50,6 @@ let blurSuppressionDeadline = 0;
 let pendingLauncherPositionSave: ReturnType<typeof setTimeout> | null = null;
 const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
-const textPreviewExtensions = new Set([
-  '.txt', '.md', '.markdown', '.mdx', '.json', '.jsonc', '.yaml', '.yml', '.toml', '.ini', '.conf', '.env',
-  '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.css', '.scss', '.sass', '.less', '.html', '.htm', '.xml',
-  '.svg', '.sh', '.zsh', '.bash', '.py', '.rb', '.php', '.java', '.kt', '.swift', '.go', '.rs', '.c', '.cc',
-  '.cpp', '.h', '.hpp', '.sql', '.graphql', '.gql', '.csv', '.log', '.plist'
-]);
 const imagePreviewExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tiff', '.tif', '.svg', '.avif']);
 const pdfPreviewExtensions = new Set(['.pdf']);
 let mainRequestSequence = 0;
@@ -645,24 +640,23 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind'], reque
       return preview;
     }
 
-    if (textPreviewExtensions.has(extension)) {
-      const body = await traceSpan(
-        {
-          subsystem: 'preview',
-          event: 'text-preview-read',
-          requestId,
-          path,
-          kind: extension || 'text'
-        },
-        async () => (await readFile(path, 'utf8')).slice(0, 12000)
-      );
+    const textPreview = await traceSpan(
+      {
+        subsystem: 'preview',
+        event: 'text-preview-read',
+        requestId,
+        path,
+        kind: extension || 'text'
+      },
+      async () => readFileTextPreview(path, extension)
+    );
+
+    if (textPreview) {
       const preview = {
         title: basename(path),
         subtitle: path,
-        body,
-        bodyMode: ['.json', '.yaml', '.yml', '.toml', '.js', '.jsx', '.ts', '.tsx', '.css', '.html', '.xml', '.sql', '.sh', '.py', '.swift', '.go', '.rs'].includes(extension)
-          ? 'code'
-          : 'plain',
+        body: textPreview.body,
+        bodyMode: textPreview.bodyMode,
         sections
       };
       previewCache.set(previewKey, preview);
