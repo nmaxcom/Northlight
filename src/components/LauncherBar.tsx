@@ -628,9 +628,13 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   }, [resetPointerSelection]);
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     resetPointerSelection();
     setSelectedIndex(0);
-  }, [query, resetPointerSelection]);
+  }, [isMock, query, resetPointerSelection]);
 
   useEffect(() => {
     if (results.length === 0) {

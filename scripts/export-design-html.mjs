@@ -10,6 +10,22 @@ const pages = [
     outputPath: resolve('design/launcher-current-view.html')
   },
   {
+    livePath: '/design/launcher-folder-preview.live.html',
+    outputPath: resolve('design/launcher-folder-preview.html')
+  },
+  {
+    livePath: '/design/launcher-app-preview.live.html',
+    outputPath: resolve('design/launcher-app-preview.html')
+  },
+  {
+    livePath: '/design/launcher-folder-listing-preview.live.html',
+    outputPath: resolve('design/launcher-folder-listing-preview.html')
+  },
+  {
+    livePath: '/design/launcher-file-preview.live.html',
+    outputPath: resolve('design/launcher-file-preview.html')
+  },
+  {
     livePath: '/design/settings-current-view.live.html',
     outputPath: resolve('design/settings-current-view.html')
   }

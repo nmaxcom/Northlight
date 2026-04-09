@@ -1,6 +1,10 @@
 const designs = [
   '/design/',
   '/design/launcher-current-view.html',
+  '/design/launcher-folder-preview.html',
+  '/design/launcher-app-preview.html',
+  '/design/launcher-folder-listing-preview.html',
+  '/design/launcher-file-preview.html',
   '/design/settings-current-view.html'
 ];
 

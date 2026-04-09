@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MantineProvider } from '@mantine/core';
 import { LauncherBar } from '../components/LauncherBar';
-import { launcherCurrentViewMock } from './launcherMockState';
+import { getLauncherMockState, type LauncherMockVariant } from './launcherMockState';
 import { logAvailableDesigns } from './logAvailableDesigns';
 import '../styles/global.css';
 import '@mantine/core/styles.css';
@@ -12,10 +12,13 @@ document.body.dataset.nativeShell = 'true';
 document.body.dataset.designHosted = 'true';
 logAvailableDesigns(window.location.pathname);
 
+const variant = (document.body.dataset.mockVariant as LauncherMockVariant | undefined) ?? 'current';
+const mockState = getLauncherMockState(variant);
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <MantineProvider theme={theme} defaultColorScheme="dark">
-      <LauncherBar mockState={launcherCurrentViewMock} />
+      <LauncherBar mockState={mockState} />
     </MantineProvider>
   </React.StrictMode>
 );

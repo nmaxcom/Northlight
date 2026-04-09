@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Northlight Launcher Folder Preview</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; }
+      body { min-height: 100vh; display: grid; place-items: center; gap: 24px; padding: 32px; background: #000; color: #f5f7fa; font-family: Inter, "SF Pro Display", ui-sans-serif, system-ui, sans-serif; }
+      .meta { width: 1120px; display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+      .title { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+      .note { color: rgba(243, 246, 250, 0.66); font-size: 0.86rem; }
+      .frame { width: 1120px; height: 760px; border-radius: 10px; overflow: hidden; display: grid; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34); }
+      #root { width: 100%; height: 100%; min-width: 0; min-height: 0; }
+      .offlineNote { width: 1120px; padding: 22px 24px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: rgba(243,246,250,0.8); font-size: 0.95rem; line-height: 1.5; }
+      .offlineNote code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.92em; }
+    </style>
+  </head>
+  <body data-mock-variant="folderPreview">
+    <header class="meta">
+      <div class="title">Launcher Mockup</div>
+      <div class="note">Folder result selected, folder metadata preview.</div>
+    </header>
+    <main class="frame" title="Northlight launcher folder preview">
+      <div id="root"></div>
+    </main>
+    <script>
+      if (window.location.protocol === 'file:') {
+        const note = document.createElement('p');
+        note.className = 'offlineNote';
+        note.innerHTML = 'This <code>*.live.html</code> host needs <code>npm run design</code> or Vite. Open <code>design/launcher-folder-preview.html</code> for the standalone self-contained mockup.';
+        document.body.append(note);
+      } else {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '/src/styles/launcher-sandbox.css';
+        document.head.append(link);
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = '/src/design/launcher-current-view.tsx';
+        document.body.append(script);
+      }
+    </script>
+  </body>
+</html>

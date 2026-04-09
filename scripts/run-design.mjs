@@ -19,6 +19,10 @@ function printLinks(baseUrl) {
   const urls = [
     `${normalized}/design/`,
     `${normalized}/design/launcher-current-view.html`,
+    `${normalized}/design/launcher-folder-preview.html`,
+    `${normalized}/design/launcher-app-preview.html`,
+    `${normalized}/design/launcher-folder-listing-preview.html`,
+    `${normalized}/design/launcher-file-preview.html`,
     `${normalized}/design/settings-current-view.html`
   ];
 
