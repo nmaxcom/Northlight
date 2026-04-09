@@ -152,6 +152,18 @@ function buildPreviewFallback(result: LauncherResult): LauncherPreview {
   );
 }
 
+function serializeMockResultInteractionPayload(result: LauncherResult) {
+  return JSON.stringify({
+    preview: buildPreviewFallback(result),
+    primaryAction: result.actions[0]
+      ? {
+          label: result.actions[0].label,
+          hint: result.actions[0].hint
+        }
+      : null
+  });
+}
+
 function groupActions(actions: LauncherAction[]) {
   const grouped = new Map<string, LauncherAction[]>();
 
@@ -1367,6 +1379,8 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                       type="button"
                       className={classes.result}
                       data-launcher-role="result"
+                      data-result-id={result.id}
+                      data-mock-interaction={isMock ? serializeMockResultInteractionPayload(result) : undefined}
                       data-selected={absoluteIndex === selectedIndex ? 'true' : 'false'}
                       tabIndex={-1}
                       onMouseDown={(event) => {
