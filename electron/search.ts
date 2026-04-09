@@ -80,6 +80,7 @@ type WalkNode = {
   path: string;
   depth: number;
   maxDepth: number;
+  isDirectory: boolean;
 };
 
 type SearchTraceContext = {
@@ -152,6 +153,36 @@ function classifyPath(path: string, isDirectory: boolean): ResultKind {
   }
 
   return isDirectory ? 'folder' : 'file';
+}
+
+function isAmbiguousFolderClassification(path: string, kind?: ResultKind) {
+  if (path.endsWith('.app')) {
+    return false;
+  }
+
+  return kind === 'folder' && !basename(path).includes('.');
+}
+
+export async function resolvePathKind(path: string, fallbackKind?: ResultKind): Promise<ResultKind> {
+  if (path.endsWith('.app')) {
+    return 'app';
+  }
+
+  try {
+    const info = await stat(path);
+    return info.isDirectory() ? 'folder' : 'file';
+  } catch {
+    return fallbackKind ?? (basename(path).includes('.') ? 'file' : 'folder');
+  }
+}
+
+async function normalizeCatalogEntryKind<T extends CatalogEntry>(entry: T): Promise<T> {
+  if (!isAmbiguousFolderClassification(entry.path, entry.kind)) {
+    return entry;
+  }
+
+  const normalizedKind = await resolvePathKind(entry.path, entry.kind);
+  return normalizedKind === entry.kind ? entry : { ...entry, kind: normalizedKind };
 }
 
 function isExcludedPath(path: string) {
@@ -358,10 +389,14 @@ async function loadPersistedIndex() {
       throw new Error('empty-catalog');
     }
 
-    fallbackIndex = entries.slice(0, MAX_INDEX_ENTRIES).map((entry) => ({
-      ...entry,
-      providerId: 'catalog'
-    }));
+    fallbackIndex = await Promise.all(
+      entries.slice(0, MAX_INDEX_ENTRIES).map(async (entry) =>
+        normalizeCatalogEntryKind({
+          ...entry,
+          providerId: 'catalog'
+        })
+      )
+    );
     fallbackIndexTotalCount = Math.max(totalCount, fallbackIndex.length);
     fallbackIndexReady = true;
     return true;
@@ -374,10 +409,14 @@ async function loadPersistedIndex() {
         return false;
       }
 
-      fallbackIndex = parsed.slice(0, MAX_INDEX_ENTRIES).map((entry) => ({
-        ...entry,
-        providerId: 'catalog'
-      }));
+      fallbackIndex = await Promise.all(
+        parsed.slice(0, MAX_INDEX_ENTRIES).map(async (entry) =>
+          normalizeCatalogEntryKind({
+            ...entry,
+            providerId: 'catalog'
+          })
+        )
+      );
       fallbackIndexTotalCount = fallbackIndex.length;
       fallbackIndexReady = true;
       return true;
@@ -540,7 +579,8 @@ async function walkForIndex(roots: RootConfig[]) {
   const queue: WalkNode[] = roots.map((root) => ({
     path: root.path,
     depth: 0,
-    maxDepth: root.maxDepth
+    maxDepth: root.maxDepth,
+    isDirectory: true
   }));
   const indexed: IndexedEntry[] = [];
   let totalCount = 0;
@@ -553,7 +593,6 @@ async function walkForIndex(roots: RootConfig[]) {
     }
 
     const currentName = basename(current.path);
-    const looksLikeDirectory = !currentName.includes('.') || current.path.endsWith('.app');
 
     if (current.depth > 0) {
       totalCount += 1;
@@ -564,7 +603,7 @@ async function walkForIndex(roots: RootConfig[]) {
           id: current.path,
           path: current.path,
           name: currentName,
-          kind: classifyPath(current.path, looksLikeDirectory),
+          kind: classifyPath(current.path, current.isDirectory),
           modifiedAt,
           providerId: 'catalog'
         });
@@ -589,7 +628,8 @@ async function walkForIndex(roots: RootConfig[]) {
           queue.push({
             path: nextPath,
             depth: current.depth + 1,
-            maxDepth: current.maxDepth
+            maxDepth: current.maxDepth,
+            isDirectory: entry.isDirectory() || entry.name.endsWith('.app')
           });
         }
       }
@@ -671,7 +711,7 @@ async function searchSpotlightProvider(context: SearchContext): Promise<SearchPr
           }
 
           const name = basename(path);
-          const kind = classifyPath(path, !name.includes('.') || path.endsWith('.app'));
+          const kind = await resolvePathKind(path);
           const candidate: SearchProviderResult = {
             id: path,
             path,
@@ -787,7 +827,8 @@ async function searchTargetedPaths(
   const queue: WalkNode[] = roots.map((root) => ({
     path: root.path,
     depth: 0,
-    maxDepth: Math.min(root.maxDepth, options.maxDepthCap ?? 4)
+    maxDepth: Math.min(root.maxDepth, options.maxDepthCap ?? 4),
+    isDirectory: true
   }));
   const matches: LocalSearchItem[] = [];
 
@@ -799,14 +840,13 @@ async function searchTargetedPaths(
     }
 
     const currentName = basename(current.path);
-    const looksLikeDirectory = !currentName.includes('.') || current.path.endsWith('.app');
 
     if (current.depth > 0) {
       const candidate: IndexedEntry = {
         id: current.path,
         path: current.path,
         name: currentName,
-        kind: classifyPath(current.path, looksLikeDirectory)
+        kind: classifyPath(current.path, current.isDirectory)
       };
       const score = rankItem(query, candidate);
 
@@ -850,7 +890,8 @@ async function searchTargetedPaths(
           queue.push({
             path: nextPath,
             depth: current.depth + 1,
-            maxDepth: current.maxDepth
+            maxDepth: current.maxDepth,
+            isDirectory: entry.isDirectory() || entry.name.endsWith('.app')
           });
         }
       }
