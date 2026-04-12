@@ -5,16 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Northlight Design Index</title>
     <style>
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        margin: 0;
-        min-height: 100%;
-      }
-
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; }
       body {
         min-height: 100vh;
         padding: 40px;
@@ -24,32 +16,10 @@
           radial-gradient(circle at top left, rgba(115, 142, 168, 0.16), transparent 28%),
           linear-gradient(180deg, #10161d, #0a0f14);
       }
-
-      .shell {
-        max-width: 980px;
-        margin: 0 auto;
-      }
-
-      h1 {
-        margin: 0;
-        font-size: 2rem;
-        font-weight: 800;
-        letter-spacing: 0.02em;
-      }
-
-      p {
-        margin: 12px 0 0;
-        color: rgba(245, 247, 250, 0.62);
-        line-height: 1.5;
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 16px;
-        margin-top: 28px;
-      }
-
+      .shell { max-width: 980px; margin: 0 auto; }
+      h1 { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: 0.02em; }
+      p { margin: 12px 0 0; color: rgba(245, 247, 250, 0.62); line-height: 1.5; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 28px; }
       .card {
         display: block;
         text-decoration: none;
@@ -60,81 +30,52 @@
         padding: 18px;
         transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
       }
-
       .card:hover {
         transform: translateY(-2px);
         border-color: rgba(170, 192, 214, 0.24);
         background: rgba(255, 255, 255, 0.05);
       }
-
-      .eyebrow {
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: rgba(245, 247, 250, 0.5);
-      }
-
-      .title {
-        margin-top: 10px;
-        font-size: 1.1rem;
-        font-weight: 800;
-      }
-
-      .meta {
-        margin-top: 8px;
-        color: rgba(245, 247, 250, 0.6);
-        font-size: 0.92rem;
-      }
+      .eyebrow { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(245, 247, 250, 0.5); }
+      .title { margin-top: 10px; font-size: 1.1rem; font-weight: 800; }
+      .meta { margin-top: 8px; color: rgba(245, 247, 250, 0.6); font-size: 0.92rem; }
     </style>
   </head>
   <body>
     <main class="shell">
       <h1>Northlight Design Index</h1>
-      <p>Shared renderer mockups served through Vite. Open one of these pages to tweak CSS against the real component tree.</p>
-
+      <p>Open these local design pages directly from disk, or serve the same files over HTTP with <code>npm run design</code>. They are backed by renderer bundles generated from the real app components.</p>
       <section class="grid">
-        <a class="card" href="/design/launcher-current-view.html">
+        <a class="card" href="./launcher-current-view.html">
           <div class="eyebrow">Launcher</div>
           <div class="title">Current View</div>
           <div class="meta">1120×760 native viewport</div>
         </a>
-
-        <a class="card" href="/design/launcher-folder-preview.html">
+        <a class="card" href="./launcher-folder-preview.html">
           <div class="eyebrow">Launcher</div>
           <div class="title">Folder Preview</div>
           <div class="meta">Selected folder with metadata preview</div>
         </a>
-
-        <a class="card" href="/design/launcher-app-preview.html">
+        <a class="card" href="./launcher-app-preview.html">
           <div class="eyebrow">Launcher</div>
           <div class="title">App Preview</div>
           <div class="meta">Selected app with large media preview</div>
         </a>
-
-        <a class="card" href="/design/launcher-folder-listing-preview.html">
+        <a class="card" href="./launcher-folder-listing-preview.html">
           <div class="eyebrow">Launcher</div>
           <div class="title">Folder Listing</div>
           <div class="meta">Selected folder with contents summary</div>
         </a>
-
-        <a class="card" href="/design/launcher-file-preview.html">
+        <a class="card" href="./launcher-file-preview.html">
           <div class="eyebrow">Launcher</div>
           <div class="title">File Preview</div>
           <div class="meta">Selected file with text preview pane</div>
         </a>
-
-        <a class="card" href="/design/settings-current-view.html">
+        <a class="card" href="./settings-current-view.html">
           <div class="eyebrow">Settings</div>
           <div class="title">Current View</div>
           <div class="meta">980×760 native viewport</div>
         </a>
       </section>
     </main>
-
-    <script type="module">
-      import { logAvailableDesigns } from '/src/design/logAvailableDesigns.ts';
-      logAvailableDesigns('/design/');
-    </script>
   </body>
 </html>

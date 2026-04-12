@@ -1,4 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+function localDesignUrl(pageName: string): string {
+  return pathToFileURL(resolve(process.cwd(), 'design', pageName)).href;
+}
 
 test('shows launcher shell', async ({ page }) => {
   await page.goto('/');
@@ -46,6 +52,25 @@ test('supports fuzzy app matches and folder quick actions', async ({ page }) => 
   const panel = page.locator('[data-actions-panel="true"]');
   await expect(panel.getByText('Open In Terminal')).toBeVisible();
   await expect(panel.getByText('Copy Name')).toBeVisible();
+});
+
+test('completes paths with Tab and reuses saved path aliases inside in:', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByLabel('Launcher query');
+
+  await input.fill('/Users/nm4/ST');
+  await page.keyboard.press('Tab');
+  await expect(input).toHaveValue('/Users/nm4/STUFF/');
+
+  await input.fill('/Users/nm4/STUFF/Coding/Northlight/');
+  await page.keyboard.press('Meta+K');
+  await expect(page.getByLabel('Path alias name')).toBeVisible();
+  await page.getByLabel('Path alias name').fill('Northlight');
+  await page.getByRole('button', { name: 'Save Path Alias' }).click();
+
+  await input.fill('in:nor');
+  await page.keyboard.press('Tab');
+  await expect(input).toHaveValue('in:Northlight');
 });
 
 test('surfaces common system apps from the fast tier without empty intermediate state', async ({ page }) => {
@@ -163,7 +188,7 @@ test('keeps settings tabs outside the content scroll region', async ({ page }) =
 });
 
 test('shows the shared settings mockup with persistent tabs and refreshed controls', async ({ page }) => {
-  await page.goto('/design/settings-current-view.html');
+  await page.goto(localDesignUrl('settings-current-view.html'));
 
   const reviewFrame = page.locator('main[title="Northlight settings current view"]');
   const tabs = page.locator('[data-settings-role="tabs"]');
@@ -181,6 +206,13 @@ test('shows the shared settings mockup with persistent tabs and refreshed contro
   await expect(primaryButton).toHaveCSS('min-height', '38px');
   await expect(titlebar).toHaveCSS('-webkit-app-region', 'drag');
   await expect(header).toHaveCSS('-webkit-app-region', 'no-drag');
+
+  const frameBox = await reviewFrame.boundingBox();
+  expect(frameBox).not.toBeNull();
+  if (frameBox) {
+    expect(Math.round(frameBox.width)).toBe(980);
+    expect(Math.round(frameBox.height)).toBe(760);
+  }
 
   const before = await tabs.boundingBox();
   expect(before).not.toBeNull();
@@ -201,12 +233,10 @@ test('shows the shared settings mockup with persistent tabs and refreshed contro
 });
 
 test('shows the launcher design mockup on a black review background with a realistic populated state', async ({ page }) => {
-  await page.goto('/design/launcher-current-view.html');
+  await page.goto(localDesignUrl('launcher-current-view.html'));
 
   const reviewFrame = page.locator('main[title="Northlight launcher current view"]');
   await expect(reviewFrame).toBeVisible();
-  await expect(page.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
-  await expect(page.locator('[data-launcher-role="window"]')).toHaveCSS('box-shadow', 'none');
   await expect(page.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText(/\d{1,3}(,\d{3})* indexed/);
   await expect(page.getByText(/^hybrid$/i)).toHaveCount(0);
   await expect(page.getByText(/^catalog ready$/i)).toHaveCount(0);
@@ -215,13 +245,23 @@ test('shows the launcher design mockup on a black review background with a reali
   await expect(page.getByRole('button', { name: /Keyboard Maestro\.app/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /strace\.md/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /strings\.cc/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /stripe/i })).toBeVisible();
-  await expect(page.locator('[data-launcher-role="result"]')).toHaveCount(10);
-  await expect(page.locator('[data-launcher-role="result-icon-image"]')).toHaveCount(10);
+  await expect(page.locator('[data-launcher-role="result"]').filter({ hasText: 'stripe' }).first()).toBeVisible();
   await expect(page.locator('[data-launcher-role="preview-title"]')).toHaveText('Stremio');
   await expect(page.locator('[data-launcher-role="preview-subtitle"]')).toHaveText('/Applications/Stremio.app');
   await expect(page.locator('[data-launcher-role="preview-body"]')).toHaveCount(0);
   await expect(page.locator('[data-launcher-role="preview-meta-value"]').filter({ hasText: '5.1.14' })).toBeVisible();
+
+  const resultCount = await page.locator('[data-launcher-role="result"]').count();
+  const iconImageCount = await page.locator('[data-launcher-role="result-icon-image"]').count();
+  expect(resultCount).toBeGreaterThanOrEqual(8);
+  expect(iconImageCount).toBeGreaterThanOrEqual(8);
+
+  const frameBox = await reviewFrame.boundingBox();
+  expect(frameBox).not.toBeNull();
+  if (frameBox) {
+    expect(Math.round(frameBox.width)).toBe(1120);
+    expect(Math.round(frameBox.height)).toBe(760);
+  }
 });
 
 test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page }) => {

@@ -49,9 +49,11 @@ Current built-in capabilities:
 - `Cmd+,` opens the Northlight settings window.
 - Clicking away from the launcher hides it again.
 - The launcher mockup in `design/launcher-current-view.html` is calibrated to the native launcher content size of `1120×760` for visual design checks.
-- `npm run design` serves the shared renderer mockups, prints the available design URLs in the terminal, and exposes an index at `/design/`.
-- The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css) as a linked stylesheet in the launcher renderer and launcher design frame, so Chrome DevTools shows it as a normal CSS file instead of an injected `<style>` block.
-- During `npm run design`, Northlight also serves Chrome DevTools automatic workspace metadata at `/.well-known/appspecific/com.chrome.devtools.json`, so `Sources > Workspaces` can connect directly to this repo and persist `Styles` edits back into the local files.
+- `npm run build:design` regenerates local design bundles in `design/assets/bundles/` from the real launcher and settings renderer sources.
+- `npm run design` regenerates those same local bundles, serves the design pages over HTTP, prints the available design URLs in the terminal, and exposes an index at `/design/`.
+- The `design/*.html` pages now work both as direct local `file://` pages and over HTTP, while staying backed by the real renderer bundles instead of handwritten mockup copies.
+- The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css) through the real launcher bundle, so design pages still inherit the real launcher styling source of truth.
+- During `npm run design`, Northlight also serves Chrome DevTools automatic workspace metadata at `/.well-known/appspecific/com.chrome.devtools.json`, so `Sources > Workspaces` can connect directly to this repo and persist `Styles` edits back into the local files when you are using HTTP.
 - The shared launcher mockup now opens in a realistic in-use launcher state, including app, file, folder, and clipboard rows with dedicated icons plus a populated preview pane, so design work happens against something much closer to the live launcher.
 
 ## Search Behavior
