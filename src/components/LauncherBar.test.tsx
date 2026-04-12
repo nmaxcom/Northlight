@@ -518,16 +518,81 @@ describe('LauncherBar', () => {
     await waitFor(() => {
       const panel = document.querySelector('[data-launcher-role="path-completion-list"]');
       expect(panel).toBeTruthy();
-      expect(within(panel as HTMLElement).getByText('Notes')).toBeInTheDocument();
-      expect(within(panel as HTMLElement).getByText('Northlight')).toBeInTheDocument();
+      const panelScope = within(panel as HTMLElement);
+      expect(panelScope.getByText('Notes')).toBeInTheDocument();
+      expect(panelScope.getByText('Northlight')).toBeInTheDocument();
+      expect(panelScope.getByRole('button', { name: 'Notes' })).toBeInTheDocument();
+      expect(panelScope.getByRole('button', { name: 'Northlight' })).toBeInTheDocument();
+      expect(screen.getByText('/Users/nm4/Notes')).toBeInTheDocument();
+      expect(within(panel as HTMLElement).queryByText('Folder')).not.toBeInTheDocument();
+      expect(within(panel as HTMLElement).queryByText('Alias')).not.toBeInTheDocument();
     });
 
     fireEvent.keyDown(window, { key: 'ArrowDown' });
+
+    await waitFor(() => {
+      expect(screen.getByText('/Users/nm4/STUFF/Coding/Northlight')).toBeInTheDocument();
+    });
+
     fireEvent.keyDown(window, { key: 'Tab' });
 
     await waitFor(() => {
       expect(screen.getByLabelText('Launcher query')).toHaveValue('in:Northlight');
     });
+  });
+
+  it('renders a compact path completion panel with a separate active detail line', async () => {
+    const manyCandidates = Array.from({ length: 12 }, (_, index) => ({
+      id: `folder:/Users/nm4/Folder${index + 1}`,
+      kind: 'folder' as const,
+      label: `Folder${index + 1}`,
+      subtitle: `/Users/nm4/Folder${index + 1}`,
+      replacementText: `/Users/nm4/Folder${index + 1}/`,
+      resolvedPath: `/Users/nm4/Folder${index + 1}`
+    }));
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.9',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      getPathAutocomplete: vi.fn().mockResolvedValue({
+        context: { mode: 'path', replaceStart: 0, replaceEnd: 10, rawReference: '/Users/nm4' },
+        candidates: manyCandidates,
+        resolvedFolderPath: null
+      }),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Launcher query'), { target: { value: '/Users/nm4' } });
+
+    const panel = await waitFor(() => {
+      const element = document.querySelector('[data-launcher-role="path-completion-list"]') as HTMLElement | null;
+      expect(element).toBeTruthy();
+      return element as HTMLElement;
+    });
+
+    const firstRow = panel.querySelector('[data-launcher-role="path-completion-row"]') as HTMLElement | null;
+    const activeDetail = panel.querySelector('[data-launcher-role="path-completion-active-detail"]') as HTMLElement | null;
+
+    expect(firstRow?.textContent).toBe('Folder1');
+    expect(activeDetail?.textContent).toBe('/Users/nm4/Folder1');
   });
 
   it('saves a path alias from the actions panel when the input resolves to a folder', async () => {

@@ -233,6 +233,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const inputRef = useRef<HTMLInputElement | null>(null);
   const actionInputRef = useRef<HTMLInputElement | null>(null);
   const pathAliasInputRef = useRef<HTMLInputElement | null>(null);
+  const pathCompletionPanelRef = useRef<HTMLElement | null>(null);
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const actionsRef = useRef<HTMLDivElement | null>(null);
   const searchRequestRef = useRef(0);
@@ -621,6 +622,15 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
     setPathAliasName((current) => current || defaultPathAliasName(resolvedFolderPath));
   }, [resolvedFolderPath]);
+
+  useEffect(() => {
+    if (pathAutocomplete.candidates.length <= 1) {
+      return;
+    }
+
+    const selectedRow = pathCompletionPanelRef.current?.querySelector<HTMLElement>('[data-path-completion-selected="true"]');
+    selectedRow?.scrollIntoView({ block: 'nearest' });
+  }, [pathAutocomplete.candidates.length, pathCompletionIndex]);
 
   useEffect(() => {
     if (isMock) {
@@ -1544,7 +1554,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         <section className={`${classes.body} ${previewVisible ? classes.bodyWithPreview : ''}`} data-launcher-role="body">
           <div className={classes.resultsColumn} data-launcher-role="results-column">
             {pathAutocomplete.candidates.length > 1 ? (
-              <section className={classes.pathCompletionPanel} data-launcher-role="path-completion-list">
+              <section
+                ref={pathCompletionPanelRef}
+                className={classes.pathCompletionPanel}
+                data-launcher-role="path-completion-list"
+              >
                 {pathAutocomplete.candidates.map((candidate, index) => (
                   <button
                     key={candidate.id}
@@ -1565,11 +1579,14 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                   >
                     <span className={classes.pathCompletionCopy}>
                       <span className={classes.pathCompletionLabel}>{candidate.label}</span>
-                      <span className={classes.pathCompletionSubtitle}>{candidate.subtitle}</span>
                     </span>
-                    <span className={classes.pathCompletionKind}>{candidate.kind === 'alias' ? 'Alias' : 'Folder'}</span>
                   </button>
                 ))}
+                {activePathCompletion ? (
+                  <div className={classes.pathCompletionActiveDetail} data-launcher-role="path-completion-active-detail">
+                    {activePathCompletion.subtitle}
+                  </div>
+                ) : null}
               </section>
             ) : null}
             <section

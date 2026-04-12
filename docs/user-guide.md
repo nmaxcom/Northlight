@@ -77,6 +77,7 @@ Current built-in capabilities:
 - Path-like input now autocompletes one folder segment at a time in the launcher, both for direct path typing and inside `in:`.
 - `Tab` accepts the active folder or path-alias completion, `Up` / `Down` choose between ambiguous candidates, and `Escape` dismisses the completion list without clearing what you typed.
 - Saved path aliases participate in that same completion model inside explicit path contexts such as `in:Northlight`.
+- When multiple path completions are visible, Northlight keeps them in a compact single-line list with internal scroll and shows the active candidate's full path only once as contextual detail.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
 - `today` means modified on the current local calendar day, `yesterday` means the previous local calendar day, and `recent` means the last 7 days by modification time.
 - Common macOS settings terms such as `settings`, `system preferences`, `keyboard`, `privacy`, `security`, `display`, `wifi`, `bluetooth`, `sound`, `notifications`, `wallpaper`, `battery`, `network`, `spotlight`, and `accessibility` surface direct settings commands in the root results.
