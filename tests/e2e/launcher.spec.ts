@@ -73,6 +73,31 @@ test('completes paths with Tab and reuses saved path aliases inside in:', async 
   await expect(input).toHaveValue('in:Northlight');
 });
 
+test('renders a compact path completion panel with separate active detail', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByLabel('Launcher query');
+
+  await input.fill('/Users/nm4/');
+
+  const panel = page.locator('[data-launcher-role="path-completion-list"]');
+  const firstRow = page.locator('[data-launcher-role="path-completion-row"]').first();
+  const activeDetail = page.locator('[data-launcher-role="path-completion-active-detail"]');
+
+  await expect(panel).toBeVisible();
+  await expect(firstRow).toBeVisible();
+  await expect(panel.getByText('Folder')).toHaveCount(0);
+  await expect(panel.getByText('Alias')).toHaveCount(0);
+  await expect(activeDetail).toBeVisible();
+
+  const rowBox = await firstRow.boundingBox();
+  expect(rowBox).not.toBeNull();
+  if (!rowBox) {
+    return;
+  }
+
+  expect(rowBox.height).toBeLessThan(42);
+});
+
 test('surfaces common system apps from the fast tier without empty intermediate state', async ({ page }) => {
   await page.goto('/');
   const input = page.getByLabel('Launcher query');
@@ -191,6 +216,7 @@ test('shows the shared settings mockup with persistent tabs and refreshed contro
   await page.goto(localDesignUrl('settings-current-view.html'));
 
   const reviewFrame = page.locator('main[title="Northlight settings current view"]');
+  await expect(page.getByText('Exact settings viewport: 980×760.')).toBeVisible();
   const tabs = page.locator('[data-settings-role="tabs"]');
   const content = page.locator('[data-settings-role="content"]');
   const primaryButton = page.locator('[data-settings-role="primary-button"]');
@@ -237,6 +263,9 @@ test('shows the launcher design mockup on a black review background with a reali
 
   const reviewFrame = page.locator('main[title="Northlight launcher current view"]');
   await expect(reviewFrame).toBeVisible();
+  await expect(page.getByText('Exact launcher viewport: 1120×760.')).toBeVisible();
+  await expect(page.locator('[data-launcher-role="theme-switch-value"]')).toHaveText('Sandbox');
+  await expect(page.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
   await expect(page.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText(/\d{1,3}(,\d{3})* indexed/);
   await expect(page.getByText(/^hybrid$/i)).toHaveCount(0);
   await expect(page.getByText(/^catalog ready$/i)).toHaveCount(0);
