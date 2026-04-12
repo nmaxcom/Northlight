@@ -117,6 +117,10 @@ function validate(settings: LauncherSettings): ValidationState {
       continue;
     }
 
+    if (/\s/.test(alias.trigger.trim())) {
+      messages.add(`Alias triggers cannot contain spaces: ${alias.trigger.trim()}`);
+    }
+
     if (aliasTriggers.has(trigger)) {
       messages.add(`Duplicate alias trigger: ${trigger}`);
     }

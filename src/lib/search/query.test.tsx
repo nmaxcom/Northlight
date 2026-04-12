@@ -115,6 +115,48 @@ describe('buildResults', () => {
     expect(results[0]?.path).toBe('/System/Applications/Calendar.app');
   });
 
+  it('resolves a path alias inside a leading in: scope before local search', async () => {
+    const searchLocal = vi.fn().mockResolvedValue([
+      {
+        id: '/Users/nm4/STUFF/Coding/Northlight/docs/product-brief.md',
+        path: '/Users/nm4/STUFF/Coding/Northlight/docs/product-brief.md',
+        name: 'product-brief.md',
+        kind: 'file',
+        score: 120
+      }
+    ]);
+
+    window.launcher = {
+      searchLocal,
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      getSettings: vi.fn().mockResolvedValue({
+        ...launcherRuntime.getSettingsSnapshot(),
+        aliases: [
+          ...launcherRuntime.getSettingsSnapshot().aliases,
+          {
+            id: 'alias-northlight',
+            trigger: 'Northlight',
+            targetType: 'path',
+            target: '/Users/nm4/STUFF/Coding/Northlight',
+            note: 'Northlight repo'
+          }
+        ]
+      })
+    } as never;
+
+    await launcherRuntime.getSettings();
+    await buildResults('in:Northlight product');
+
+    expect(searchLocal).toHaveBeenCalledWith(
+      'product',
+      undefined,
+      expect.objectContaining({
+        scopePath: '/Users/nm4/STUFF/Coding/Northlight'
+      }),
+      undefined
+    );
+  });
+
   it('returns system settings commands for common launcher queries', async () => {
     const settings = await buildResults('settings');
     const keyboard = await buildResults('keyboard');

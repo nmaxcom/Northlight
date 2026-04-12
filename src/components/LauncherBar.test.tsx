@@ -401,6 +401,201 @@ describe('LauncherBar', () => {
     expect(image).toHaveAttribute('src', 'data:image/png;base64,abc');
   });
 
+  it('accepts the active path completion with Tab', async () => {
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.9',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      getPathAutocomplete: vi.fn().mockImplementation((input: string) => {
+        if (input === '/Users/nm4/ST') {
+          return Promise.resolve({
+            context: { mode: 'path', replaceStart: 0, replaceEnd: input.length, rawReference: input },
+            candidates: [
+              {
+                id: 'folder:/Users/nm4/STUFF',
+                kind: 'folder',
+                label: 'STUFF',
+                subtitle: '/Users/nm4/STUFF',
+                replacementText: '/Users/nm4/STUFF/',
+                resolvedPath: '/Users/nm4/STUFF'
+              }
+            ],
+            resolvedFolderPath: null
+          });
+        }
+
+        return Promise.resolve({ context: null, candidates: [], resolvedFolderPath: null });
+      }),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: '/Users/nm4/ST' } });
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Launcher query' })).toHaveValue('/Users/nm4/ST');
+    });
+
+    fireEvent.keyDown(window, { key: 'Tab' });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Launcher query')).toHaveValue('/Users/nm4/STUFF/');
+    });
+  });
+
+  it('uses arrow keys to choose between ambiguous path completions', async () => {
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.9',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      getPathAutocomplete: vi.fn().mockImplementation((input: string) => {
+        if (input === 'in:n') {
+          return Promise.resolve({
+            context: { mode: 'scope', replaceStart: 3, replaceEnd: input.length, rawReference: 'n' },
+            candidates: [
+              {
+                id: 'alias:notes',
+                kind: 'alias',
+                label: 'Notes',
+                subtitle: '/Users/nm4/Notes',
+                replacementText: 'Notes',
+                resolvedPath: '/Users/nm4/Notes'
+              },
+              {
+                id: 'alias:northlight',
+                kind: 'alias',
+                label: 'Northlight',
+                subtitle: '/Users/nm4/STUFF/Coding/Northlight',
+                replacementText: 'Northlight',
+                resolvedPath: '/Users/nm4/STUFF/Coding/Northlight'
+              }
+            ],
+            resolvedFolderPath: null
+          });
+        }
+
+        return Promise.resolve({ context: null, candidates: [], resolvedFolderPath: null });
+      }),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Launcher query'), { target: { value: 'in:n' } });
+
+    await waitFor(() => {
+      const panel = document.querySelector('[data-launcher-role="path-completion-list"]');
+      expect(panel).toBeTruthy();
+      expect(within(panel as HTMLElement).getByText('Notes')).toBeInTheDocument();
+      expect(within(panel as HTMLElement).getByText('Northlight')).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(window, { key: 'ArrowDown' });
+    fireEvent.keyDown(window, { key: 'Tab' });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Launcher query')).toHaveValue('in:Northlight');
+    });
+  });
+
+  it('saves a path alias from the actions panel when the input resolves to a folder', async () => {
+    const saveSettings = vi.fn().mockImplementation(async (settings) => settings);
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.9',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      saveSettings,
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      getPathAutocomplete: vi.fn().mockImplementation((input: string) => {
+        if (input === '/Users/nm4/STUFF/Coding/Northlight/') {
+          return Promise.resolve({
+            context: { mode: 'path', replaceStart: 0, replaceEnd: input.length, rawReference: input },
+            candidates: [],
+            resolvedFolderPath: '/Users/nm4/STUFF/Coding/Northlight'
+          });
+        }
+
+        return Promise.resolve({ context: null, candidates: [], resolvedFolderPath: null });
+      }),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Launcher query'), { target: { value: '/Users/nm4/STUFF/Coding/Northlight/' } });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /actions/i })).toBeEnabled();
+    });
+
+    fireEvent.keyDown(window, { key: 'k', metaKey: true });
+
+    const aliasInput = await screen.findByLabelText('Path alias name');
+    fireEvent.change(aliasInput, { target: { value: 'Northlight' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Path Alias' }));
+
+    await waitFor(() => {
+      expect(saveSettings).toHaveBeenCalledWith(
+        expect.objectContaining({
+          aliases: expect.arrayContaining([
+            expect.objectContaining({
+              trigger: 'Northlight',
+              targetType: 'path',
+              target: '/Users/nm4/STUFF/Coding/Northlight'
+            })
+          ])
+        })
+      );
+    });
+  });
+
   it('wraps result selection with arrow keys', async () => {
     const scrollSpy = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
 

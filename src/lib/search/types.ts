@@ -5,6 +5,7 @@ export type ResultKind = 'file' | 'folder' | 'conversion' | 'app' | 'command' | 
 export type SearchProviderKind = 'spotlight' | 'catalog' | 'deterministic' | 'targeted';
 export type SearchScopeToken = 'downloads' | 'documents' | 'desktop' | 'library' | 'home';
 export type SearchTimeToken = 'today' | 'yesterday' | 'recent';
+export type PathAutocompleteMode = 'path' | 'scope';
 
 export type AliasTargetType = 'path' | 'snippet' | 'settings';
 
@@ -141,6 +142,28 @@ export type SearchIntent = {
   scopePath?: string;
   timeToken?: SearchTimeToken;
   matchedTokens: string[];
+};
+
+export type PathAutocompleteContext = {
+  mode: PathAutocompleteMode;
+  replaceStart: number;
+  replaceEnd: number;
+  rawReference: string;
+};
+
+export type PathAutocompleteCandidate = {
+  id: string;
+  kind: 'folder' | 'alias';
+  label: string;
+  subtitle: string;
+  replacementText: string;
+  resolvedPath: string;
+};
+
+export type PathAutocompleteState = {
+  context: PathAutocompleteContext | null;
+  candidates: PathAutocompleteCandidate[];
+  resolvedFolderPath: string | null;
 };
 
 export type SearchContext = {
@@ -359,6 +382,7 @@ export type LauncherBridge = {
   ) => Promise<LocalSearchItem[]>;
   getStatus: (requestId?: string) => Promise<LauncherStatus>;
   getSettings: () => Promise<LauncherSettings>;
+  getPathAutocomplete?: (input: string, caret: number) => Promise<PathAutocompleteState>;
   getEffectiveShortcut?: () => Promise<string>;
   saveSettings: (settings: LauncherSettings) => Promise<LauncherSettings>;
   getSearchPerformance?: () => Promise<{

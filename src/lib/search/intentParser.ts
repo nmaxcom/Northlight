@@ -99,6 +99,10 @@ function mergeIntentFilters(current: LocalIntentFilter | null, next: LocalIntent
   };
 }
 
+function isExplicitScopeReference(scopeCandidate: string) {
+  return scopeCandidate.startsWith('/') || scopeCandidate.startsWith('~/') || !scopeCandidate.includes(' ');
+}
+
 export function localIntentFilterKey(filter: LocalIntentFilter | null | undefined) {
   if (!filter) {
     return 'all';
@@ -158,9 +162,27 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
   let timeToken: SearchTimeToken | undefined;
   const matchedTokens: string[] = [];
   const tokens = trimmed.split(/\s+/);
+  let startIndex = 0;
   let endIndex = tokens.length - 1;
 
-  while (endIndex >= 1) {
+  if (tokens[0]?.toLowerCase().startsWith('in:')) {
+    const leadingScopeToken = tokens[0];
+    const leadingScopeCandidate = leadingScopeToken.toLowerCase();
+    const namedScope = SCOPE_TOKENS[leadingScopeCandidate];
+    const explicitScopeCandidate = leadingScopeToken.slice(3);
+
+    if (namedScope) {
+      scopeToken = namedScope;
+      matchedTokens.push(leadingScopeToken);
+      startIndex = 1;
+    } else if (explicitScopeCandidate && isExplicitScopeReference(explicitScopeCandidate)) {
+      scopePath = explicitScopeCandidate;
+      matchedTokens.push(leadingScopeToken);
+      startIndex = 1;
+    }
+  }
+
+  while (endIndex >= startIndex + 1) {
     const token = tokens[endIndex];
     const candidate = token.toLowerCase();
     const candidateTime = TIME_TOKENS[candidate];
@@ -239,14 +261,14 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
     }
 
     let explicitScopeStart = -1;
-    for (let index = endIndex; index >= 1; index -= 1) {
+    for (let index = endIndex; index >= startIndex; index -= 1) {
       const segment = tokens[index];
       if (!segment.toLowerCase().startsWith('in:')) {
         continue;
       }
 
       const scopeCandidate = segment.slice(3);
-      if (scopeCandidate.startsWith('/') || scopeCandidate.startsWith('~/')) {
+      if (scopeCandidate && isExplicitScopeReference(scopeCandidate)) {
         explicitScopeStart = index;
       }
       break;
@@ -273,7 +295,7 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
     break;
   }
 
-  let searchText = tokens.slice(0, endIndex + 1).join(' ').trim();
+  let searchText = tokens.slice(startIndex, endIndex + 1).join(' ').trim();
   if (searchText.endsWith('/') && !searchText.endsWith('//')) {
     const folderText = searchText.slice(0, -1).trim();
     if (folderText) {

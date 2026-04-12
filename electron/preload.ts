@@ -3,6 +3,7 @@ import type {
   LauncherSettings,
   LauncherTraceEvent,
   LocalSearchItem,
+  PathAutocompleteState,
   ScopePerformanceInsight,
   SearchIntent,
   SearchPerformanceSample,
@@ -24,6 +25,8 @@ const launcherApi = {
   ) => ipcRenderer.invoke('launcher:search-local', query, scopePath, intent, requestId),
   getStatus: (requestId?: string) => ipcRenderer.invoke('launcher:get-status', requestId),
   getSettings: () => ipcRenderer.invoke('launcher:get-settings'),
+  getPathAutocomplete: (input: string, caret: number): Promise<PathAutocompleteState> =>
+    ipcRenderer.invoke('launcher:get-path-autocomplete', input, caret),
   getSearchPerformance: (): Promise<{ samples: SearchPerformanceSample[]; summary: SearchPerformanceSummary }> =>
     ipcRenderer.invoke('launcher:get-search-performance'),
   recordSearchPerformance: (sample: Omit<SearchPerformanceSample, 'id' | 'recordedAt'>) =>

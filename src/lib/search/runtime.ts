@@ -2,6 +2,7 @@ import { clearRankStore, recordSelection } from './adaptiveRanking';
 import { matchesLocalIntent, searchIntentKey } from './intentParser';
 import { fileFixtures } from './mockData';
 import { adaptiveRankBoost } from './adaptiveRanking';
+import { buildFixtureFolderPaths, buildPathAutocompleteState } from './pathAutocomplete';
 import { composedSearchScore } from './scoring';
 import { resolveLauncherShortcut } from '../shortcuts';
 import { modifiedAtMatchesIntentTime, pathMatchesIntentScope } from './intentScope';
@@ -11,6 +12,7 @@ import type {
   LauncherSettings,
   LauncherStatus,
   LocalSearchItem,
+  PathAutocompleteState,
   ScopePerformanceInsight,
   SearchIntent,
   SearchPerformanceSample,
@@ -95,6 +97,14 @@ function clearTransientCaches() {
 function clearVisibleSearchState() {
   queryCache.clear();
   hotQueryCache.clear();
+}
+
+function inferHomePathFromSettings() {
+  const homeScope = settingsCache.scopes
+    .map((scope) => scope.path.match(/^\/Users\/[^/]+/))
+    .find((candidate): candidate is RegExpMatchArray => Boolean(candidate));
+
+  return homeScope?.[0] ?? '/Users/nm4';
 }
 
 function cacheKey(query: string, scopePath?: string | null, intent?: SearchIntent | null, tier: 'all' | 'hot' = 'all') {
@@ -240,6 +250,26 @@ export const launcherRuntime = {
   },
   getSettingsSnapshot() {
     return settingsCache;
+  },
+  getPathAutocomplete(input: string, caret: number): Promise<PathAutocompleteState> {
+    if (window.launcher?.getPathAutocomplete) {
+      return window.launcher.getPathAutocomplete(input, caret);
+    }
+
+    const folderPaths = buildFixtureFolderPaths(
+      fileFixtures.map((item) => item.path),
+      inferHomePathFromSettings()
+    );
+
+    return Promise.resolve(
+      buildPathAutocompleteState(
+        input,
+        caret,
+        settingsCache.aliases,
+        folderPaths,
+        inferHomePathFromSettings()
+      )
+    );
   },
   getSearchPerformance() {
     if (!window.launcher?.getSearchPerformance) {

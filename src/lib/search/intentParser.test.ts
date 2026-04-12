@@ -166,13 +166,51 @@ describe('parseIntentQuery', () => {
     });
   });
 
-  it('treats malformed in: tokens as plain text', () => {
+  it('parses a leading in: alias as a structured scope path candidate', () => {
+    expect(parseIntentQuery('in:Northlight product .md')).toEqual({
+      rawQuery: 'in:Northlight product .md',
+      searchText: 'product',
+      intent: {
+        localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+        scopeToken: undefined,
+        scopePath: 'Northlight',
+        timeToken: undefined,
+        matchedTokens: ['.md', 'in:Northlight']
+      },
+      localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+      matchedTokens: ['.md', 'in:Northlight']
+    });
+  });
+
+  it('parses a leading named scope token before the search text', () => {
+    expect(parseIntentQuery('in:desktop notes today')).toEqual({
+      rawQuery: 'in:desktop notes today',
+      searchText: 'notes',
+      intent: {
+        localFilter: null,
+        scopeToken: 'desktop',
+        scopePath: undefined,
+        timeToken: 'today',
+        matchedTokens: ['today', 'in:desktop']
+      },
+      localFilter: null,
+      matchedTokens: ['today', 'in:desktop']
+    });
+  });
+
+  it('treats alias-like in: tokens as valid explicit scope references', () => {
     expect(parseIntentQuery('notes .md in:docs')).toEqual({
       rawQuery: 'notes .md in:docs',
-      searchText: 'notes .md in:docs',
-      intent: null,
-      localFilter: null,
-      matchedTokens: []
+      searchText: 'notes',
+      intent: {
+        localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+        scopeToken: undefined,
+        scopePath: 'docs',
+        timeToken: undefined,
+        matchedTokens: ['.md', 'in:docs']
+      },
+      localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
+      matchedTokens: ['.md', 'in:docs']
     });
   });
 

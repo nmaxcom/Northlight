@@ -5,7 +5,7 @@ import { parseIntentQuery } from './intentParser';
 import { launcherRuntime } from './runtime';
 import { normalizeSearchText } from './scoring';
 import { buildSystemSettingsCommandResults } from './systemSettings';
-import type { AliasEntry, ClipboardEntry, LauncherResult, LocalSearchItem, SnippetEntry } from './types';
+import type { AliasEntry, ClipboardEntry, LauncherResult, LocalSearchItem, SearchIntent, SnippetEntry } from './types';
 
 export type QueryContext = {
   scopePath?: string | null;
@@ -156,6 +156,29 @@ function inferPathKind(path: string): LocalSearchItem['kind'] {
 
   const name = path.split('/').at(-1) ?? path;
   return name.includes('.') ? 'file' : 'folder';
+}
+
+function resolveIntentScopeAliases(intent: SearchIntent | null): SearchIntent | null {
+  if (!intent?.scopePath) {
+    return intent;
+  }
+
+  if (intent.scopePath.startsWith('/') || intent.scopePath.startsWith('~/')) {
+    return intent;
+  }
+
+  const alias = launcherRuntime
+    .getSettingsSnapshot()
+    .aliases.find((candidate) => candidate.targetType === 'path' && candidate.trigger.toLowerCase() === intent.scopePath?.toLowerCase());
+
+  if (!alias) {
+    return intent;
+  }
+
+  return {
+    ...intent,
+    scopePath: alias.target
+  };
 }
 
 function buildSettingsCommandResult(query: string): LauncherResult[] {
@@ -366,6 +389,7 @@ export function buildConversionResult(query: string): LauncherResult[] {
 
 export function buildImmediateResults(query: string, context: QueryContext = {}): LauncherResult[] {
   const parsedQuery = parseIntentQuery(query);
+  const resolvedIntent = resolveIntentScopeAliases(parsedQuery.intent);
   const trimmed = parsedQuery.searchText.trim();
 
   if (!trimmed) {
@@ -374,12 +398,12 @@ export function buildImmediateResults(query: string, context: QueryContext = {})
 
   const localResults = buildLocalResults(
     mergeLocalItems(
-      launcherRuntime.getCachedLocalHot(trimmed, context.scopePath, parsedQuery.intent),
-      launcherRuntime.getCachedLocal(trimmed, context.scopePath, parsedQuery.intent)
+      launcherRuntime.getCachedLocalHot(trimmed, context.scopePath, resolvedIntent),
+      launcherRuntime.getCachedLocal(trimmed, context.scopePath, resolvedIntent)
     ),
     context
   );
-  if (parsedQuery.intent) {
+  if (resolvedIntent) {
     return localResults.sort((a, b) => b.score - a.score);
   }
 
@@ -394,6 +418,7 @@ export function buildImmediateResults(query: string, context: QueryContext = {})
 
 export async function buildHotResults(query: string, context: QueryContext = {}): Promise<LauncherResult[]> {
   const parsedQuery = parseIntentQuery(query);
+  const resolvedIntent = resolveIntentScopeAliases(parsedQuery.intent);
   const trimmed = parsedQuery.searchText.trim();
 
   if (!trimmed) {
@@ -401,11 +426,11 @@ export async function buildHotResults(query: string, context: QueryContext = {})
   }
 
   const localResults = buildLocalResults(
-    await launcherRuntime.searchLocalHot(trimmed, context.scopePath, parsedQuery.intent, context.traceRequestId),
+    await launcherRuntime.searchLocalHot(trimmed, context.scopePath, resolvedIntent, context.traceRequestId),
     context
   );
 
-  if (parsedQuery.intent) {
+  if (resolvedIntent) {
     return localResults.sort((a, b) => b.score - a.score);
   }
 
@@ -420,6 +445,7 @@ export async function buildHotResults(query: string, context: QueryContext = {})
 
 export async function buildResults(query: string, context: QueryContext = {}): Promise<LauncherResult[]> {
   const parsedQuery = parseIntentQuery(query);
+  const resolvedIntent = resolveIntentScopeAliases(parsedQuery.intent);
   const trimmed = parsedQuery.searchText.trim();
 
   if (!trimmed) {
@@ -427,12 +453,12 @@ export async function buildResults(query: string, context: QueryContext = {}): P
   }
 
   const [hotLocal, deepLocal] = await Promise.all([
-    launcherRuntime.searchLocalHot(trimmed, context.scopePath, parsedQuery.intent, context.traceRequestId),
-    launcherRuntime.searchLocal(trimmed, context.scopePath, parsedQuery.intent, context.traceRequestId)
+    launcherRuntime.searchLocalHot(trimmed, context.scopePath, resolvedIntent, context.traceRequestId),
+    launcherRuntime.searchLocal(trimmed, context.scopePath, resolvedIntent, context.traceRequestId)
   ]);
   const localResults = buildLocalResults(mergeLocalItems(hotLocal, deepLocal), context);
 
-  if (parsedQuery.intent) {
+  if (resolvedIntent) {
     return localResults.sort((a, b) => b.score - a.score);
   }
 

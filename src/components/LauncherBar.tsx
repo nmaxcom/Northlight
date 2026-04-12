@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   LauncherAction,
+  PathAutocompleteState,
   LauncherPreview,
   LauncherResult,
   LauncherSettings,
@@ -9,6 +10,7 @@ import type {
   ResultKind
 } from '../lib/search/types';
 import { parseIntentQuery } from '../lib/search/intentParser';
+import { applyPathAutocompleteCandidate, pathAutocompleteSuffix } from '../lib/search/pathAutocomplete';
 import { buildHotResults, buildImmediateResults, buildResults } from '../lib/search/query';
 import { launcherRuntime } from '../lib/search/runtime';
 import { getLauncherTheme, getLauncherThemeStyle, getNextLauncherThemeId } from '../launcherTheme';
@@ -175,6 +177,12 @@ function groupActions(actions: LauncherAction[]) {
   return Array.from(grouped.entries()).map(([label, items]) => ({ label, items }));
 }
 
+function defaultPathAliasName(path: string) {
+  return (path.split('/').at(-1) ?? '')
+    .replace(/\s+/g, '')
+    .trim();
+}
+
 export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState }) {
   const isMock = Boolean(mockState);
   const [query, setQuery] = useState(mockState?.query ?? '');
@@ -187,6 +195,14 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const [preview, setPreview] = useState<LauncherPreview | null>(mockState?.preview ?? null);
   const [feedback, setFeedback] = useState<FeedbackState>(mockState?.feedback ?? null);
   const [settings, setSettings] = useState<LauncherSettings>(mockState?.settings ?? launcherRuntime.getSettingsSnapshot());
+  const [pathAutocomplete, setPathAutocomplete] = useState<PathAutocompleteState>({
+    context: null,
+    candidates: [],
+    resolvedFolderPath: null
+  });
+  const [pathCompletionIndex, setPathCompletionIndex] = useState(0);
+  const [pathAutocompleteDismissedQuery, setPathAutocompleteDismissedQuery] = useState<string | null>(null);
+  const [pathAliasName, setPathAliasName] = useState('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(mockState?.settings.quickLookStartsOpen ?? settings.quickLookStartsOpen);
   const [isPointerActive, setIsPointerActive] = useState(Boolean(mockState?.pointerActive));
   const [status, setStatus] = useState<LauncherStatus>({
@@ -202,6 +218,9 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const activeRefiners = useMemo(() => parseIntentQuery(query).intent?.matchedTokens ?? [], [query]);
   const activeTheme = useMemo(() => getLauncherTheme(settings.launcherThemeId), [settings.launcherThemeId]);
   const selectedResult = results[selectedIndex];
+  const resolvedFolderPath = pathAutocomplete.resolvedFolderPath;
+  const activePathCompletion = pathAutocomplete.candidates[pathCompletionIndex] ?? null;
+  const pathSuggestionSuffix = pathAutocompleteSuffix(query, pathAutocomplete.context, activePathCompletion);
   const filteredActions = useMemo(
     () => (selectedResult?.actions ?? []).filter((action) => actionMatches(action, actionQuery)),
     [actionQuery, selectedResult]
@@ -209,9 +228,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const groupedActions = useMemo(() => groupActions(filteredActions), [filteredActions]);
   const selectedAction = filteredActions[actionSelectedIndex];
   const primaryAction = isActionsOpen ? selectedAction : selectedResult?.actions[0];
+  const canOpenActions = Boolean(selectedResult || resolvedFolderPath);
   const previewVisible = settings.previewEnabled && isPreviewOpen;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const actionInputRef = useRef<HTMLInputElement | null>(null);
+  const pathAliasInputRef = useRef<HTMLInputElement | null>(null);
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const actionsRef = useRef<HTMLDivElement | null>(null);
   const searchRequestRef = useRef(0);
@@ -267,9 +288,14 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   );
 
   const focusActiveInput = useCallback(() => {
-    const target = isActionsOpen ? actionInputRef.current : inputRef.current;
+    const target =
+      isActionsOpen && resolvedFolderPath && !selectedResult
+        ? pathAliasInputRef.current
+        : isActionsOpen
+          ? actionInputRef.current
+          : inputRef.current;
     target?.focus({ preventScroll: true });
-  }, [isActionsOpen]);
+  }, [isActionsOpen, resolvedFolderPath, selectedResult]);
 
   const resetPointerSelection = useCallback(() => {
     pointerSelectionEnabledRef.current = false;
@@ -318,14 +344,14 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   );
 
   const openActions = useCallback(() => {
-    if (!selectedResult) {
+    if (!selectedResult && !resolvedFolderPath) {
       return;
     }
 
     setIsActionsOpen(true);
     setActionQuery('');
     setActionSelectedIndex(0);
-  }, [selectedResult]);
+  }, [resolvedFolderPath, selectedResult]);
 
   const closeActions = useCallback(() => {
     setIsActionsOpen(false);
@@ -334,9 +360,32 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     window.requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
   }, []);
 
+  const acceptPathCompletion = useCallback(() => {
+    if (!pathAutocomplete.context || !activePathCompletion) {
+      return false;
+    }
+
+    resetPointerSelection();
+    setPathAutocompleteDismissedQuery(null);
+    setQuery(applyPathAutocompleteCandidate(query, pathAutocomplete.context, activePathCompletion));
+    return true;
+  }, [activePathCompletion, pathAutocomplete.context, query, resetPointerSelection]);
+
+  const dismissPathAutocomplete = useCallback(() => {
+    const caret = inputRef.current?.selectionStart ?? query.length;
+    setPathAutocomplete({
+      context: null,
+      candidates: [],
+      resolvedFolderPath: null
+    });
+    setPathCompletionIndex(0);
+    setPathAutocompleteDismissedQuery(`${query}::${caret}`);
+  }, [query]);
+
   const handleQueryChange = useCallback(
     (nextQuery: string) => {
       resetPointerSelection();
+      setPathAutocompleteDismissedQuery(null);
       setQuery(nextQuery);
       const trimmed = nextQuery.trim();
       searchMetricsRef.current = trimmed
@@ -411,6 +460,49 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     },
     [focusActiveInput, isMock, showFeedback]
   );
+
+  const savePathAlias = useCallback(async () => {
+    if (!resolvedFolderPath) {
+      showFeedback('error', 'Resolve a folder path first');
+      return;
+    }
+
+    const nextTrigger = pathAliasName.trim();
+    if (!nextTrigger || /\s/.test(nextTrigger)) {
+      showFeedback('error', 'Alias names cannot contain spaces');
+      return;
+    }
+
+    const currentSettings = launcherRuntime.getSettingsSnapshot();
+    const hasConflict = currentSettings.aliases.some((alias) => alias.trigger.toLowerCase() === nextTrigger.toLowerCase());
+    if (hasConflict) {
+      showFeedback('error', 'Alias name already exists');
+      return;
+    }
+
+    const nextSettings: LauncherSettings = {
+      ...currentSettings,
+      aliases: [
+        ...currentSettings.aliases,
+        {
+          id: `alias-${Date.now()}`,
+          trigger: nextTrigger,
+          targetType: 'path',
+          target: resolvedFolderPath,
+          note: resolvedFolderPath
+        }
+      ]
+    };
+
+    try {
+      const saved = await launcherRuntime.saveSettings(nextSettings);
+      setSettings(saved);
+      showFeedback('success', 'Saved path alias');
+      closeActions();
+    } catch {
+      showFeedback('error', 'Could not save path alias');
+    }
+  }, [closeActions, pathAliasName, resolvedFolderPath, showFeedback]);
 
   useEffect(() => {
     const metrics = searchMetricsRef.current;
@@ -492,6 +584,43 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   useEffect(() => {
     visibleResultsCountRef.current = results.length;
   }, [results.length]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const caret = inputRef.current?.selectionStart ?? query.length;
+    const dismissalKey = `${query}::${caret}`;
+
+    if (pathAutocompleteDismissedQuery === dismissalKey) {
+      setPathAutocomplete({
+        context: null,
+        candidates: [],
+        resolvedFolderPath: null
+      });
+      return;
+    }
+
+    void launcherRuntime.getPathAutocomplete(query, caret).then((nextState) => {
+      if (cancelled) {
+        return;
+      }
+
+      setPathAutocomplete(nextState);
+      setPathCompletionIndex(0);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathAutocompleteDismissedQuery, query, settings.aliases]);
+
+  useEffect(() => {
+    if (!resolvedFolderPath) {
+      setPathAliasName('');
+      return;
+    }
+
+    setPathAliasName((current) => current || defaultPathAliasName(resolvedFolderPath));
+  }, [resolvedFolderPath]);
 
   useEffect(() => {
     if (isMock) {
@@ -686,9 +815,22 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
   useEffect(() => {
     if (isActionsOpen && !selectedResult) {
-      closeActions();
+      if (!resolvedFolderPath) {
+        closeActions();
+      }
     }
-  }, [closeActions, isActionsOpen, selectedResult]);
+  }, [closeActions, isActionsOpen, resolvedFolderPath, selectedResult]);
+
+  useEffect(() => {
+    if (!isActionsOpen || !resolvedFolderPath || selectedResult) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      pathAliasInputRef.current?.focus({ preventScroll: true });
+      pathAliasInputRef.current?.select();
+    });
+  }, [isActionsOpen, resolvedFolderPath, selectedResult]);
 
   useEffect(() => {
     if (isMock) {
@@ -1074,6 +1216,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
     const onKeyDown = async (event: KeyboardEvent) => {
       if (event.key === 'Tab') {
+        if (!isActionsOpen && document.activeElement === inputRef.current && acceptPathCompletion()) {
+          event.preventDefault();
+          return;
+        }
+
         event.preventDefault();
         focusActiveInput();
         return;
@@ -1103,7 +1250,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       }
 
       if (event.key.toLowerCase() === 'k' && event.metaKey && !event.altKey && !event.shiftKey) {
-        if (!selectedResult) {
+        if (!canOpenActions) {
           return;
         }
 
@@ -1123,6 +1270,20 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       }
 
       if (isActionsOpen) {
+        if (document.activeElement === pathAliasInputRef.current) {
+          if (event.key === 'Enter' && !event.metaKey && !event.altKey && !event.shiftKey) {
+            event.preventDefault();
+            await savePathAlias();
+            return;
+          }
+
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            closeActions();
+            return;
+          }
+        }
+
         if (event.key === 'ArrowDown') {
           event.preventDefault();
           setActionSelectedIndex((current) => (filteredActions.length ? (current + 1) % filteredActions.length : 0));
@@ -1148,6 +1309,20 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         }
       }
 
+      if (!isActionsOpen && pathAutocomplete.candidates.length > 1 && document.activeElement === inputRef.current) {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          setPathCompletionIndex((current) => (current + 1) % pathAutocomplete.candidates.length);
+          return;
+        }
+
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          setPathCompletionIndex((current) => (current - 1 + pathAutocomplete.candidates.length) % pathAutocomplete.candidates.length);
+          return;
+        }
+      }
+
       if (event.key === 'ArrowDown') {
         event.preventDefault();
         setSelectedIndex((current) => (results.length ? (current + 1) % results.length : 0));
@@ -1161,6 +1336,12 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       }
 
       if (event.key === 'Escape') {
+        if (!isActionsOpen && document.activeElement === inputRef.current && (pathAutocomplete.context || pathAutocomplete.candidates.length > 0)) {
+          event.preventDefault();
+          dismissPathAutocomplete();
+          return;
+        }
+
         if (isActionsOpen) {
           event.preventDefault();
           closeActions();
@@ -1226,6 +1407,9 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
     closeActions,
+    canOpenActions,
+    acceptPathCompletion,
+    dismissPathAutocomplete,
     dumpTrace,
     filteredActions.length,
     focusActiveInput,
@@ -1233,8 +1417,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     isMock,
     isActionsOpen,
     openActions,
+    pathAutocomplete.candidates.length,
+    pathAutocomplete.context,
     query,
     results.length,
+    savePathAlias,
     selectedAction,
     selectedResult,
   ]);
@@ -1248,7 +1435,12 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       style={getLauncherThemeStyle(activeTheme.id)}
       onFocusCapture={(event) => {
         const target = event.target as HTMLElement;
-        const activeInput = isActionsOpen ? actionInputRef.current : inputRef.current;
+        const activeInput =
+          isActionsOpen && resolvedFolderPath && !selectedResult
+            ? pathAliasInputRef.current
+            : isActionsOpen
+              ? actionInputRef.current
+              : inputRef.current;
 
         if (target === activeInput) {
           return;
@@ -1314,20 +1506,28 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         <section className={classes.search} data-launcher-role="search">
           <div className={classes.searchIcon} data-launcher-role="search-icon">⌕</div>
           <div className={classes.searchCenter} data-launcher-role="search-center">
-            <input
-              aria-label="Launcher query"
-              ref={inputRef}
-              className={`${classes.searchInput} ${activeRefiners.length > 0 ? classes.searchInputWithRefiners : ''}`}
-              data-launcher-role="search-input"
-              data-has-refiners={activeRefiners.length > 0 ? 'true' : 'false'}
-              type="text"
-              value={query}
-              size={activeRefiners.length > 0 ? Math.max(query.length, 1) : undefined}
-              placeholder="Search files, folders, apps, or type 30mph to kmh"
-              autoComplete="off"
-              spellCheck={false}
-              onChange={(event) => handleQueryChange(event.currentTarget.value)}
-            />
+            <div className={classes.searchInputWrap} data-launcher-role="search-input-wrap">
+              {pathSuggestionSuffix ? (
+                <div className={classes.searchSuggestion} data-launcher-role="path-suggestion" aria-hidden="true">
+                  <span className={classes.searchSuggestionTyped}>{query}</span>
+                  <span>{pathSuggestionSuffix}</span>
+                </div>
+              ) : null}
+              <input
+                aria-label="Launcher query"
+                ref={inputRef}
+                className={`${classes.searchInput} ${activeRefiners.length > 0 ? classes.searchInputWithRefiners : ''}`}
+                data-launcher-role="search-input"
+                data-has-refiners={activeRefiners.length > 0 ? 'true' : 'false'}
+                type="text"
+                value={query}
+                size={activeRefiners.length > 0 ? Math.max(query.length, 1) : undefined}
+                placeholder="Search files, folders, apps, or type 30mph to kmh"
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(event) => handleQueryChange(event.currentTarget.value)}
+              />
+            </div>
             {activeRefiners.length > 0 ? (
               <span className={classes.refinerBar} data-launcher-role="refiner-bar" aria-hidden="true">
                 {activeRefiners.map((token, index) => (
@@ -1343,6 +1543,35 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
         <section className={`${classes.body} ${previewVisible ? classes.bodyWithPreview : ''}`} data-launcher-role="body">
           <div className={classes.resultsColumn} data-launcher-role="results-column">
+            {pathAutocomplete.candidates.length > 1 ? (
+              <section className={classes.pathCompletionPanel} data-launcher-role="path-completion-list">
+                {pathAutocomplete.candidates.map((candidate, index) => (
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    className={classes.pathCompletionRow}
+                    data-launcher-role="path-completion-row"
+                    data-path-completion-kind={candidate.kind}
+                    data-path-completion-selected={index === pathCompletionIndex ? 'true' : 'false'}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      focusActiveInput();
+                    }}
+                    onMouseEnter={() => setPathCompletionIndex(index)}
+                    onClick={() => {
+                      setPathCompletionIndex(index);
+                      acceptPathCompletion();
+                    }}
+                  >
+                    <span className={classes.pathCompletionCopy}>
+                      <span className={classes.pathCompletionLabel}>{candidate.label}</span>
+                      <span className={classes.pathCompletionSubtitle}>{candidate.subtitle}</span>
+                    </span>
+                    <span className={classes.pathCompletionKind}>{candidate.kind === 'alias' ? 'Alias' : 'Folder'}</span>
+                  </button>
+                ))}
+              </section>
+            ) : null}
             <section
               className={classes.results}
               data-launcher-role="results"
@@ -1459,8 +1688,38 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
             <div className={classes.actionsPanel} data-launcher-role="actions-panel" data-actions-panel="true">
               <div className={classes.actionHeader} data-launcher-role="action-header">
                 <div className={classes.actionHeaderTitle} data-launcher-role="action-header-title">{selectedResult?.title ?? 'Actions'}</div>
-                <div className={classes.actionHeaderSubtitle} data-launcher-role="action-header-subtitle">{selectedResult ? kindLabel(selectedResult) : 'Current result'}</div>
+                <div className={classes.actionHeaderSubtitle} data-launcher-role="action-header-subtitle">
+                  {selectedResult ? kindLabel(selectedResult) : resolvedFolderPath ?? 'Current input'}
+                </div>
               </div>
+              {resolvedFolderPath ? (
+                <div className={classes.aliasBuilder} data-launcher-role="path-alias-builder">
+                  <div className={classes.aliasBuilderCopy}>
+                    <div className={classes.actionGroupLabel}>Save Path Alias</div>
+                    <div className={classes.actionHeaderSubtitle}>{resolvedFolderPath}</div>
+                  </div>
+                  <div className={classes.aliasBuilderControls}>
+                    <input
+                      aria-label="Path alias name"
+                      ref={pathAliasInputRef}
+                      className={classes.aliasBuilderInput}
+                      value={pathAliasName}
+                      onChange={(event) => setPathAliasName(event.currentTarget.value.replace(/\s+/g, ''))}
+                      placeholder="Northlight"
+                    />
+                    <button
+                      type="button"
+                      className={classes.aliasBuilderButton}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                      }}
+                      onClick={() => void savePathAlias()}
+                    >
+                      Save Path Alias
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <div className={classes.actionList} data-launcher-role="action-list" ref={actionsRef}>
                 {groupedActions.length === 0 ? (
                   <div className={classes.actionEmpty} data-launcher-role="action-empty">No matching actions</div>
@@ -1548,7 +1807,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
               type="button"
               className={classes.actionsTrigger}
               data-launcher-role="actions-trigger"
-              disabled={!selectedResult}
+              disabled={!canOpenActions}
               onMouseDown={(event) => {
                 event.preventDefault();
                 focusActiveInput();

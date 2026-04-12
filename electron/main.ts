@@ -4,12 +4,14 @@ import { execFile, spawn } from 'node:child_process';
 import { access, mkdir, readFile, readdir, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { basename, extname, join } from 'node:path';
+import { homedir } from 'node:os';
 import { platform } from 'node:process';
 import packageJson from '../package.json';
 import { shouldHideLauncherApp } from '../src/lib/launcher/dismissBehavior';
 import { getLauncherOpenStrategy } from '../src/lib/launcher/openTarget';
 import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/shortcuts';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem, SearchIntent } from '../src/lib/search/types';
+import { buildPathAutocompleteState, expandHomePath } from '../src/lib/search/pathAutocomplete';
 import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
 import { getIdleTraceSummary, getTraceDump, getTraceState, ingestRendererTrace, recordTrace, setTraceEnabled, traceSpan, writeTraceDumpFile } from './diagnostics';
 import {
@@ -54,6 +56,49 @@ const previewCache = new Map<string, LauncherPreview | null>();
 let mainRequestSequence = 0;
 const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
+const HOME_PATH = homedir();
+
+async function readDirectoryFolderPaths(path: string) {
+  try {
+    const entries = await readdir(path, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => join(path, entry.name));
+  } catch {
+    return [];
+  }
+}
+
+async function buildPathAutocompleteFolderPaths(input: string) {
+  const folderPaths = new Set<string>([
+    '/Applications',
+    '/System',
+    '/System/Applications',
+    HOME_PATH
+  ]);
+
+  const scopeContext = buildPathAutocompleteState(input, input.length, launcherSettingsCache.aliases, Array.from(folderPaths), HOME_PATH).context;
+  if (!scopeContext?.rawReference || (!scopeContext.rawReference.startsWith('/') && scopeContext.rawReference !== '~' && !scopeContext.rawReference.startsWith('~/'))) {
+    return Array.from(folderPaths);
+  }
+
+  const rawReference = scopeContext.rawReference;
+  if (rawReference === '~') {
+    return Array.from(folderPaths);
+  }
+
+  const expandedReference = expandHomePath(rawReference, HOME_PATH);
+  const candidateParent = rawReference.endsWith('/')
+    ? expandedReference
+    : expandedReference.slice(0, expandedReference.lastIndexOf('/')) || '/';
+
+  for (const entry of await readDirectoryFolderPaths(candidateParent)) {
+    folderPaths.add(entry);
+  }
+
+  folderPaths.add(candidateParent);
+  return Array.from(folderPaths);
+}
 
 function clearPendingLauncherPositionSave() {
   if (!pendingLauncherPositionSave) {
@@ -909,6 +954,10 @@ app.whenReady().then(async () => {
     return status;
   });
   ipcMain.handle('launcher:get-settings', async () => getLauncherSettings());
+  ipcMain.handle('launcher:get-path-autocomplete', async (_event, input: string, caret: number) => {
+    const folderPaths = await buildPathAutocompleteFolderPaths(input.slice(0, Math.max(0, Math.min(caret, input.length))));
+    return buildPathAutocompleteState(input, caret, launcherSettingsCache.aliases, folderPaths, HOME_PATH);
+  });
   ipcMain.handle('launcher:get-search-performance', async () => getSearchPerformance());
   ipcMain.handle('launcher:record-search-performance', async (_event, sample) => {
     await recordSearchPerformanceSample(sample);

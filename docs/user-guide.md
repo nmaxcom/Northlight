@@ -74,6 +74,9 @@ Current built-in capabilities:
 - Trailing intent refiners stay optional: Northlight first searches broadly, then lets you tighten the result type with suffixes like `/`, `img`, `.jpg`, `.pdf`, `.md`, `app`, `file`, or `folder`.
 - A trailing slash such as `lw/` is parsed as a folder refiner and appears as a `folder` chip inside the search box, to the right of the typed query.
 - Scope refiners let you narrow broad queries with `in:downloads`, `in:documents`, `in:desktop`, `in:library`, `in:home`, or a concrete path such as `in:/Users/nm4/STUFF/Coding/Northlight` or `in:~/Documents`.
+- Path-like input now autocompletes one folder segment at a time in the launcher, both for direct path typing and inside `in:`.
+- `Tab` accepts the active folder or path-alias completion, `Up` / `Down` choose between ambiguous candidates, and `Escape` dismisses the completion list without clearing what you typed.
+- Saved path aliases participate in that same completion model inside explicit path contexts such as `in:Northlight`.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
 - `today` means modified on the current local calendar day, `yesterday` means the previous local calendar day, and `recent` means the last 7 days by modification time.
 - Common macOS settings terms such as `settings`, `system preferences`, `keyboard`, `privacy`, `security`, `display`, `wifi`, `bluetooth`, `sound`, `notifications`, `wallpaper`, `battery`, `network`, `spotlight`, and `accessibility` surface direct settings commands in the root results.
@@ -98,8 +101,10 @@ Current built-in capabilities:
 - `Cmd+Shift+N`: copy only the selected result name when available.
 - `Cmd+Backspace`: clear the current query or action filter when the text field is focused.
 - `Cmd+K`: open the current result's `Actions` panel.
+- `Tab`: accept the active path completion when the query is currently resolving a path or `in:` reference.
 - `Cmd+,`: open the settings window.
 - `Arrow Up` / `Arrow Down`: move through results.
+- When the path completion list is visible, `Arrow Up` / `Arrow Down` move through completions instead of the main results.
 - `Escape`: clear the query if there is text; otherwise hide the launcher cleanly without letting the dismiss keypress fall through into macOS.
 
 ## Result Behavior
@@ -141,6 +146,7 @@ The settings window is the control center for launcher preferences.
 - The settings mockup in `design/settings-current-view.html` is calibrated to the native settings content size of `980×760` for visual design checks.
 - Set how many clipboard items to retain.
 - Create aliases for paths, snippets, or direct settings access.
+- When the launcher query already resolves to a concrete folder path, `Cmd+K` lets you save that folder as a no-spaces path alias directly from the launcher instead of forcing the flow through settings first.
 - Create reusable text snippets.
 - Enable or disable indexed scope paths.
 - Mark a scope as `Fast Path` when it should behave like `~/Desktop` or `/Applications` and participate in the immediate search tier.

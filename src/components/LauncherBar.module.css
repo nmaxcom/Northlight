@@ -132,6 +132,30 @@
   overflow: hidden;
 }
 
+.searchInputWrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.searchSuggestion {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  color: var(--launcher-search-placeholder);
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  white-space: pre;
+  overflow: hidden;
+}
+
+.searchSuggestionTyped {
+  color: transparent;
+}
+
 .refinerBar {
   display: inline-flex;
   align-items: center;
@@ -216,6 +240,72 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.pathCompletionPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--launcher-panel-border);
+  background: var(--launcher-panel-bg);
+}
+
+.pathCompletionRow {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.pathCompletionRow:hover,
+.pathCompletionRow[data-path-completion-selected='true'] {
+  background: var(--launcher-action-hover-bg);
+  border-color: var(--launcher-action-hover-border);
+}
+
+.pathCompletionCopy {
+  min-width: 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pathCompletionLabel {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.pathCompletionSubtitle {
+  color: var(--launcher-subtle-text);
+  font-size: 0.75rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pathCompletionKind {
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--launcher-kind-bg);
+  color: var(--launcher-kind-fg);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
 }
 
 .bestMatch,
@@ -718,6 +808,56 @@
   margin-top: 4px;
   font-size: 0.82rem;
   color: var(--launcher-subtle-text);
+}
+
+.aliasBuilder {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--launcher-panel-divider);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aliasBuilderCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aliasBuilderControls {
+  display: flex;
+  gap: 10px;
+}
+
+.aliasBuilderInput {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 1 1 auto;
+  min-height: 38px;
+  border-radius: 12px;
+  border: 1px solid var(--launcher-input-border);
+  background: var(--launcher-input-bg);
+  color: var(--launcher-text);
+  padding: 0 12px;
+  font-size: 0.92rem;
+}
+
+.aliasBuilderButton {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--launcher-control-border);
+  background: var(--launcher-control-bg);
+  color: var(--launcher-text);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.aliasBuilderButton:hover {
+  background: var(--launcher-control-hover-bg);
 }
 
 .actionList {
