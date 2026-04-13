@@ -1,6 +1,6 @@
 {
   "name": "northlight",
-  "version": "0.8.50",
+  "version": "0.8.55",
   "productName": "Northlight",
   "description": "A steel-fast macOS launcher built with Electron, React, and Mantine.",
   "main": "dist-electron/main/main.js",
@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "electron-vite dev --watch",
     "build:design": "node scripts/build-design.mjs",
+    "export:design": "node scripts/export-design.mjs",
     "design": "node scripts/run-design.mjs",
     "build": "npm run typecheck && vite build && electron-vite build",
     "preview": "vite preview",

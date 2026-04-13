@@ -50,6 +50,7 @@ Current built-in capabilities:
 - Clicking away from the launcher hides it again.
 - The launcher mockup in `design/launcher-current-view.html` is calibrated to the native launcher content size of `1120×760` for visual design checks.
 - `npm run build:design` regenerates local design bundles in `design/assets/bundles/` from the real launcher and settings renderer sources.
+- `npm run export:design` generates self-contained share files in `design/export/` from the current local design pages, so you can hand off HTMLs that open directly without separate JS/CSS bundles.
 - `npm run design` regenerates those same local bundles, serves the launcher/settings design pages over HTTP, prints the available design URLs in the terminal, and exposes an index at `/design/`.
 - The local design surface is now just [design/launcher-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/launcher-current-view.html) and [design/settings-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view.html); both work over `file://` and HTTP while staying backed by the real renderer bundles instead of handwritten mockup copies.
 - The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css) through the real launcher bundle, so design pages still inherit the real launcher styling source of truth.
