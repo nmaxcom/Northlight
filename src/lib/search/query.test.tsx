@@ -592,4 +592,62 @@ describe('buildResults', () => {
       matchedTokens: ['.md', 'in:/Users/nm4/My Projects/Northlight']
     }, undefined);
   });
+
+  it('returns the same scoped markdown result whether in: appears at the beginning or end', async () => {
+    const leading = await buildResults('in:/Users/nm4/STUFF/Coding/Northlight product .md');
+    const trailing = await buildResults('product .md in:/Users/nm4/STUFF/Coding/Northlight');
+
+    expect(leading[0]?.title).toBe('product-brief.md');
+    expect(trailing[0]?.title).toBe('product-brief.md');
+    expect(leading[0]?.path).toBe(trailing[0]?.path);
+  });
+
+  it('finds dotfiles inside an explicit path scope', async () => {
+    const results = await buildResults('in:/Users/nm4/STUFF/Coding/Northlight .env');
+
+    expect(results[0]?.title).toBe('.env');
+    expect(results[0]?.path).toBe('/Users/nm4/STUFF/Coding/Northlight/.env');
+  });
+
+  it('finds files inside hidden-style Library paths when explicitly scoped there', async () => {
+    const results = await buildResults('ghost img in:/Users/nm4/Library/Application Support/HiddenGallery');
+
+    expect(results[0]?.title).toBe('ghost-image.png');
+    expect(results.every((result) => result.kind === 'file')).toBe(true);
+  });
+
+  it('scopes image search correctly with and without the img operator', async () => {
+    const unfiltered = await buildResults('in:/Users/nm4/Documents/Brand/steel-moodboard type');
+    const imagesOnly = await buildResults('in:/Users/nm4/Documents/Brand/steel-moodboard type img');
+
+    expect(unfiltered.some((result) => result.title === 'type-study.sketch')).toBe(true);
+    expect(imagesOnly.some((result) => result.title === 'type-study.sketch')).toBe(false);
+  });
+
+  it('finds apps inside an explicit system app scope with in: at the beginning and end', async () => {
+    const leading = await buildResults('in:/System/Applications textedit app');
+    const trailing = await buildResults('textedit app in:/System/Applications');
+
+    expect(leading[0]?.title).toBe('TextEdit.app');
+    expect(trailing[0]?.title).toBe('TextEdit.app');
+  });
+
+  it('finds results inside a fast-path folder scope', async () => {
+    const results = await buildResults('invoice .pdf in:desktop');
+
+    expect(results[0]?.title).toBe('Invoice-April.pdf');
+    expect(results[0]?.path).toBe('/Users/nm4/Desktop/Invoice-April.pdf');
+  });
+
+  it('finds results inside an indexed but non-hot coding scope', async () => {
+    const results = await buildResults('product .md in:/Users/nm4/STUFF/Coding/Northlight');
+
+    expect(results[0]?.title).toBe('product-brief.md');
+  });
+
+  it('supports explicit path narrowing into a non-hot non-preset path', async () => {
+    const results = await buildResults('raycast .md in:/Users/nm4/Projects/Launchers');
+
+    expect(results[0]?.title).toBe('Raycast-notes.md');
+  });
 });

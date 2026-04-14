@@ -89,7 +89,7 @@ export function pathAutocompleteSuffix(input: string, context: PathAutocompleteC
   }
 
   const current = input.slice(context.replaceStart, context.replaceEnd);
-  if (!candidate.replacementText.startsWith(current)) {
+  if (!candidate.replacementText.toLowerCase().startsWith(current.toLowerCase())) {
     return '';
   }
 

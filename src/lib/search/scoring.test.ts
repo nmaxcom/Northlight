@@ -93,4 +93,14 @@ describe('baseSearchScore', () => {
 
     expect(app).toBeGreaterThan(0);
   });
+
+  it('keeps leading-dot filenames searchable as literal names', () => {
+    const score = baseSearchScore('.env', {
+      name: '.env',
+      path: '/Users/nm4/STUFF/Coding/Northlight/.env',
+      kind: 'file'
+    });
+
+    expect(score).toBeGreaterThan(0);
+  });
 });

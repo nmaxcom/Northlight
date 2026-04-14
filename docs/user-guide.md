@@ -76,6 +76,7 @@ Current built-in capabilities:
 - A trailing slash such as `lw/` is parsed as a folder refiner and appears as a `folder` chip inside the search box, to the right of the typed query.
 - Scope refiners let you narrow broad queries with `in:downloads`, `in:documents`, `in:desktop`, `in:library`, `in:home`, or a concrete path such as `in:/Users/nm4/STUFF/Coding/Northlight` or `in:~/Documents`.
 - Path-like input now autocompletes one folder segment at a time in the launcher, both for direct path typing and inside `in:`.
+- Path autocomplete is casing-tolerant while you type, so lowercase input such as `/app` can still suggest and accept `/Applications/` with the real filesystem casing.
 - `Tab` accepts the active folder or path-alias completion, `Up` / `Down` choose between ambiguous candidates, and `Escape` dismisses the completion list without clearing what you typed.
 - Saved path aliases participate in that same completion model inside explicit path contexts such as `in:Northlight`.
 - When multiple path completions are visible, Northlight keeps them in a compact single-line list with internal scroll and shows the active candidate's full path only once as contextual detail.

@@ -51,6 +51,55 @@ export const fileFixtures: LocalSearchItem[] = [
     score: 0
   },
   {
+    id: '/Users/nm4/Desktop/Invoice-April.pdf',
+    path: '/Users/nm4/Desktop/Invoice-April.pdf',
+    name: 'Invoice-April.pdf',
+    kind: 'file',
+    score: 0
+  },
+  {
+    id: '/Users/nm4/STUFF/Coding/Northlight/.env',
+    path: '/Users/nm4/STUFF/Coding/Northlight/.env',
+    name: '.env',
+    kind: 'file',
+    score: 0
+  },
+  {
+    id: '/Users/nm4/STUFF/Coding/Northlight/.github',
+    path: '/Users/nm4/STUFF/Coding/Northlight/.github',
+    name: '.github',
+    kind: 'folder',
+    score: 0
+  },
+  {
+    id: '/Users/nm4/STUFF/Coding/Northlight/.github/workflows/ci.yml',
+    path: '/Users/nm4/STUFF/Coding/Northlight/.github/workflows/ci.yml',
+    name: 'ci.yml',
+    kind: 'file',
+    score: 0
+  },
+  {
+    id: '/Users/nm4/Library/Application Support/HiddenGallery/ghost-image.png',
+    path: '/Users/nm4/Library/Application Support/HiddenGallery/ghost-image.png',
+    name: 'ghost-image.png',
+    kind: 'file',
+    score: 0
+  },
+  {
+    id: '/Users/nm4/Library/Application Support/HiddenGallery/session-cache.json',
+    path: '/Users/nm4/Library/Application Support/HiddenGallery/session-cache.json',
+    name: 'session-cache.json',
+    kind: 'file',
+    score: 0
+  },
+  {
+    id: '/Users/nm4/Projects/Launchers/.raycastrc',
+    path: '/Users/nm4/Projects/Launchers/.raycastrc',
+    name: '.raycastrc',
+    kind: 'file',
+    score: 0
+  },
+  {
     id: '/Users/nm4/Applications/Figma.app',
     path: '/Users/nm4/Applications/Figma.app',
     name: 'Figma.app',

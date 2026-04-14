@@ -48,6 +48,14 @@ describe('pathAutocomplete helpers', () => {
     expect(pathAutocompleteSuffix('/Users/nm4/ST', state.context, candidate)).toBe('UFF/');
   });
 
+  it('keeps path completion visible when the typed path casing differs from the real folder casing', () => {
+    const state = buildPathAutocompleteState('/app', '/app'.length, aliases, ['/Applications'], '/Users/nm4');
+    const candidate = state.candidates[0];
+
+    expect(candidate.replacementText).toBe('/Applications/');
+    expect(pathAutocompleteSuffix('/app', state.context, candidate)).toBe('lications/');
+  });
+
   it('surfaces aliases first inside in: contexts', () => {
     const state = buildPathAutocompleteState('in:nor', 'in:nor'.length, aliases, folderPaths, '/Users/nm4');
 

@@ -1,7 +1,15 @@
 import type { LocalSearchItem } from './types';
 
 function stripFileDecorations(value: string) {
-  return value.replace(/\.app$/i, '').replace(/\.[^.]+$/i, '');
+  const withoutApp = value.replace(/\.app$/i, '');
+  const basename = withoutApp.split('/').at(-1) ?? withoutApp;
+  const extensionStart = basename.lastIndexOf('.');
+
+  if (extensionStart <= 0) {
+    return withoutApp;
+  }
+
+  return withoutApp.slice(0, withoutApp.length - (basename.length - extensionStart));
 }
 
 function splitTokens(value: string) {
