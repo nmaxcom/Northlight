@@ -52,6 +52,7 @@ let registeredLauncherShortcut: string | null = null;
 let launcherSettingsCache = getLauncherStateSnapshot().settings;
 let blurSuppressionDeadline = 0;
 let pendingLauncherPositionSave: ReturnType<typeof setTimeout> | null = null;
+let launcherDevToolsPinned = false;
 const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 let mainRequestSequence = 0;
@@ -374,8 +375,63 @@ async function showLauncher() {
   mainWindow.webContents.send('launcher:visibility-changed', true);
 }
 
-function hideLauncher() {
+function broadcastDevToolsPinnedChanged() {
+  const windows = [mainWindow, settingsWindow].filter((candidate): candidate is BrowserWindow => Boolean(candidate && !candidate.isDestroyed()));
+  for (const win of windows) {
+    win.webContents.send('launcher:devtools-pinned-changed', launcherDevToolsPinned);
+  }
+}
+
+function setLauncherDevToolsPinned(nextPinned: boolean) {
+  if (launcherDevToolsPinned === nextPinned) {
+    return nextPinned;
+  }
+
+  launcherDevToolsPinned = nextPinned;
+  broadcastDevToolsPinnedChanged();
+  return launcherDevToolsPinned;
+}
+
+function closeLauncherDevTools() {
+  if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.webContents.isDevToolsOpened()) {
+    return;
+  }
+
+  mainWindow.webContents.closeDevTools();
+}
+
+function openLauncherDevTools() {
   if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  if (mainWindow.webContents.isDevToolsOpened()) {
+    return;
+  }
+
+  mainWindow.webContents.openDevTools({ mode: 'detach', activate: true });
+}
+
+async function toggleLauncherDevToolsPinned() {
+  if (launcherDevToolsPinned) {
+    setLauncherDevToolsPinned(false);
+    closeLauncherDevTools();
+    return false;
+  }
+
+  await createWindow();
+  await showLauncher();
+  setLauncherDevToolsPinned(true);
+  openLauncherDevTools();
+  return true;
+}
+
+function hideLauncher(force = false) {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  if (launcherDevToolsPinned && !force) {
     return;
   }
 
@@ -446,6 +502,12 @@ async function createWindow() {
     console[label](`[renderer] ${message}`);
   });
 
+  mainWindow.webContents.on('devtools-closed', () => {
+    if (launcherDevToolsPinned) {
+      setLauncherDevToolsPinned(false);
+    }
+  });
+
   mainWindow.once('ready-to-show', () => {
     if (pendingShow) {
       void showLauncher();
@@ -454,6 +516,7 @@ async function createWindow() {
 
   mainWindow.on('closed', () => {
     clearPendingLauncherPositionSave();
+    setLauncherDevToolsPinned(false);
     mainWindow = null;
     rendererReady = false;
     pendingShow = false;
@@ -471,6 +534,10 @@ async function createWindow() {
 
   mainWindow.on('blur', () => {
     persistLauncherPosition();
+
+    if (launcherDevToolsPinned) {
+      return;
+    }
 
     if (!mainWindow || !shouldHideLauncherOnBlur(mainWindow.isVisible(), Date.now(), blurSuppressionDeadline)) {
       return;
@@ -705,23 +772,7 @@ function registerShortcuts() {
   });
 
   const devtoolsRegistered = globalShortcut.register(DEVTOOLS_SHORTCUT, () => {
-    const candidateWindows = [mainWindow, settingsWindow].filter(
-      (candidate): candidate is BrowserWindow => Boolean(candidate && !candidate.isDestroyed())
-    );
-    const targetWindow =
-      candidateWindows.find((candidate) => candidate.isFocused()) ??
-      candidateWindows.find((candidate) => candidate.isVisible());
-
-    if (!targetWindow) {
-      return;
-    }
-
-    if (targetWindow.webContents.isDevToolsOpened()) {
-      targetWindow.webContents.closeDevTools();
-      return;
-    }
-
-    targetWindow.webContents.openDevTools({ mode: 'detach', activate: true });
+    void toggleLauncherDevToolsPinned();
   });
 
   if (!devtoolsRegistered) {
@@ -746,7 +797,7 @@ function registerLauncherShortcut(accelerator: string) {
     }
 
     if (mainWindow.isVisible()) {
-      mainWindow.hide();
+      hideLauncher();
       return;
     }
 
@@ -989,6 +1040,8 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle('launcher:get-scope-insights', async () => getScopeInsights());
   ipcMain.handle('launcher:get-effective-shortcut', async () => resolveLauncherShortcut(launcherSettingsCache.launcherHotkey, app.isPackaged));
+  ipcMain.handle('launcher:get-devtools-pinned', async () => launcherDevToolsPinned);
+  ipcMain.handle('launcher:toggle-devtools-pinned', async () => toggleLauncherDevToolsPinned());
   ipcMain.handle('launcher:get-trace-state', async () => getTraceState());
   ipcMain.handle('launcher:set-trace-enabled', async (_event, enabled: boolean) => setTraceEnabled(enabled));
   ipcMain.handle('launcher:trace-event', async (_event, event) => {

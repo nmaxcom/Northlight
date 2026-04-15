@@ -307,6 +307,12 @@ export const launcherRuntime = {
   getEffectiveShortcut() {
     return window.launcher?.getEffectiveShortcut?.() ?? Promise.resolve(resolveLauncherShortcut(settingsCache.launcherHotkey, false));
   },
+  getDevToolsPinned() {
+    return window.launcher?.getDevToolsPinned?.() ?? Promise.resolve(false);
+  },
+  toggleDevToolsPinned() {
+    return window.launcher?.toggleDevToolsPinned?.() ?? Promise.resolve(false);
+  },
   saveSettings(settings: LauncherSettings) {
     settingsCache = settings;
     return window.launcher?.saveSettings?.(settings).then((nextSettings) => {
@@ -386,6 +392,13 @@ export const launcherRuntime = {
     }
 
     return window.launcher.onVisibilityChanged(callback);
+  },
+  onDevToolsPinnedChanged(callback: (pinned: boolean) => void) {
+    if (!window.launcher?.onDevToolsPinnedChanged) {
+      return () => {};
+    }
+
+    return window.launcher.onDevToolsPinnedChanged(callback);
   },
   getCachedLocal(query: string, scopePath?: string | null, intent?: SearchIntent | null) {
     return searchCachedLocal(query, scopePath, intent);

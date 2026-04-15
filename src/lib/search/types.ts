@@ -384,6 +384,8 @@ export type LauncherBridge = {
   getSettings: () => Promise<LauncherSettings>;
   getPathAutocomplete?: (input: string, caret: number) => Promise<PathAutocompleteState>;
   getEffectiveShortcut?: () => Promise<string>;
+  getDevToolsPinned?: () => Promise<boolean>;
+  toggleDevToolsPinned?: () => Promise<boolean>;
   saveSettings: (settings: LauncherSettings) => Promise<LauncherSettings>;
   getSearchPerformance?: () => Promise<{
     samples: SearchPerformanceSample[];
@@ -408,6 +410,7 @@ export type LauncherBridge = {
   onSettingsChanged?: (callback: (settings: LauncherSettings) => void) => () => void;
   onIndexChanged?: (callback: () => void) => () => void;
   onVisibilityChanged?: (callback: (visible: boolean) => void) => () => void;
+  onDevToolsPinnedChanged?: (callback: (pinned: boolean) => void) => () => void;
   openPath: (path: string) => Promise<void>;
   revealPath: (path: string) => Promise<void>;
   openInTerminal: (path: string) => Promise<void>;

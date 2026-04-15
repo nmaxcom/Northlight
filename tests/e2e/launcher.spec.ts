@@ -265,6 +265,7 @@ test('shows the launcher design mockup on a black review background with a reali
   await expect(reviewFrame).toBeVisible();
   await expect(page.getByText('Exact launcher viewport: 1120×760.')).toBeVisible();
   await expect(page.locator('[data-launcher-role="theme-switch-value"]')).toHaveText('Sandbox');
+  await expect(page.locator('[data-launcher-role="devtools-toggle-value"]')).toHaveText('Off');
   await expect(page.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');
   await expect(page.locator('[data-launcher-role="status-badge"]').nth(1)).toHaveText(/\d{1,3}(,\d{3})* indexed/);
   await expect(page.getByText(/^hybrid$/i)).toHaveCount(0);
@@ -291,6 +292,10 @@ test('shows the launcher design mockup on a black review background with a reali
     expect(Math.round(frameBox.width)).toBe(1120);
     expect(Math.round(frameBox.height)).toBe(760);
   }
+
+  await page.locator('[data-launcher-role="devtools-toggle"]').click();
+  await expect(page.locator('[data-launcher-role="devtools-toggle"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-launcher-role="devtools-toggle-value"]')).toHaveText('On');
 });
 
 test('renders pane icons for Wi-Fi and Privacy settings commands', async ({ page }) => {

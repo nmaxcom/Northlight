@@ -33,6 +33,8 @@ const launcherApi = {
     ipcRenderer.invoke('launcher:record-search-performance', sample),
   getScopeInsights: (): Promise<ScopePerformanceInsight[]> => ipcRenderer.invoke('launcher:get-scope-insights'),
   getEffectiveShortcut: () => ipcRenderer.invoke('launcher:get-effective-shortcut'),
+  getDevToolsPinned: () => ipcRenderer.invoke('launcher:get-devtools-pinned'),
+  toggleDevToolsPinned: () => ipcRenderer.invoke('launcher:toggle-devtools-pinned'),
   saveSettings: (settings: LauncherSettings) => ipcRenderer.invoke('launcher:save-settings', settings),
   getClipboardHistory: () => ipcRenderer.invoke('launcher:get-clipboard-history'),
   openSettings: () => ipcRenderer.invoke('launcher:open-settings'),
@@ -69,6 +71,11 @@ const launcherApi = {
     const listener = (_event: unknown, visible: boolean) => callback(visible);
     ipcRenderer.on('launcher:visibility-changed', listener);
     return () => ipcRenderer.removeListener('launcher:visibility-changed', listener);
+  },
+  onDevToolsPinnedChanged: (callback: (pinned: boolean) => void) => {
+    const listener = (_event: unknown, pinned: boolean) => callback(pinned);
+    ipcRenderer.on('launcher:devtools-pinned-changed', listener);
+    return () => ipcRenderer.removeListener('launcher:devtools-pinned-changed', listener);
   }
 };
 

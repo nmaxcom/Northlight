@@ -36,6 +36,7 @@ export type LauncherBarMockState = {
   results: LauncherResult[];
   selectedIndex?: number;
   pointerActive?: boolean;
+  isDevToolsPinned?: boolean;
   isResolving?: boolean;
   isActionsOpen?: boolean;
   actionQuery?: string;
@@ -205,6 +206,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const [pathAliasName, setPathAliasName] = useState('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(mockState?.settings.quickLookStartsOpen ?? settings.quickLookStartsOpen);
   const [isPointerActive, setIsPointerActive] = useState(Boolean(mockState?.pointerActive));
+  const [isDevToolsPinned, setIsDevToolsPinned] = useState(Boolean(mockState?.isDevToolsPinned));
   const [status, setStatus] = useState<LauncherStatus>({
     appVersion: mockState?.status.appVersion ?? '0.8.9',
     indexEntryCount: mockState?.status.indexEntryCount ?? 0,
@@ -571,14 +573,23 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     });
 
     void launcherRuntime.getClipboardHistory();
+    void launcherRuntime.getDevToolsPinned().then((nextPinned) => {
+      if (!cancelled) {
+        setIsDevToolsPinned(nextPinned);
+      }
+    });
 
     const unsubscribe = launcherRuntime.onSettingsChanged((nextSettings) => {
       setSettings(nextSettings);
+    });
+    const unsubscribeDevToolsPinned = launcherRuntime.onDevToolsPinnedChanged((nextPinned) => {
+      setIsDevToolsPinned(nextPinned);
     });
 
     return () => {
       cancelled = true;
       unsubscribe();
+      unsubscribeDevToolsPinned();
     };
   }, [isMock, traceEvent]);
 
@@ -1219,6 +1230,22 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     focusActiveInput();
   }, [focusActiveInput, isMock]);
 
+  const toggleDevToolsPinned = useCallback(() => {
+    if (isMock) {
+      setIsDevToolsPinned((current) => !current);
+      focusActiveInput();
+      return;
+    }
+
+    void launcherRuntime
+      .toggleDevToolsPinned()
+      .then((nextPinned) => {
+        setIsDevToolsPinned(nextPinned);
+        focusActiveInput();
+      })
+      .catch(() => undefined);
+  }, [focusActiveInput, isMock]);
+
   useEffect(() => {
     if (isMock) {
       return;
@@ -1442,6 +1469,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       data-launcher-role="window"
       data-launcher-theme={activeTheme.id}
       data-pointer-active={isPointerActive ? 'true' : 'false'}
+      data-devtools-pinned={isDevToolsPinned ? 'true' : 'false'}
       style={getLauncherThemeStyle(activeTheme.id)}
       onFocusCapture={(event) => {
         const target = event.target as HTMLElement;
@@ -1496,6 +1524,21 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
             >
               <span className={classes.themeSwitchLabel} data-launcher-role="theme-switch-label">Theme</span>
               <span className={classes.themeSwitchValue} data-launcher-role="theme-switch-value">{activeTheme.label}</span>
+            </button>
+            <button
+              type="button"
+              className={`${classes.themeSwitch} ${isDevToolsPinned ? classes.themeSwitchActive : ''}`}
+              data-launcher-role="devtools-toggle"
+              aria-label={`Toggle launcher inspect mode. Inspect mode ${isDevToolsPinned ? 'on' : 'off'}`}
+              aria-pressed={isDevToolsPinned}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                focusActiveInput();
+              }}
+              onClick={toggleDevToolsPinned}
+            >
+              <span className={classes.themeSwitchLabel} data-launcher-role="devtools-toggle-label">Inspect</span>
+              <span className={classes.themeSwitchValue} data-launcher-role="devtools-toggle-value">{isDevToolsPinned ? 'On' : 'Off'}</span>
             </button>
           </div>
           <div className={classes.status} data-launcher-role="status">

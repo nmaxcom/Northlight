@@ -9891,6 +9891,14 @@
       var _a, _b;
       return ((_b = (_a = window.launcher) == null ? void 0 : _a.getEffectiveShortcut) == null ? void 0 : _b.call(_a)) ?? Promise.resolve(resolveLauncherShortcut(settingsCache.launcherHotkey));
     },
+    getDevToolsPinned() {
+      var _a, _b;
+      return ((_b = (_a = window.launcher) == null ? void 0 : _a.getDevToolsPinned) == null ? void 0 : _b.call(_a)) ?? Promise.resolve(false);
+    },
+    toggleDevToolsPinned() {
+      var _a, _b;
+      return ((_b = (_a = window.launcher) == null ? void 0 : _a.toggleDevToolsPinned) == null ? void 0 : _b.call(_a)) ?? Promise.resolve(false);
+    },
     saveSettings(settings2) {
       var _a, _b;
       settingsCache = settings2;
@@ -9977,6 +9985,14 @@
         };
       }
       return window.launcher.onVisibilityChanged(callback);
+    },
+    onDevToolsPinnedChanged(callback) {
+      var _a;
+      if (!((_a = window.launcher) == null ? void 0 : _a.onDevToolsPinnedChanged)) {
+        return () => {
+        };
+      }
+      return window.launcher.onDevToolsPinnedChanged(callback);
     },
     getCachedLocal(query, scopePath, intent) {
       return searchCachedLocal(query, scopePath, intent);
@@ -17072,97 +17088,98 @@
       ...localResults
     ].sort((a, b) => b.score - a.score);
   }
-  const window$1 = "_window_1ford_1";
-  const shell = "_shell_1ford_19";
-  const header = "_header_1ford_29";
-  const headerLeft = "_headerLeft_1ford_38";
-  const brand = "_brand_1ford_44";
-  const themeSwitch = "_themeSwitch_1ford_51";
-  const themeSwitchLabel = "_themeSwitchLabel_1ford_71";
-  const themeSwitchValue = "_themeSwitchValue_1ford_79";
-  const status$1 = "_status_1ford_85";
-  const badge = "_badge_1ford_92";
-  const readyBadge = "_readyBadge_1ford_107";
-  const search = "_search_1ford_112";
-  const searchCenter = "_searchCenter_1ford_127";
-  const searchInputWrap = "_searchInputWrap_1ford_135";
-  const searchSuggestion = "_searchSuggestion_1ford_141";
-  const searchSuggestionTyped = "_searchSuggestionTyped_1ford_155";
-  const refinerBar = "_refinerBar_1ford_159";
-  const refinerChip = "_refinerChip_1ford_170";
-  const searchIcon = "_searchIcon_1ford_186";
-  const searchArrow = "_searchArrow_1ford_187";
-  const searchInput = "_searchInput_1ford_135";
-  const searchInputWithRefiners = "_searchInputWithRefiners_1ford_212";
-  const versionBadge = "_versionBadge_1ford_222";
-  const body = "_body_1ford_226";
-  const bodyWithPreview = "_bodyWithPreview_1ford_234";
-  const resultsColumn = "_resultsColumn_1ford_238";
-  const pathCompletionPanel = "_pathCompletionPanel_1ford_245";
-  const pathCompletionRow = "_pathCompletionRow_1ford_258";
-  const pathCompletionCopy = "_pathCompletionCopy_1ford_282";
-  const pathCompletionLabel = "_pathCompletionLabel_1ford_288";
-  const pathCompletionActiveDetail = "_pathCompletionActiveDetail_1ford_296";
-  const result$1 = "_result_1ford_238";
-  const results$1 = "_results_1ford_238";
-  const actionList = "_actionList_1ford_398";
-  const previewBody = "_previewBody_1ford_399";
-  const emptyState = "_emptyState_1ford_412";
-  const actionsTrigger = "_actionsTrigger_1ford_458";
-  const actionRow = "_actionRow_1ford_460";
-  const actionSearch = "_actionSearch_1ford_464";
-  const resultIcon = "_resultIcon_1ford_470";
-  const resultIconImageBacked = "_resultIconImageBacked_1ford_482";
-  const resultIconImage = "_resultIconImage_1ford_482";
-  const iconFolder = "_iconFolder_1ford_499";
-  const iconApp = "_iconApp_1ford_503";
-  const iconFile = "_iconFile_1ford_507";
-  const iconConversion = "_iconConversion_1ford_511";
-  const iconClipboard = "_iconClipboard_1ford_515";
-  const iconSnippet = "_iconSnippet_1ford_519";
-  const iconCommand = "_iconCommand_1ford_523";
-  const iconAlias = "_iconAlias_1ford_527";
-  const resultCopy = "_resultCopy_1ford_531";
-  const resultTitle = "_resultTitle_1ford_535";
-  const resultSubtitle = "_resultSubtitle_1ford_541";
-  const resultKind = "_resultKind_1ford_551";
-  const previewPane = "_previewPane_1ford_565";
-  const previewHeader = "_previewHeader_1ford_575";
-  const previewEyebrow = "_previewEyebrow_1ford_584";
-  const previewContent = "_previewContent_1ford_592";
-  const previewTitle = "_previewTitle_1ford_601";
-  const previewSubtitle = "_previewSubtitle_1ford_609";
-  const previewMediaFrame = "_previewMediaFrame_1ford_646";
-  const previewMediaImage = "_previewMediaImage_1ford_658";
-  const previewMeta = "_previewMeta_1ford_665";
-  const previewMetaRow = "_previewMetaRow_1ford_671";
-  const previewMetaLabel = "_previewMetaLabel_1ford_682";
-  const previewMetaValue = "_previewMetaValue_1ford_690";
-  const previewPlaceholder = "_previewPlaceholder_1ford_699";
-  const footer = "_footer_1ford_708";
-  const footerLeft = "_footerLeft_1ford_718";
-  const footerRight = "_footerRight_1ford_719";
-  const footerText = "_footerText_1ford_729";
-  const footerTextStrong = "_footerTextStrong_1ford_734";
-  const kbd = "_kbd_1ford_739";
-  const actionsPanel = "_actionsPanel_1ford_778";
-  const actionHeader = "_actionHeader_1ford_792";
-  const actionHeaderTitle = "_actionHeaderTitle_1ford_797";
-  const actionHeaderSubtitle = "_actionHeaderSubtitle_1ford_802";
-  const aliasBuilder = "_aliasBuilder_1ford_808";
-  const aliasBuilderCopy = "_aliasBuilderCopy_1ford_816";
-  const aliasBuilderControls = "_aliasBuilderControls_1ford_822";
-  const aliasBuilderInput = "_aliasBuilderInput_1ford_827";
-  const aliasBuilderButton = "_aliasBuilderButton_1ford_840";
-  const actionGroup = "_actionGroup_1ford_864";
-  const actionGroupLabel = "_actionGroupLabel_1ford_874";
-  const actionCopy = "_actionCopy_1ford_900";
-  const actionLabel = "_actionLabel_1ford_913";
-  const actionRowHint = "_actionRowHint_1ford_918";
-  const actionShortcuts = "_actionShortcuts_1ford_924";
-  const actionEmpty = "_actionEmpty_1ford_952";
-  const feedback = "_feedback_1ford_960";
-  const feedbackError = "_feedbackError_1ford_976";
+  const window$1 = "_window_1rq6k_1";
+  const shell = "_shell_1rq6k_19";
+  const header = "_header_1rq6k_29";
+  const headerLeft = "_headerLeft_1rq6k_38";
+  const brand = "_brand_1rq6k_44";
+  const themeSwitch = "_themeSwitch_1rq6k_51";
+  const themeSwitchActive = "_themeSwitchActive_1rq6k_71";
+  const themeSwitchLabel = "_themeSwitchLabel_1rq6k_76";
+  const themeSwitchValue = "_themeSwitchValue_1rq6k_84";
+  const status$1 = "_status_1rq6k_90";
+  const badge = "_badge_1rq6k_97";
+  const readyBadge = "_readyBadge_1rq6k_112";
+  const search = "_search_1rq6k_117";
+  const searchCenter = "_searchCenter_1rq6k_132";
+  const searchInputWrap = "_searchInputWrap_1rq6k_140";
+  const searchSuggestion = "_searchSuggestion_1rq6k_146";
+  const searchSuggestionTyped = "_searchSuggestionTyped_1rq6k_160";
+  const refinerBar = "_refinerBar_1rq6k_164";
+  const refinerChip = "_refinerChip_1rq6k_175";
+  const searchIcon = "_searchIcon_1rq6k_191";
+  const searchArrow = "_searchArrow_1rq6k_192";
+  const searchInput = "_searchInput_1rq6k_140";
+  const searchInputWithRefiners = "_searchInputWithRefiners_1rq6k_217";
+  const versionBadge = "_versionBadge_1rq6k_227";
+  const body = "_body_1rq6k_231";
+  const bodyWithPreview = "_bodyWithPreview_1rq6k_239";
+  const resultsColumn = "_resultsColumn_1rq6k_243";
+  const pathCompletionPanel = "_pathCompletionPanel_1rq6k_250";
+  const pathCompletionRow = "_pathCompletionRow_1rq6k_263";
+  const pathCompletionCopy = "_pathCompletionCopy_1rq6k_287";
+  const pathCompletionLabel = "_pathCompletionLabel_1rq6k_293";
+  const pathCompletionActiveDetail = "_pathCompletionActiveDetail_1rq6k_301";
+  const result$1 = "_result_1rq6k_243";
+  const results$1 = "_results_1rq6k_243";
+  const actionList = "_actionList_1rq6k_403";
+  const previewBody = "_previewBody_1rq6k_404";
+  const emptyState = "_emptyState_1rq6k_417";
+  const actionsTrigger = "_actionsTrigger_1rq6k_463";
+  const actionRow = "_actionRow_1rq6k_465";
+  const actionSearch = "_actionSearch_1rq6k_469";
+  const resultIcon = "_resultIcon_1rq6k_475";
+  const resultIconImageBacked = "_resultIconImageBacked_1rq6k_487";
+  const resultIconImage = "_resultIconImage_1rq6k_487";
+  const iconFolder = "_iconFolder_1rq6k_504";
+  const iconApp = "_iconApp_1rq6k_508";
+  const iconFile = "_iconFile_1rq6k_512";
+  const iconConversion = "_iconConversion_1rq6k_516";
+  const iconClipboard = "_iconClipboard_1rq6k_520";
+  const iconSnippet = "_iconSnippet_1rq6k_524";
+  const iconCommand = "_iconCommand_1rq6k_528";
+  const iconAlias = "_iconAlias_1rq6k_532";
+  const resultCopy = "_resultCopy_1rq6k_536";
+  const resultTitle = "_resultTitle_1rq6k_540";
+  const resultSubtitle = "_resultSubtitle_1rq6k_546";
+  const resultKind = "_resultKind_1rq6k_556";
+  const previewPane = "_previewPane_1rq6k_570";
+  const previewHeader = "_previewHeader_1rq6k_580";
+  const previewEyebrow = "_previewEyebrow_1rq6k_589";
+  const previewContent = "_previewContent_1rq6k_597";
+  const previewTitle = "_previewTitle_1rq6k_606";
+  const previewSubtitle = "_previewSubtitle_1rq6k_614";
+  const previewMediaFrame = "_previewMediaFrame_1rq6k_651";
+  const previewMediaImage = "_previewMediaImage_1rq6k_663";
+  const previewMeta = "_previewMeta_1rq6k_670";
+  const previewMetaRow = "_previewMetaRow_1rq6k_676";
+  const previewMetaLabel = "_previewMetaLabel_1rq6k_687";
+  const previewMetaValue = "_previewMetaValue_1rq6k_695";
+  const previewPlaceholder = "_previewPlaceholder_1rq6k_704";
+  const footer = "_footer_1rq6k_713";
+  const footerLeft = "_footerLeft_1rq6k_723";
+  const footerRight = "_footerRight_1rq6k_724";
+  const footerText = "_footerText_1rq6k_734";
+  const footerTextStrong = "_footerTextStrong_1rq6k_739";
+  const kbd = "_kbd_1rq6k_744";
+  const actionsPanel = "_actionsPanel_1rq6k_783";
+  const actionHeader = "_actionHeader_1rq6k_797";
+  const actionHeaderTitle = "_actionHeaderTitle_1rq6k_802";
+  const actionHeaderSubtitle = "_actionHeaderSubtitle_1rq6k_807";
+  const aliasBuilder = "_aliasBuilder_1rq6k_813";
+  const aliasBuilderCopy = "_aliasBuilderCopy_1rq6k_821";
+  const aliasBuilderControls = "_aliasBuilderControls_1rq6k_827";
+  const aliasBuilderInput = "_aliasBuilderInput_1rq6k_832";
+  const aliasBuilderButton = "_aliasBuilderButton_1rq6k_845";
+  const actionGroup = "_actionGroup_1rq6k_869";
+  const actionGroupLabel = "_actionGroupLabel_1rq6k_879";
+  const actionCopy = "_actionCopy_1rq6k_905";
+  const actionLabel = "_actionLabel_1rq6k_918";
+  const actionRowHint = "_actionRowHint_1rq6k_923";
+  const actionShortcuts = "_actionShortcuts_1rq6k_929";
+  const actionEmpty = "_actionEmpty_1rq6k_957";
+  const feedback = "_feedback_1rq6k_965";
+  const feedbackError = "_feedbackError_1rq6k_981";
   const classes = {
     window: window$1,
     shell,
@@ -17170,6 +17187,7 @@
     headerLeft,
     brand,
     themeSwitch,
+    themeSwitchActive,
     themeSwitchLabel,
     themeSwitchValue,
     status: status$1,
@@ -17392,6 +17410,7 @@
     const [pathAliasName, setPathAliasName] = reactExports.useState("");
     const [isPreviewOpen, setIsPreviewOpen] = reactExports.useState((mockState2 == null ? void 0 : mockState2.settings.quickLookStartsOpen) ?? settings2.quickLookStartsOpen);
     const [isPointerActive, setIsPointerActive] = reactExports.useState(Boolean(mockState2 == null ? void 0 : mockState2.pointerActive));
+    const [isDevToolsPinned, setIsDevToolsPinned] = reactExports.useState(Boolean(mockState2 == null ? void 0 : mockState2.isDevToolsPinned));
     const [status2, setStatus] = reactExports.useState({
       appVersion: (mockState2 == null ? void 0 : mockState2.status.appVersion) ?? "0.8.9",
       indexEntryCount: (mockState2 == null ? void 0 : mockState2.status.indexEntryCount) ?? 0,
@@ -17698,12 +17717,21 @@
         }
       });
       void launcherRuntime.getClipboardHistory();
+      void launcherRuntime.getDevToolsPinned().then((nextPinned) => {
+        if (!cancelled) {
+          setIsDevToolsPinned(nextPinned);
+        }
+      });
       const unsubscribe = launcherRuntime.onSettingsChanged((nextSettings) => {
         setSettings(nextSettings);
+      });
+      const unsubscribeDevToolsPinned = launcherRuntime.onDevToolsPinnedChanged((nextPinned) => {
+        setIsDevToolsPinned(nextPinned);
       });
       return () => {
         cancelled = true;
         unsubscribe();
+        unsubscribeDevToolsPinned();
       };
     }, [isMock, traceEvent]);
     reactExports.useEffect(() => {
@@ -18255,6 +18283,17 @@
       });
       focusActiveInput();
     }, [focusActiveInput, isMock]);
+    const toggleDevToolsPinned = reactExports.useCallback(() => {
+      if (isMock) {
+        setIsDevToolsPinned((current) => !current);
+        focusActiveInput();
+        return;
+      }
+      void launcherRuntime.toggleDevToolsPinned().then((nextPinned) => {
+        setIsDevToolsPinned(nextPinned);
+        focusActiveInput();
+      }).catch(() => void 0);
+    }, [focusActiveInput, isMock]);
     reactExports.useEffect(() => {
       if (isMock) {
         return;
@@ -18445,6 +18484,7 @@
         "data-launcher-role": "window",
         "data-launcher-theme": activeTheme.id,
         "data-pointer-active": isPointerActive ? "true" : "false",
+        "data-devtools-pinned": isDevToolsPinned ? "true" : "false",
         style: getLauncherThemeStyle(activeTheme.id),
         onFocusCapture: (event) => {
           const target = event.target;
@@ -18486,6 +18526,25 @@
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.themeSwitchLabel, "data-launcher-role": "theme-switch-label", children: "Theme" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.themeSwitchValue, "data-launcher-role": "theme-switch-value", children: activeTheme.label })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "button",
+                {
+                  type: "button",
+                  className: `${classes.themeSwitch} ${isDevToolsPinned ? classes.themeSwitchActive : ""}`,
+                  "data-launcher-role": "devtools-toggle",
+                  "aria-label": `Toggle launcher inspect mode. Inspect mode ${isDevToolsPinned ? "on" : "off"}`,
+                  "aria-pressed": isDevToolsPinned,
+                  onMouseDown: (event) => {
+                    event.preventDefault();
+                    focusActiveInput();
+                  },
+                  onClick: toggleDevToolsPinned,
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.themeSwitchLabel, "data-launcher-role": "devtools-toggle-label", children: "Inspect" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.themeSwitchValue, "data-launcher-role": "devtools-toggle-value", children: isDevToolsPinned ? "On" : "Off" })
                   ]
                 }
               )

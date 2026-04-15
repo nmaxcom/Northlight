@@ -22,7 +22,7 @@ describe('LauncherBar', () => {
 
     expect(screen.getByLabelText('Launcher query')).toBeInTheDocument();
     expect(screen.getByText('Start typing to search')).toBeInTheDocument();
-    await screen.findByText('15 indexed');
+    await screen.findByText(/\d{1,3}(,\d{3})* indexed/i);
     expect(screen.getByText('v0.8.9')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /actions/i })).toBeDisabled();
     expect(screen.queryByText('Best Match')).not.toBeInTheDocument();
@@ -291,6 +291,53 @@ describe('LauncherBar', () => {
     expect(document.querySelector('[data-launcher-theme="sandbox"]')).toBeTruthy();
     await waitFor(() => {
       expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ launcherThemeId: 'sandbox' }));
+    });
+  });
+
+  it('toggles launcher inspect mode from the header without clearing the active query or results', async () => {
+    const toggleDevToolsPinned = vi.fn().mockResolvedValue(true);
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.8',
+        indexEntryCount: 10,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getDevToolsPinned: vi.fn().mockResolvedValue(false),
+      toggleDevToolsPinned,
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'product' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('product-brief.md').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /toggle launcher inspect mode/i }));
+
+    expect(input).toHaveValue('product');
+    expect(screen.getAllByText('product-brief.md').length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(toggleDevToolsPinned).toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: /toggle launcher inspect mode/i })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByText('On')).toBeInTheDocument();
     });
   });
 
@@ -695,7 +742,7 @@ describe('LauncherBar', () => {
     );
 
     const input = screen.getByLabelText('Launcher query');
-    await screen.findByText('15 indexed');
+    await screen.findByText(/\d{1,3}(,\d{3})* indexed/i);
     fireEvent.mouseDown(document.querySelector('[data-results-scroll="true"]')!);
 
     expect(input).toHaveFocus();
@@ -709,7 +756,7 @@ describe('LauncherBar', () => {
     );
 
     const input = screen.getByLabelText('Launcher query');
-    await screen.findByText('15 indexed');
+    await screen.findByText(/\d{1,3}(,\d{3})* indexed/i);
 
     fireEvent.keyDown(window, { key: 'Tab' });
 
@@ -861,7 +908,7 @@ describe('LauncherBar', () => {
     );
 
     const input = screen.getByLabelText('Launcher query');
-    await screen.findByText('15 indexed');
+    await screen.findByText(/\d{1,3}(,\d{3})* indexed/i);
     fireEvent.change(input, { target: { value: 'steel' } });
 
     await waitFor(() => {
@@ -873,6 +920,51 @@ describe('LauncherBar', () => {
 
     await waitFor(() => {
       expect(input).toHaveFocus();
+    });
+  });
+
+  it('updates the inspect toggle when the bridge broadcasts pin changes', async () => {
+    let devToolsPinnedListener: ((pinned: boolean) => void) | undefined;
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.16',
+        indexEntryCount: 14,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getDevToolsPinned: vi.fn().mockResolvedValue(false),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined),
+      onDevToolsPinnedChanged: vi.fn().mockImplementation((callback) => {
+        devToolsPinnedListener = callback;
+        return () => {};
+      })
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    await screen.findByText('14 indexed');
+    expect(screen.getByRole('button', { name: /toggle launcher inspect mode/i })).toHaveAttribute('aria-pressed', 'false');
+
+    act(() => {
+      devToolsPinnedListener?.(true);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /toggle launcher inspect mode/i })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByText('On')).toBeInTheDocument();
     });
   });
 

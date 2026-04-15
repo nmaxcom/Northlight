@@ -9380,6 +9380,14 @@
       var _a, _b;
       return ((_b = (_a = window.launcher) == null ? void 0 : _a.getEffectiveShortcut) == null ? void 0 : _b.call(_a)) ?? Promise.resolve(resolveLauncherShortcut(settingsCache.launcherHotkey));
     },
+    getDevToolsPinned() {
+      var _a, _b;
+      return ((_b = (_a = window.launcher) == null ? void 0 : _a.getDevToolsPinned) == null ? void 0 : _b.call(_a)) ?? Promise.resolve(false);
+    },
+    toggleDevToolsPinned() {
+      var _a, _b;
+      return ((_b = (_a = window.launcher) == null ? void 0 : _a.toggleDevToolsPinned) == null ? void 0 : _b.call(_a)) ?? Promise.resolve(false);
+    },
     saveSettings(settings) {
       var _a, _b;
       settingsCache = settings;
@@ -9466,6 +9474,14 @@
         };
       }
       return window.launcher.onVisibilityChanged(callback);
+    },
+    onDevToolsPinnedChanged(callback) {
+      var _a;
+      if (!((_a = window.launcher) == null ? void 0 : _a.onDevToolsPinnedChanged)) {
+        return () => {
+        };
+      }
+      return window.launcher.onDevToolsPinnedChanged(callback);
     },
     getCachedLocal(query, scopePath, intent) {
       return searchCachedLocal(query, scopePath, intent);

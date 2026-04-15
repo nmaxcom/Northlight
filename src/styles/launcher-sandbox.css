@@ -62,6 +62,25 @@
   background: var(--launcher-theme-switch-hover-bg);
 }
 
+[data-launcher-theme='sandbox'] [data-launcher-role='devtools-toggle'] {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: none;
+  background: var(--launcher-theme-switch-bg);
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  opacity: 0.4;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='devtools-toggle']:hover,
+[data-launcher-theme='sandbox'] [data-launcher-role='devtools-toggle'][aria-pressed='true'] {
+  background: var(--launcher-theme-switch-hover-bg);
+}
+
 [data-launcher-theme='sandbox'] [data-launcher-role='theme-switch-label'] {
   color: var(--launcher-theme-switch-label);
   font-size: 0.72rem;
@@ -71,6 +90,20 @@
 }
 
 [data-launcher-theme='sandbox'] [data-launcher-role='theme-switch-value'] {
+  color: var(--launcher-theme-switch-value);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='devtools-toggle-label'] {
+  color: var(--launcher-theme-switch-label);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+[data-launcher-theme='sandbox'] [data-launcher-role='devtools-toggle-value'] {
   color: var(--launcher-theme-switch-value);
   font-size: 0.8rem;
   font-weight: 700;
