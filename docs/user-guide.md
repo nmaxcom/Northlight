@@ -45,6 +45,7 @@ Current built-in capabilities:
 - The top-right status area shows the app version, the exact current catalog count, and the current readiness state.
 - Clicking the `Theme` chip in the launcher header toggles between the fixed `Original` theme and the duplicated `Sandbox` theme for fast visual comparison.
 - `Cmd+Shift+J` toggles detached Chromium DevTools for the Northlight window that is focused or visible, so you can inspect real launcher and settings CSS issues without leaving Electron.
+- The launcher header also exposes an `Inspect` toggle; turning it on opens detached DevTools for the launcher and keeps the launcher pinned visible until inspect mode is turned off again.
 - The launcher keeps a single active focus model: `Tab` and stray focus events do not move focus away from the active input for the current mode.
 - A persistent bottom bar always shows the primary action for the current result and an `Actions` trigger.
 - `Cmd+,` opens the Northlight settings window.
@@ -77,11 +78,13 @@ Current built-in capabilities:
 - Trailing intent refiners stay optional: Northlight first searches broadly, then lets you tighten the result type with suffixes like `/`, `img`, `.jpg`, `.pdf`, `.md`, `app`, `file`, or `folder`.
 - A trailing slash such as `lw/` is parsed as a folder refiner and appears as a `folder` chip inside the search box, to the right of the typed query.
 - Scope refiners let you narrow broad queries with `in:downloads`, `in:documents`, `in:desktop`, `in:library`, `in:home`, or a concrete path such as `in:/Users/nm4/STUFF/Coding/Northlight` or `in:~/Documents`.
+- `in:` works both at the start and at the end of the query, so `in:/Users/nm4/STUFF/Coding/Northlight product .md` and `product .md in:/Users/nm4/STUFF/Coding/Northlight` narrow to the same scope.
 - Path-like input now autocompletes one folder segment at a time in the launcher, both for direct path typing and inside `in:`.
 - Path autocomplete is casing-tolerant while you type, so lowercase input such as `/app` can still suggest and accept `/Applications/` with the real filesystem casing.
 - `Tab` accepts the active folder or path-alias completion, `Up` / `Down` choose between ambiguous candidates, and `Escape` dismisses the completion list without clearing what you typed.
 - Saved path aliases participate in that same completion model inside explicit path contexts such as `in:Northlight`.
 - When multiple path completions are visible, Northlight keeps them in a compact single-line list with internal scroll and shows the active candidate's full path only once as contextual detail.
+- Scoped search also applies to dotfiles and hidden-style support locations when you point `in:` at them explicitly, for example `in:/Users/nm4/STUFF/Coding/Northlight .env` or `ghost img in:/Users/nm4/Library/Application Support/HiddenGallery`.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
 - `today` means modified on the current local calendar day, `yesterday` means the previous local calendar day, and `recent` means the last 7 days by modification time.
 - Common macOS settings terms such as `settings`, `system preferences`, `keyboard`, `privacy`, `security`, `display`, `wifi`, `bluetooth`, `sound`, `notifications`, `wallpaper`, `battery`, `network`, `spotlight`, and `accessibility` surface direct settings commands in the root results.
