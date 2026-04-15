@@ -44,6 +44,7 @@ Current built-in capabilities:
 - Keyboard launch, typing, and live result refreshes now ignore the cursor's resting position until you actually move or use the mouse inside the launcher, so `Enter` keeps targeting the keyboard-selected result and stale hover highlights disappear as soon as you resume typing.
 - The top-right status area shows the app version, the exact current catalog count, and the current readiness state.
 - Clicking the `Theme` chip in the launcher header toggles between the fixed `Original` theme and the duplicated `Sandbox` theme for fast visual comparison.
+- `Cmd+Shift+J` toggles detached Chromium DevTools for the Northlight window that is focused or visible, so you can inspect real launcher and settings CSS issues without leaving Electron.
 - The launcher keeps a single active focus model: `Tab` and stray focus events do not move focus away from the active input for the current mode.
 - A persistent bottom bar always shows the primary action for the current result and an `Actions` trigger.
 - `Cmd+,` opens the Northlight settings window.

@@ -42,6 +42,7 @@ const WINDOW_WIDTH = 1120;
 const WINDOW_HEIGHT = 760;
 const SETTINGS_WINDOW_WIDTH = 980;
 const SETTINGS_WINDOW_HEIGHT = 760;
+const DEVTOOLS_SHORTCUT = 'CommandOrControl+Shift+J';
 
 let mainWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
@@ -702,6 +703,30 @@ function registerShortcuts() {
       });
     }
   });
+
+  const devtoolsRegistered = globalShortcut.register(DEVTOOLS_SHORTCUT, () => {
+    const candidateWindows = [mainWindow, settingsWindow].filter(
+      (candidate): candidate is BrowserWindow => Boolean(candidate && !candidate.isDestroyed())
+    );
+    const targetWindow =
+      candidateWindows.find((candidate) => candidate.isFocused()) ??
+      candidateWindows.find((candidate) => candidate.isVisible());
+
+    if (!targetWindow) {
+      return;
+    }
+
+    if (targetWindow.webContents.isDevToolsOpened()) {
+      targetWindow.webContents.closeDevTools();
+      return;
+    }
+
+    targetWindow.webContents.openDevTools({ mode: 'detach', activate: true });
+  });
+
+  if (!devtoolsRegistered) {
+    console.warn(`[main] failed to register devtools shortcut: ${DEVTOOLS_SHORTCUT}`);
+  }
 }
 
 function registerLauncherShortcut(accelerator: string) {
