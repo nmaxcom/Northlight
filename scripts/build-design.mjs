@@ -16,6 +16,14 @@ const targets = [
   {
     name: 'settings-current-view',
     entry: resolve('src/design/settings-current-view.tsx')
+  },
+  {
+    name: 'settings-current-view2',
+    entry: resolve('src/design/settings-current-view2.tsx')
+  },
+  {
+    name: 'settings-current-view3',
+    entry: resolve('src/design/settings-current-view3.tsx')
   }
 ];
 

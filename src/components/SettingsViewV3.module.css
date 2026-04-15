@@ -1,0 +1,1096 @@
+/* Northlight settings v3 — dense professional panel, prose in tooltips / collapsed reference */
+
+.page {
+  height: 100vh;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(99, 140, 186, 0.1), transparent 50%),
+    radial-gradient(90% 60% at 100% 0%, rgba(72, 94, 120, 0.08), transparent 45%),
+    linear-gradient(165deg, #05070a 0%, #090c11 48%, #06080c 100%);
+  color: #e4e9f0;
+  padding: 16px 16px 12px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.shell {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-rows: 26px auto minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+}
+
+.titlebar {
+  border-radius: 14px 14px 0 0;
+  -webkit-app-region: drag;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 8px 14px 10px;
+  -webkit-app-region: no-drag;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(4, 6, 9, 0.5);
+}
+
+.headerCopy {
+  min-width: 0;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.subtitle {
+  margin-top: 6px;
+  color: rgba(232, 237, 244, 0.55);
+  max-width: 520px;
+  line-height: 1.5;
+  font-size: 0.875rem;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  min-height: 0;
+  border-radius: 0 0 16px 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 8px;
+  background: rgba(3, 5, 8, 0.92);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  -webkit-app-region: no-drag;
+}
+
+.content {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px 14px;
+  background: rgba(8, 11, 16, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.tab {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 11px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(232, 237, 244, 0.55);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  text-align: left;
+  letter-spacing: 0.01em;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.tab:hover {
+  color: rgba(232, 237, 244, 0.88);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tabActive {
+  color: #f0f4f8;
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.button,
+.secondaryButton {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f0f4f8;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.015em;
+  transition:
+    transform 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease,
+    filter 120ms ease;
+}
+
+.button {
+  background: linear-gradient(180deg, rgba(110, 152, 196, 0.45), rgba(62, 98, 138, 0.55));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.25);
+  border-color: rgba(160, 190, 220, 0.22);
+}
+
+.secondaryButton {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.button:hover,
+.secondaryButton:hover,
+.scopeActionButton:hover,
+.scopePresetButton:hover,
+.scopeComposerAdd:hover,
+.scopeComposerCancel:hover,
+.iconButton:hover,
+.tab:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.button:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 6px 20px rgba(0, 0, 0, 0.28);
+}
+
+.secondaryButton:hover,
+.scopePresetButton:hover,
+.scopeComposerCancel:hover,
+.iconButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.button:active,
+.secondaryButton:active,
+.scopeActionButton:active,
+.scopePresetButton:active,
+.scopeComposerAdd:active,
+.scopeComposerCancel:active,
+.iconButton:active,
+.tab:active {
+  transform: translateY(1px);
+  filter: brightness(0.95);
+}
+
+.button:disabled,
+.secondaryButton:disabled,
+.scopeActionButton:disabled,
+.scopePresetButton:disabled,
+.scopeComposerAdd:disabled,
+.scopeComposerCancel:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+  filter: none;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+.gridWithSidebar {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
+}
+
+.gridSingle {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.leftColumn,
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.016) 100%);
+  padding: 12px 14px 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+}
+
+.cardTitle {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(240, 244, 248, 0.88);
+}
+
+.cardSubtitle {
+  margin-top: 4px;
+  color: rgba(232, 237, 244, 0.5);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  margin-top: 14px;
+}
+
+.field,
+.fieldFull {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcutField {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.shortcutButton {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.35);
+  color: #f0f4f8;
+  padding: 8px 12px;
+  text-align: left;
+  cursor: text;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.shortcutButton:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.shortcutButtonCapturing {
+  border-color: rgba(130, 175, 230, 0.55);
+  box-shadow: 0 0 0 3px rgba(100, 155, 220, 0.15);
+}
+
+.shortcutTokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.shortcutToken {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.shortcutTokenSymbol {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.shortcutTokenLabel {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(232, 237, 244, 0.5);
+}
+
+.shortcutPlaceholder,
+.shortcutHint {
+  color: rgba(232, 237, 244, 0.45);
+}
+
+.shortcutPlaceholder {
+  font-size: 0.875rem;
+}
+
+.shortcutHint {
+  margin-top: 8px;
+  font-size: 0.78rem;
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(232, 237, 244, 0.45);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(0, 0, 0, 0.28);
+  color: #f0f4f8;
+  padding: 9px 12px;
+  user-select: text;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.input:hover,
+.select:hover,
+.textarea:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: rgba(130, 175, 230, 0.45);
+  box-shadow: 0 0 0 3px rgba(100, 155, 220, 0.12);
+}
+
+.textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.toggleRow {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.toggleCompact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 38px;
+  padding: 6px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.045);
+  cursor: default;
+}
+
+.toggleCompact:first-child {
+  border-top: 0;
+}
+
+.toggleCompact .toggleLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.toggle:first-child {
+  border-top: 0;
+}
+
+.toggleText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.toggleLabel {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.toggleHelp {
+  font-size: 0.78rem;
+  color: rgba(232, 237, 244, 0.48);
+  line-height: 1.4;
+}
+
+/* iOS-style switches (WebKit-friendly) */
+.toggle input[type='checkbox'],
+.toggleCompact input[type='checkbox'],
+.scopeToggleHeader input[type='checkbox'],
+.scopeToggleCompact input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.toggle input[type='checkbox']::before,
+.toggleCompact input[type='checkbox']::before,
+.scopeToggleHeader input[type='checkbox']::before,
+.scopeToggleCompact input[type='checkbox']::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: transform 180ms cubic-bezier(0.34, 1.02, 0.68, 1);
+}
+
+.toggle input[type='checkbox']:checked,
+.toggleCompact input[type='checkbox']:checked,
+.scopeToggleHeader input[type='checkbox']:checked,
+.scopeToggleCompact input[type='checkbox']:checked {
+  background: rgba(72, 158, 116, 0.85);
+  border-color: rgba(120, 210, 170, 0.35);
+}
+
+.toggle input[type='checkbox']:checked::before,
+.toggleCompact input[type='checkbox']:checked::before,
+.scopeToggleHeader input[type='checkbox']:checked::before,
+.scopeToggleCompact input[type='checkbox']:checked::before {
+  transform: translateX(18px);
+}
+
+.toggle input[type='checkbox']:focus-visible,
+.toggleCompact input[type='checkbox']:focus-visible,
+.scopeToggleHeader input[type='checkbox']:focus-visible,
+.scopeToggleCompact input[type='checkbox']:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(100, 155, 220, 0.25);
+}
+
+.list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.scopeIntro {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.scopeHero {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.scopeHeroCopy {
+  max-width: 620px;
+}
+
+.scopeLead {
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.scopeLeadText {
+  margin-top: 6px;
+  color: rgba(232, 237, 244, 0.55);
+  line-height: 1.5;
+  font-size: 0.8125rem;
+}
+
+.scopeMetrics {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.scopeMetric {
+  min-width: 80px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.scopeMetricLabel {
+  display: block;
+  font-size: 0.65rem;
+  color: rgba(232, 237, 244, 0.42);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.scopeMetricValue {
+  display: block;
+  margin-top: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.scopeToolbar {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.scopeToolbarLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(232, 237, 244, 0.42);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.scopePresetRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scopePresetButton,
+.scopeActionButton,
+.scopeComposerAdd,
+.scopeComposerCancel {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f0f4f8;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.scopeActionButton,
+.scopeComposerAdd {
+  background: linear-gradient(180deg, rgba(90, 130, 170, 0.4), rgba(50, 80, 110, 0.5));
+  border-color: rgba(160, 190, 220, 0.2);
+}
+
+.scopePresetButton,
+.scopeComposerCancel {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.scopePresetButtonWarm {
+  border-color: rgba(220, 180, 100, 0.25);
+}
+
+.scopePresetButtonDanger {
+  border-color: rgba(220, 120, 120, 0.28);
+}
+
+.scopePresetButtonLabel {
+  font-weight: 650;
+}
+
+.scopePresetButtonCost {
+  margin-left: 6px;
+  color: rgba(232, 237, 244, 0.45);
+  font-size: 0.75rem;
+}
+
+.scopePresetNotes {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scopePresetNoteRow {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.scopePresetNoteLabel {
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.scopePresetNoteText {
+  color: rgba(232, 237, 244, 0.52);
+  line-height: 1.45;
+  font-size: 0.8125rem;
+}
+
+.scopeComposer {
+  margin-top: 14px;
+  padding: 14px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.scopeComposerHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.scopeComposerTitle {
+  font-weight: 650;
+  font-size: 0.875rem;
+}
+
+.scopeComposerHint {
+  margin-top: 4px;
+  color: rgba(232, 237, 244, 0.5);
+  font-size: 0.8125rem;
+}
+
+.scopeComposerRow {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.scopeFeedback {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(80, 140, 200, 0.12);
+  border: 1px solid rgba(120, 170, 220, 0.22);
+  color: rgba(220, 235, 250, 0.92);
+  font-size: 0.8125rem;
+}
+
+.scopeList {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.scopeRow {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.scopeCardMeta {
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: rgba(232, 237, 244, 0.45);
+}
+
+.row {
+  padding: 14px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.rowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.rowTitle {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: rgba(232, 237, 244, 0.85);
+  min-width: 0;
+  max-width: min(420px, 100%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconButton {
+  min-height: 30px;
+  min-width: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(232, 237, 244, 0.65);
+  cursor: pointer;
+  user-select: none;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.statusRow {
+  margin-top: 12px;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(232, 237, 244, 0.88);
+}
+
+.statusPillReady {
+  background: rgba(52, 168, 110, 0.18);
+  color: #8aeab8;
+}
+
+.statusPillPending {
+  background: rgba(130, 150, 180, 0.15);
+  color: #d4dde8;
+}
+
+.statusPillError {
+  background: rgba(200, 80, 80, 0.2);
+  color: #ffb0b0;
+}
+
+.errorList {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #ff9e9e;
+  line-height: 1.5;
+  font-size: 0.8125rem;
+}
+
+.scopeToggle {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0 0;
+}
+
+.scopeToggleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 28px;
+}
+
+.hintList {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: rgba(232, 237, 244, 0.62);
+  line-height: 1.5;
+  font-size: 0.8125rem;
+}
+
+.scopeInsightRow {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.scopeCostPill {
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.scopeCostLow {
+  background: rgba(48, 160, 110, 0.22);
+  color: #7ee0b0;
+}
+
+.scopeCostMedium {
+  background: rgba(200, 150, 60, 0.2);
+  color: #f0d080;
+}
+
+.scopeCostHigh {
+  background: rgba(200, 80, 80, 0.2);
+  color: #f5a0a0;
+}
+
+.scopeInsightMeta {
+  color: rgba(232, 237, 244, 0.52);
+  font-size: 0.8125rem;
+}
+
+.scopeInsightText {
+  flex: 1;
+  min-width: 0;
+  color: rgba(232, 237, 244, 0.78);
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.performanceGrid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.performanceMetric {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.performanceLabel {
+  color: rgba(232, 237, 244, 0.48);
+  font-size: 0.72rem;
+}
+
+.performanceValue {
+  color: #f0f4f8;
+  font-weight: 650;
+  font-size: 0.9375rem;
+}
+
+button,
+select,
+input,
+textarea {
+  -webkit-app-region: no-drag;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:focus,
+button:focus-visible,
+input:focus,
+input:focus-visible,
+select:focus,
+select:focus-visible,
+textarea:focus,
+textarea:focus-visible {
+  outline: none;
+}
+
+.button:focus-visible,
+.secondaryButton:focus-visible,
+.scopeActionButton:focus-visible,
+.scopePresetButton:focus-visible,
+.scopeComposerAdd:focus-visible,
+.scopeComposerCancel:focus-visible,
+.iconButton:focus-visible,
+.tab:focus-visible {
+  box-shadow: 0 0 0 2px rgba(120, 170, 220, 0.35);
+}
+
+.scopeHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.scopeHeaderRow .cardTitle {
+  margin: 0;
+}
+
+.scopeHeaderRow .scopeMetrics {
+  margin-left: auto;
+}
+
+.scopeHeaderRow .scopeMetric {
+  min-width: 0;
+  padding: 6px 10px;
+}
+
+.scopeRowGrid {
+  grid-template-columns: 1fr;
+}
+
+.scopeTogglePair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 24px;
+  grid-column: 1 / -1;
+}
+
+.scopeToggleCompact {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+  cursor: default;
+}
+
+.scopeToggleCompact .toggleLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(228, 233, 240, 0.55);
+  min-width: 2.25rem;
+}
+
+.reference {
+  margin: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 0;
+}
+
+.reference summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(228, 233, 240, 0.48);
+  user-select: none;
+}
+
+.reference summary::-webkit-details-marker {
+  display: none;
+}
+
+.reference summary::after {
+  content: '';
+  float: right;
+  width: 0;
+  height: 0;
+  margin-top: 4px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid rgba(228, 233, 240, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.reference[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.reference .hintList {
+  margin: 0;
+  padding: 0 12px 12px 28px;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(228, 233, 240, 0.52);
+}
+
+@media (max-width: 960px) {
+  .grid,
+  .gridWithSidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .body {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebarNav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .tab {
+    width: auto;
+  }
+
+  .scopeHero,
+  .scopeComposerRow,
+  .scopePresetNoteRow {
+    grid-template-columns: 1fr;
+    display: block;
+  }
+
+  .scopeMetrics {
+    margin-top: 10px;
+  }
+}

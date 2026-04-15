@@ -52,7 +52,8 @@ Current built-in capabilities:
 - `npm run build:design` regenerates local design bundles in `design/assets/bundles/` from the real launcher and settings renderer sources.
 - `npm run export:design` generates one self-contained share file at `design/export/current-design.html` from the current launcher design page, so you can hand off a single HTML that opens directly without separate JS/CSS bundles.
 - `npm run design` regenerates those same local bundles, serves the launcher/settings design pages over HTTP, prints the available design URLs in the terminal, and exposes an index at `/design/`.
-- The local design surface is now just [design/launcher-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/launcher-current-view.html) and [design/settings-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view.html); both work over `file://` and HTTP while staying backed by the real renderer bundles instead of handwritten mockup copies.
+- The local design pages are [design/launcher-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/launcher-current-view.html), [design/settings-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view.html) (classic horizontal tabs), [design/settings-current-view2.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view2.html) (sidebar layout), and [design/settings-current-view3.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view3.html) (dense layout, matches the shipping settings window). All work over `file://` and HTTP from bundles in `design/assets/bundles/`.
+- The exported share files live in `design/export/` and are snapshots for handoff; the local `design/*.html` pages remain the real renderer-backed source of truth.
 - The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css) through the real launcher bundle, so design pages still inherit the real launcher styling source of truth.
 - During `npm run design`, Northlight also serves Chrome DevTools automatic workspace metadata at `/.well-known/appspecific/com.chrome.devtools.json`, so `Sources > Workspaces` can connect directly to this repo and persist `Styles` edits back into the local files when you are using HTTP.
 - The shared launcher mockup now opens in a realistic in-use launcher state, including app, file, folder, and clipboard rows with dedicated icons plus a populated preview pane, so design work happens against something much closer to the live launcher.
@@ -138,15 +139,15 @@ Current built-in capabilities:
 The settings window is the control center for launcher preferences.
 
 - Settings is only draggable from its dedicated top title bar, so the visible header and form controls behave like a normal window surface instead of acting as a giant drag target.
-- Section tabs stay fixed outside the scrolling content area, so long sections no longer push the navigation out of view.
-- Settings tabs now use a clearer desktop-style segmented control treatment with explicit active, hover, pressed, and focus states.
-- Primary and secondary settings buttons now have stronger visual feedback for hover, pressed, disabled, and saving states.
+- The section sidebar stays fixed outside the scrolling content area, so long sections do not push navigation out of view.
+- The shipping settings window uses a left sidebar (Overview, Aliases & Snippets, Scopes & Status), a compact header, dense grouped cards, and switch rows where extra detail lives in native tooltips (`title`) and screen-reader labels—not inline paragraphs between controls. Long scope guidance sits behind a collapsed `Scope reference` disclosure on the Scopes tab. Older layouts remain on `settings-current-view.html` (tabs) and `settings-current-view2.html` (sidebar with more inline copy).
+- Primary and secondary settings buttons use a modern treatment with clear hover, pressed, disabled, and saving states.
 - The settings mockup review page now uses a black outer background like the launcher review page, so both design frames sit on the same neutral surround.
 - Toggle best match, app-first ranking, preview, quick look, snippets, and clipboard history.
 - Capture a new global launcher shortcut directly by pressing the combination in settings, or clear it entirely to disable the launcher hotkey.
 - During `npm run dev`, a cleared launcher shortcut still falls back to `Cmd+Shift+Space` for that session so the launcher cannot strand itself hidden while you are iterating.
 - The shortcut field in settings renders Apple-style keycaps and still shows the active session shortcut when development fallback is in effect.
-- The settings mockup in `design/settings-current-view.html` is calibrated to the native settings content size of `980×760` for visual design checks.
+- All settings mock pages use the native settings content size of `980×760` for visual design checks.
 - Set how many clipboard items to retain.
 - Create aliases for paths, snippets, or direct settings access.
 - When the launcher query already resolves to a concrete folder path, `Cmd+K` lets you save that folder as a no-spaces path alias directly from the launcher instead of forcing the flow through settings first.

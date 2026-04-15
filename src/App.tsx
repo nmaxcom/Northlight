@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { LauncherBar } from './components/LauncherBar';
-import { SettingsView } from './components/SettingsView';
+import { SettingsViewV3 } from './components/SettingsViewV3';
 
 export default function App() {
   const view = new URLSearchParams(window.location.search).get('view') ?? 'launcher';
@@ -21,7 +21,7 @@ export default function App() {
         overflow: 'hidden'
       }}
     >
-      {view === 'settings' ? <SettingsView /> : <LauncherBar />}
+      {view === 'settings' ? <SettingsViewV3 /> : <LauncherBar />}
     </div>
   );
 }

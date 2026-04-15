@@ -170,18 +170,18 @@ test('filters actions inside the actions panel', async ({ page }) => {
 test('shows the settings view route', async ({ page }) => {
   await page.goto('/?view=settings');
 
-  await expect(page.getByText('Northlight Settings')).toBeVisible();
+  await expect(page.locator('[data-settings-role="header-copy"]')).toContainText('Settings');
   await expect(page.getByRole('button', { name: /save settings/i })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible();
-  await expect(page.getByText('Search And Ranking')).toBeVisible();
+  await expect(page.getByText('Search', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Launcher shortcut' })).toBeVisible();
   await expect(page.getByText('⌘')).toBeVisible();
   await expect(page.getByText('⇧')).toBeVisible();
   await page.getByRole('tab', { name: 'Scopes & Status' }).click();
-  await expect(page.getByRole('checkbox', { name: /watch filesystem changes/i })).toBeChecked();
-  await expect(page.getByRole('checkbox', { name: 'Fast Path' }).first()).toBeVisible();
-  await expect(page.getByText('Search Performance')).toBeVisible();
-  await expect(page.getByText(/low-latency tier before deep search finishes/i)).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /watch filesystem for changes/i })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: /fast path/i }).first()).toBeVisible();
+  await expect(page.getByText('Latency (local samples)')).toBeVisible();
+  await expect(page.getByText('Scope reference')).toBeVisible();
 });
 
 test('keeps settings tabs outside the content scroll region', async ({ page }) => {
@@ -212,11 +212,11 @@ test('keeps settings tabs outside the content scroll region', async ({ page }) =
   expect(after.y).toBe(before.y);
 });
 
-test('shows the shared settings mockup with persistent tabs and refreshed controls', async ({ page }) => {
-  await page.goto(localDesignUrl('settings-current-view.html'));
+test('shows the shared settings v3 mockup with persistent sidebar and refreshed controls', async ({ page }) => {
+  await page.goto(localDesignUrl('settings-current-view3.html'));
 
-  const reviewFrame = page.locator('main[title="Northlight settings current view"]');
-  await expect(page.getByText('Exact settings viewport: 980×760.')).toBeVisible();
+  const reviewFrame = page.locator('main[title="Northlight settings current view v3"]');
+  await expect(page.getByText(/980×760/i)).toBeVisible();
   const tabs = page.locator('[data-settings-role="tabs"]');
   const content = page.locator('[data-settings-role="content"]');
   const primaryButton = page.locator('[data-settings-role="primary-button"]');

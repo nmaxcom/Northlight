@@ -1,0 +1,1074 @@
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { shortcutTokens } from '../lib/shortcuts';
+import type {
+  AliasEntry,
+  LauncherSettings,
+  ScopeEntry,
+  ScopePerformanceInsight,
+  SearchPerformanceSummary,
+  SnippetEntry
+} from '../lib/search/types';
+import { launcherRuntime } from '../lib/search/runtime';
+import classes from './SettingsViewV2.module.css';
+
+type ValidationState = {
+  aliasTriggers: Set<string>;
+  snippetTriggers: Set<string>;
+  hasErrors: boolean;
+  messages: string[];
+};
+
+function shortcutFromEvent(event: KeyboardEvent<HTMLInputElement>) {
+  const key = event.key;
+
+  if (['Meta', 'Control', 'Shift', 'Alt'].includes(key)) {
+    return null;
+  }
+
+  const parts: string[] = [];
+  if (event.metaKey) {
+    parts.push('CommandOrControl');
+  } else if (event.ctrlKey) {
+    parts.push('Control');
+  }
+  if (event.altKey) {
+    parts.push('Alt');
+  }
+  if (event.shiftKey) {
+    parts.push('Shift');
+  }
+
+  let mainKey = '';
+
+  if (key === ' ') {
+    mainKey = 'Space';
+  } else if (key === 'Escape') {
+    mainKey = 'Escape';
+  } else if (key === 'Backspace') {
+    mainKey = 'Backspace';
+  } else if (key === 'Delete') {
+    mainKey = 'Delete';
+  } else if (key === 'Enter') {
+    mainKey = 'Enter';
+  } else if (key === ',') {
+    mainKey = ',';
+  } else if (key.length === 1) {
+    mainKey = key.toUpperCase();
+  } else {
+    mainKey = key.charAt(0).toUpperCase() + key.slice(1);
+  }
+
+  if (!parts.length && !mainKey) {
+    return null;
+  }
+
+  return [...parts, mainKey].filter(Boolean).join('+');
+}
+
+function cloneSettings(settings: LauncherSettings): LauncherSettings {
+  return JSON.parse(JSON.stringify(settings)) as LauncherSettings;
+}
+
+function createAlias(): AliasEntry {
+  return {
+    id: `alias-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    trigger: '',
+    targetType: 'path',
+    target: '',
+    note: ''
+  };
+}
+
+function createSnippet(): SnippetEntry {
+  return {
+    id: `snippet-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    trigger: '',
+    content: '',
+    note: ''
+  };
+}
+
+function createScope(): ScopeEntry {
+  return {
+    id: `scope-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    path: '',
+    enabled: true,
+    hot: false
+  };
+}
+
+function inferHomePath(scopes: ScopeEntry[]) {
+  const match = scopes
+    .map((scope) => scope.path.match(/^\/Users\/[^/]+/))
+    .find((candidate): candidate is RegExpMatchArray => Boolean(candidate));
+
+  return match?.[0] ?? '/Users';
+}
+
+function validate(settings: LauncherSettings): ValidationState {
+  const aliasTriggers = new Set<string>();
+  const snippetTriggers = new Set<string>();
+  const messages = new Set<string>();
+
+  for (const alias of settings.aliases) {
+    const trigger = alias.trigger.trim().toLowerCase();
+    if (!trigger) {
+      messages.add('All aliases need a trigger.');
+      continue;
+    }
+
+    if (/\s/.test(alias.trigger.trim())) {
+      messages.add(`Alias triggers cannot contain spaces: ${alias.trigger.trim()}`);
+    }
+
+    if (aliasTriggers.has(trigger)) {
+      messages.add(`Duplicate alias trigger: ${trigger}`);
+    }
+    aliasTriggers.add(trigger);
+  }
+
+  for (const snippet of settings.snippets) {
+    const trigger = snippet.trigger.trim().toLowerCase();
+    if (!trigger || !snippet.content.trim()) {
+      messages.add('All snippets need a trigger and content.');
+      continue;
+    }
+
+    if (snippetTriggers.has(trigger) || aliasTriggers.has(trigger)) {
+      messages.add(`Snippet trigger conflicts with an existing trigger: ${trigger}`);
+    }
+    snippetTriggers.add(trigger);
+  }
+
+  for (const scope of settings.scopes) {
+    if (!scope.path.trim()) {
+      messages.add('Scopes cannot be empty.');
+    }
+  }
+
+  return {
+    aliasTriggers,
+    snippetTriggers,
+    hasErrors: messages.size > 0,
+    messages: Array.from(messages)
+  };
+}
+
+export function SettingsViewV2() {
+  const [settings, setSettings] = useState<LauncherSettings | null>(null);
+  const [searchPerformance, setSearchPerformance] = useState<SearchPerformanceSummary | null>(null);
+  const [scopeInsights, setScopeInsights] = useState<ScopePerformanceInsight[]>([]);
+  const [effectiveShortcut, setEffectiveShortcut] = useState('');
+  const [saveState, setSaveState] = useState('Loading settings...');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isCapturingShortcut, setIsCapturingShortcut] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'scopes'>('overview');
+  const [isAddingScope, setIsAddingScope] = useState(false);
+  const [newScopePath, setNewScopePath] = useState('');
+  const [scopeFeedback, setScopeFeedback] = useState<string | null>(null);
+  const scopeListRef = useRef<HTMLDivElement | null>(null);
+  const newScopeInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void launcherRuntime.getSettings().then((nextSettings) => {
+      if (!cancelled) {
+        setSettings(cloneSettings(nextSettings));
+        setSaveState('Ready');
+      }
+    });
+    void launcherRuntime.getSearchPerformance().then((nextPerformance) => {
+      if (!cancelled) {
+        setSearchPerformance(nextPerformance.summary);
+      }
+    });
+    void launcherRuntime.getScopeInsights().then((nextInsights) => {
+      if (!cancelled) {
+        setScopeInsights(nextInsights);
+      }
+    });
+    void launcherRuntime.getEffectiveShortcut().then((nextShortcut) => {
+      if (!cancelled) {
+        setEffectiveShortcut(nextShortcut);
+      }
+    });
+
+    const unsubscribe = launcherRuntime.onSettingsChanged((nextSettings) => {
+      setSettings(cloneSettings(nextSettings));
+      setSaveState('Updated from another window');
+      void launcherRuntime.getScopeInsights().then((nextInsights) => {
+        if (!cancelled) {
+          setScopeInsights(nextInsights);
+        }
+      });
+      void launcherRuntime.getSearchPerformance().then((nextPerformance) => {
+        if (!cancelled) {
+          setSearchPerformance(nextPerformance.summary);
+        }
+      });
+      void launcherRuntime.getEffectiveShortcut().then((nextShortcut) => {
+        if (!cancelled) {
+          setEffectiveShortcut(nextShortcut);
+        }
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
+
+  const validation = useMemo(() => (settings ? validate(settings) : { hasErrors: false, messages: [], aliasTriggers: new Set(), snippetTriggers: new Set() }), [settings]);
+
+  if (!settings) {
+    return <div className={classes.page}>Loading…</div>;
+  }
+
+  const updateSettings = (updater: (current: LauncherSettings) => LauncherSettings) => {
+    setSettings((current) => (current ? updater(cloneSettings(current)) : current));
+    setSaveState('Unsaved changes');
+  };
+
+  const revealNewestScope = () => {
+    window.requestAnimationFrame(() => {
+      const container = scopeListRef.current;
+      const lastScope = container?.lastElementChild as HTMLElement | null;
+      lastScope?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const pathField = lastScope?.querySelector<HTMLInputElement>('input[data-scope-path="true"]');
+      pathField?.focus();
+      pathField?.select();
+    });
+  };
+
+  const showScopeFeedback = (message: string) => {
+    setScopeFeedback(message);
+    window.clearTimeout((showScopeFeedback as typeof showScopeFeedback & { timer?: number }).timer);
+    (showScopeFeedback as typeof showScopeFeedback & { timer?: number }).timer = window.setTimeout(() => setScopeFeedback(null), 2400);
+  };
+
+  const save = async () => {
+    if (validation.hasErrors) {
+      setSaveState('Fix validation errors before saving');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveState('Saving…');
+
+    try {
+      const nextSettings = await launcherRuntime.saveSettings(settings);
+      const nextEffectiveShortcut = await launcherRuntime.getEffectiveShortcut();
+      const nextInsights = await launcherRuntime.getScopeInsights();
+      const nextPerformance = await launcherRuntime.getSearchPerformance();
+      setSettings(cloneSettings(nextSettings));
+      setEffectiveShortcut(nextEffectiveShortcut);
+      setScopeInsights(nextInsights);
+      setSearchPerformance(nextPerformance.summary);
+      setSaveState('Saved');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const displayedShortcut = settings.launcherHotkey || effectiveShortcut;
+  const displayTokens = shortcutTokens(displayedShortcut);
+  const usesSessionFallback = !settings.launcherHotkey && Boolean(effectiveShortcut);
+  const homePath = inferHomePath(settings.scopes);
+  const scopePresets = [
+    {
+      id: 'library',
+      label: 'Add ~/Library',
+      path: `${homePath}/Library`,
+      tone: 'balanced',
+      note: 'Best next step for app data, preferences, and support files.',
+      cost: 'Medium cost'
+    },
+    {
+      id: 'home',
+      label: 'Add Home',
+      path: homePath,
+      tone: 'warm',
+      note: 'Broader personal search with more noise from Downloads, Library, and hidden files.',
+      cost: 'High cost'
+    },
+    {
+      id: 'root',
+      label: 'Add /',
+      path: '/',
+      tone: 'danger',
+      note: 'Widest coverage, but the slowest and noisiest option. Use only if you really want whole-disk search.',
+      cost: 'Highest cost'
+    }
+  ] as const;
+
+  const addScopePath = (path: string) => {
+    const trimmedPath = path.trim();
+    if (!trimmedPath) {
+      return false;
+    }
+
+    let added = false;
+    updateSettings((current) => {
+      if (current.scopes.some((scope) => scope.path === trimmedPath)) {
+        return current;
+      }
+
+      added = true;
+
+      return {
+        ...current,
+        scopes: [
+          ...current.scopes,
+          {
+            ...createScope(),
+            path: trimmedPath
+          }
+        ]
+      };
+    });
+
+    if (added) {
+      showScopeFeedback(`Added ${trimmedPath}. The new scope is shown at the bottom of the list.`);
+      revealNewestScope();
+      return true;
+    }
+
+    showScopeFeedback(`${trimmedPath} is already in your scope list.`);
+    return false;
+  };
+
+  const addCustomScope = () => {
+    if (!addScopePath(newScopePath)) {
+      if (!newScopePath.trim()) {
+        newScopeInputRef.current?.focus();
+      }
+      return;
+    }
+
+    setNewScopePath('');
+    setIsAddingScope(false);
+  };
+
+  const enabledScopes = settings.scopes.filter((scope) => scope.enabled).length;
+  const statusTone = validation.hasErrors ? 'error' : saveState === 'Saved' || saveState === 'Ready' ? 'ready' : 'pending';
+  const hasUnsavedChanges = saveState === 'Unsaved changes';
+  const insightById = new Map(scopeInsights.map((insight) => [insight.id, insight]));
+  const formatMs = (value: number | null) => (typeof value === 'number' ? `${Math.round(value)} ms` : 'No data yet');
+  const formatRate = (value: number) => `${Math.round(value * 100)}%`;
+
+  return (
+    <main className={classes.page}>
+      <div className={classes.shell}>
+        <div className={classes.titlebar} data-settings-role="titlebar" aria-hidden="true" />
+        <header className={classes.header} data-settings-role="header">
+          <div className={classes.headerCopy} data-settings-role="header-copy">
+            <div className={classes.title}>Northlight Settings</div>
+            <div className={classes.subtitle}>
+              Control ranking, preview, clipboard history, snippets, aliases, scopes, and launcher utility-window behavior in one place.
+            </div>
+          </div>
+          <div className={classes.actions} data-settings-role="header-actions">
+            <button className={classes.secondaryButton} data-settings-role="secondary-button" type="button" onClick={() => setSettings(cloneSettings(launcherRuntime.getSettingsSnapshot()))}>
+              Revert
+            </button>
+            <button className={classes.button} data-settings-role="primary-button" type="button" disabled={isSaving || (!hasUnsavedChanges && !validation.hasErrors)} onClick={() => void save()}>
+              {isSaving ? 'Saving…' : 'Save Settings'}
+            </button>
+          </div>
+        </header>
+
+        <div className={classes.body}>
+          <nav className={classes.sidebarNav} data-settings-role="tabs" aria-label="Settings sections" role="tablist">
+            {[
+              ['overview', 'Overview'],
+              ['content', 'Aliases & Snippets'],
+              ['scopes', 'Scopes & Status']
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={`${classes.tab} ${activeTab === id ? classes.tabActive : ''}`}
+                data-settings-role="tab"
+                role="tab"
+                aria-selected={activeTab === id}
+                aria-controls={`settings-panel-${id}`}
+                onClick={() => setActiveTab(id as 'overview' | 'content' | 'scopes')}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          <div className={classes.content} data-settings-role="content">
+          <div
+            id={`settings-panel-${activeTab}`}
+            className={`${classes.grid} ${activeTab === 'scopes' ? classes.gridWithSidebar : classes.gridSingle}`}
+            data-settings-role="panel"
+            role="tabpanel"
+          >
+            <div className={classes.leftColumn}>
+              {activeTab === 'overview' ? (
+              <section className={classes.card}>
+                <div className={classes.cardTitle}>Search And Ranking</div>
+                <div className={classes.cardSubtitle}>Tune app priority, preview defaults, and clipboard/snippet participation.</div>
+                <div className={classes.toggleRow}>
+                  {[
+                    ['appFirstEnabled', 'Prefer apps', 'Boost app candidates over similarly named files.'],
+                    ['previewEnabled', 'Preview pane', 'Keep an inline preview panel available in the launcher.'],
+                    ['quickLookStartsOpen', 'Preview open by default', 'Open the preview pane automatically when the launcher appears.'],
+                    ['clipboardHistoryEnabled', 'Clipboard history', 'Track recent clipboard text and expose it in search.'],
+                    ['snippetsEnabled', 'Snippets', 'Include saved text snippets in search results.']
+                  ].map(([key, label, help]) => (
+                    <label key={key} className={classes.toggle}>
+                      <div className={classes.toggleText}>
+                        <div className={classes.toggleLabel}>{label}</div>
+                        <div className={classes.toggleHelp}>{help}</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(settings[key as keyof LauncherSettings])}
+                        onChange={(event) => {
+                          const checked = event.currentTarget.checked;
+                          updateSettings((current) => ({
+                            ...current,
+                            [key]: checked
+                          }));
+                        }}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className={classes.fieldGrid}>
+                  <label className={classes.field}>
+                    <span className={classes.label}>Clipboard items</span>
+                    <input
+                      className={classes.input}
+                      type="number"
+                      min={5}
+                      max={50}
+                      value={settings.maxClipboardItems}
+                      onChange={(event) => {
+                        const value = Number(event.currentTarget.value);
+                        updateSettings((current) => ({
+                          ...current,
+                          maxClipboardItems: value || current.maxClipboardItems
+                        }));
+                      }}
+                    />
+                  </label>
+                </div>
+              </section>
+              ) : null}
+
+              {activeTab === 'overview' ? (
+              <section className={classes.card}>
+                <div className={classes.cardTitle}>Launcher Window</div>
+                <div className={classes.cardSubtitle}>Control the global shortcut and native utility-window behavior.</div>
+                <div className={classes.fieldGrid}>
+                  <label className={classes.field}>
+                    <span className={classes.label}>Launcher shortcut</span>
+                    <div className={classes.shortcutField}>
+                      <button
+                        aria-label="Launcher shortcut"
+                        className={`${classes.shortcutButton} ${isCapturingShortcut ? classes.shortcutButtonCapturing : ''}`}
+                        type="button"
+                        onFocus={() => setIsCapturingShortcut(true)}
+                        onBlur={() => setIsCapturingShortcut(false)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Tab') {
+                            return;
+                          }
+
+                          event.preventDefault();
+
+                          if (!event.metaKey && !event.ctrlKey && !event.altKey && ['Backspace', 'Delete'].includes(event.key)) {
+                            updateSettings((current) => ({
+                              ...current,
+                              launcherHotkey: ''
+                            }));
+                            setIsCapturingShortcut(false);
+                            event.currentTarget.blur();
+                            return;
+                          }
+
+                          if (!event.metaKey && !event.ctrlKey && !event.altKey && event.key === 'Escape') {
+                            setIsCapturingShortcut(false);
+                            event.currentTarget.blur();
+                            return;
+                          }
+
+                          const nextShortcut = shortcutFromEvent(event);
+                          if (!nextShortcut) {
+                            return;
+                          }
+
+                          updateSettings((current) => ({
+                            ...current,
+                            launcherHotkey: nextShortcut
+                          }));
+                          setIsCapturingShortcut(false);
+                          event.currentTarget.blur();
+                        }}
+                      >
+                        {isCapturingShortcut ? (
+                          <span className={classes.shortcutPlaceholder}>Press a shortcut…</span>
+                        ) : displayTokens.length > 0 ? (
+                          <span className={classes.shortcutTokens} aria-hidden="true">
+                            {displayTokens.map((token) => (
+                              <span key={token.id} className={classes.shortcutToken}>
+                                <span className={classes.shortcutTokenSymbol}>{token.symbol ?? token.label}</span>
+                                {token.symbol ? <span className={classes.shortcutTokenLabel}>{token.label}</span> : null}
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          <span className={classes.shortcutPlaceholder}>Disabled</span>
+                        )}
+                      </button>
+                      <button
+                        className={classes.secondaryButton}
+                        type="button"
+                        onClick={() =>
+                          updateSettings((current) => ({
+                            ...current,
+                            launcherHotkey: ''
+                          }))
+                        }
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    {usesSessionFallback ? (
+                      <span className={classes.shortcutHint}>Using the dev-session fallback shortcut until you save a new one.</span>
+                    ) : null}
+                  </label>
+                </div>
+              </section>
+              ) : null}
+
+              {activeTab === 'content' ? (
+              <section className={classes.card}>
+                <div className={classes.sectionHeader}>
+                  <div>
+                    <div className={classes.cardTitle}>Aliases</div>
+                    <div className={classes.cardSubtitle}>Short triggers for paths, snippets, or direct settings access.</div>
+                  </div>
+                  <button
+                    className={classes.secondaryButton}
+                    type="button"
+                    onClick={() =>
+                      updateSettings((current) => ({
+                        ...current,
+                        aliases: [...current.aliases, createAlias()]
+                      }))
+                    }
+                  >
+                    Add Alias
+                  </button>
+                </div>
+                <div className={classes.list}>
+                  {settings.aliases.map((alias, index) => (
+                    <div key={alias.id} className={classes.row}>
+                      <div className={classes.rowHeader}>
+                        <div className={classes.rowTitle}>Alias {index + 1}</div>
+                        <button
+                          className={classes.iconButton}
+                          type="button"
+                          onClick={() =>
+                            updateSettings((current) => ({
+                              ...current,
+                              aliases: current.aliases.filter((entry) => entry.id !== alias.id)
+                            }))
+                          }
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className={classes.fieldGrid}>
+                        <label className={classes.field}>
+                          <span className={classes.label}>Trigger</span>
+                          <input
+                            className={classes.input}
+                            value={alias.trigger}
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                aliases: current.aliases.map((entry) =>
+                                  entry.id === alias.id ? { ...entry, trigger: value } : entry
+                                )
+                              }));
+                            }}
+                          />
+                        </label>
+                        <label className={classes.field}>
+                          <span className={classes.label}>Target type</span>
+                          <select
+                            className={classes.select}
+                            value={alias.targetType}
+                            onChange={(event) => {
+                              const value = event.currentTarget.value as AliasEntry['targetType'];
+                              updateSettings((current) => ({
+                                ...current,
+                                aliases: current.aliases.map((entry) =>
+                                  entry.id === alias.id ? { ...entry, targetType: value } : entry
+                                )
+                              }));
+                            }}
+                          >
+                            <option value="path">Path</option>
+                            <option value="snippet">Snippet</option>
+                            <option value="settings">Settings</option>
+                          </select>
+                        </label>
+                        <label className={classes.fieldFull}>
+                          <span className={classes.label}>Target</span>
+                          <input
+                            className={classes.input}
+                            value={alias.target}
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                aliases: current.aliases.map((entry) =>
+                                  entry.id === alias.id ? { ...entry, target: value } : entry
+                                )
+                              }));
+                            }}
+                          />
+                        </label>
+                        <label className={classes.fieldFull}>
+                          <span className={classes.label}>Note</span>
+                          <input
+                            className={classes.input}
+                            value={alias.note ?? ''}
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                aliases: current.aliases.map((entry) =>
+                                  entry.id === alias.id ? { ...entry, note: value } : entry
+                                )
+                              }));
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+              ) : null}
+
+              {activeTab === 'content' ? (
+              <section className={classes.card}>
+                <div className={classes.sectionHeader}>
+                  <div>
+                    <div className={classes.cardTitle}>Snippets</div>
+                    <div className={classes.cardSubtitle}>Reusable text blocks that appear as launcher results.</div>
+                  </div>
+                  <button
+                    className={classes.secondaryButton}
+                    type="button"
+                    onClick={() =>
+                      updateSettings((current) => ({
+                        ...current,
+                        snippets: [...current.snippets, createSnippet()]
+                      }))
+                    }
+                  >
+                    Add Snippet
+                  </button>
+                </div>
+                <div className={classes.list}>
+                  {settings.snippets.map((snippet, index) => (
+                    <div key={snippet.id} className={classes.row}>
+                      <div className={classes.rowHeader}>
+                        <div className={classes.rowTitle}>Snippet {index + 1}</div>
+                        <button
+                          className={classes.iconButton}
+                          type="button"
+                          onClick={() =>
+                            updateSettings((current) => ({
+                              ...current,
+                              snippets: current.snippets.filter((entry) => entry.id !== snippet.id)
+                            }))
+                          }
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className={classes.fieldGrid}>
+                        <label className={classes.field}>
+                          <span className={classes.label}>Trigger</span>
+                          <input
+                            className={classes.input}
+                            value={snippet.trigger}
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                snippets: current.snippets.map((entry) =>
+                                  entry.id === snippet.id ? { ...entry, trigger: value } : entry
+                                )
+                              }));
+                            }}
+                          />
+                        </label>
+                        <label className={classes.field}>
+                          <span className={classes.label}>Note</span>
+                          <input
+                            className={classes.input}
+                            value={snippet.note ?? ''}
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                snippets: current.snippets.map((entry) =>
+                                  entry.id === snippet.id ? { ...entry, note: value } : entry
+                                )
+                              }));
+                            }}
+                          />
+                        </label>
+                        <label className={classes.fieldFull}>
+                          <span className={classes.label}>Content</span>
+                          <textarea
+                            className={classes.textarea}
+                            value={snippet.content}
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                snippets: current.snippets.map((entry) =>
+                                  entry.id === snippet.id ? { ...entry, content: value } : entry
+                                )
+                              }));
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+              ) : null}
+
+              {activeTab === 'scopes' ? (
+              <section className={classes.card}>
+                <div className={classes.sectionHeader}>
+                  <div>
+                    <div className={classes.cardTitle}>Search Scopes</div>
+                    <div className={classes.cardSubtitle}>Scopes feed the local catalog, narrow Spotlight coverage, and define safe fallback search roots.</div>
+                  </div>
+                  <button
+                    className={classes.scopeActionButton}
+                    type="button"
+                    onClick={() => {
+                      setIsAddingScope(true);
+                      setScopeFeedback(null);
+                      window.requestAnimationFrame(() => newScopeInputRef.current?.focus());
+                    }}
+                  >
+                    Add Scope
+                  </button>
+                </div>
+
+                <div className={classes.scopeHero}>
+                  <div className={classes.scopeHeroCopy}>
+                    <div className={classes.scopeLead}>Choose which roots Northlight hydrates and prefers.</div>
+                    <div className={classes.scopeLeadText}>
+                      Northlight now uses hybrid search: Spotlight supplies broad recall on macOS, while the local catalog improves ranking, recents, and resilience. Start narrow. Add `~/Library` when you need app support files and preferences. Add Home or `/` only when broader recall matters more than speed and result cleanliness.
+                    </div>
+                  </div>
+                  <div className={classes.scopeMetrics}>
+                    <div className={classes.scopeMetric}>
+                      <span className={classes.scopeMetricLabel}>Enabled</span>
+                      <span className={classes.scopeMetricValue}>{enabledScopes}</span>
+                    </div>
+                    <div className={classes.scopeMetric}>
+                      <span className={classes.scopeMetricLabel}>Watchers</span>
+                      <span className={classes.scopeMetricValue}>{settings.watchFsChangesEnabled ? 'On' : 'Off'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={classes.scopeToolbar}>
+                  <div className={classes.scopeToolbarLabel}>Quick Add</div>
+                  <div className={classes.scopePresetRow}>
+                    {scopePresets.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        className={`${classes.scopePresetButton} ${preset.tone === 'danger' ? classes.scopePresetButtonDanger : preset.tone === 'warm' ? classes.scopePresetButtonWarm : ''}`}
+                        onClick={() => addScopePath(preset.path)}
+                      >
+                        <span className={classes.scopePresetButtonLabel}>{preset.label}</span>
+                        <span className={classes.scopePresetButtonCost}>{preset.cost}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={classes.scopePresetNotes}>
+                  {scopePresets.map((preset) => (
+                    <div key={preset.id} className={classes.scopePresetNoteRow}>
+                      <span className={classes.scopePresetNoteLabel}>{preset.label}</span>
+                      <span className={classes.scopePresetNoteText}>{preset.note}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {isAddingScope ? (
+                  <div className={classes.scopeComposer}>
+                    <div className={classes.scopeComposerHeader}>
+                      <div>
+                        <div className={classes.scopeComposerTitle}>Add Custom Scope</div>
+                        <div className={classes.scopeComposerHint}>Paste a folder path, then add it to the list. You can promote it to fast search afterward.</div>
+                      </div>
+                      <button className={classes.scopeComposerCancel} type="button" onClick={() => {
+                        setIsAddingScope(false);
+                        setNewScopePath('');
+                      }}>
+                        Cancel
+                      </button>
+                    </div>
+                    <div className={classes.scopeComposerRow}>
+                      <input
+                        ref={newScopeInputRef}
+                        className={classes.input}
+                        placeholder="/Users/you/Library"
+                        value={newScopePath}
+                        onChange={(event) => setNewScopePath(event.currentTarget.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            addCustomScope();
+                          }
+                        }}
+                      />
+                      <button className={classes.scopeComposerAdd} type="button" onClick={addCustomScope}>
+                        Add Path
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className={classes.toggleRow}>
+                  <label className={classes.toggle}>
+                    <div className={classes.toggleText}>
+                      <div className={classes.toggleLabel}>Watch filesystem changes</div>
+                      <div className={classes.toggleHelp}>Listen for changes in enabled scopes and invalidate stale results faster.</div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.watchFsChangesEnabled}
+                      onChange={(event) => {
+                        const checked = event.currentTarget.checked;
+                        updateSettings((current) => ({
+                          ...current,
+                          watchFsChangesEnabled: checked
+                        }));
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {scopeFeedback ? <div className={classes.scopeFeedback}>{scopeFeedback}</div> : null}
+
+                <div className={classes.scopeList} ref={scopeListRef}>
+                  {settings.scopes.map((scope, index) => {
+                    const insight = insightById.get(scope.id);
+                    const costClass =
+                      insight?.cost === 'high' ? classes.scopeCostHigh : insight?.cost === 'medium' ? classes.scopeCostMedium : classes.scopeCostLow;
+
+                    return (
+                    <div key={scope.id} className={classes.scopeRow}>
+                      <div className={classes.rowHeader}>
+                        <div>
+                          <div className={classes.rowTitle}>Scope {index + 1}</div>
+                          <div className={classes.scopeCardMeta}>{scope.path === '/' ? 'Whole disk' : scope.path.includes('/Library') ? 'Library-heavy scope' : 'Custom scope'}</div>
+                        </div>
+                        <button
+                          className={classes.iconButton}
+                          type="button"
+                          onClick={() =>
+                            updateSettings((current) => ({
+                              ...current,
+                              scopes: current.scopes.filter((entry) => entry.id !== scope.id)
+                            }))
+                          }
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className={classes.fieldGrid}>
+                        <label className={classes.fieldFull}>
+                          <span className={classes.label}>Path</span>
+                          <input
+                            data-scope-path="true"
+                            className={classes.input}
+                            value={scope.path}
+                            onChange={(event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                scopes: current.scopes.map((entry) =>
+                                  entry.id === scope.id ? { ...entry, path: value } : entry
+                                )
+                              }));
+                            }}
+                          />
+                        </label>
+                        <label className={classes.scopeToggle}>
+                          <div className={classes.scopeToggleHeader}>
+                            <div className={classes.toggleLabel}>Enabled</div>
+                            <input
+                              type="checkbox"
+                              aria-label="Enabled"
+                              checked={scope.enabled}
+                              onChange={(event) => {
+                                const checked = event.currentTarget.checked;
+                                updateSettings((current) => ({
+                                  ...current,
+                                  scopes: current.scopes.map((entry) =>
+                                    entry.id === scope.id ? { ...entry, enabled: checked } : entry
+                                  )
+                                }));
+                              }}
+                            />
+                          </div>
+                          <div className={classes.toggleHelp}>Disabled scopes stay saved but are ignored by search.</div>
+                        </label>
+                        <label className={classes.scopeToggle}>
+                          <div className={classes.scopeToggleHeader}>
+                            <div className={classes.toggleLabel}>Fast Path</div>
+                            <input
+                              type="checkbox"
+                              aria-label="Fast Path"
+                              checked={scope.hot}
+                              onChange={(event) => {
+                                const checked = event.currentTarget.checked;
+                                updateSettings((current) => ({
+                                  ...current,
+                                  scopes: current.scopes.map((entry) =>
+                                    entry.id === scope.id ? { ...entry, hot: checked } : entry
+                                  )
+                                }));
+                              }}
+                            />
+                          </div>
+                          <div className={classes.toggleHelp}>
+                            Fast paths are searched in the immediate tier, like Desktop and Applications.
+                          </div>
+                        </label>
+                      </div>
+                      {insight ? (
+                        <div className={classes.scopeInsightRow}>
+                          <span className={`${classes.scopeCostPill} ${costClass}`}>
+                            {insight.cost.toUpperCase()}
+                          </span>
+                          <span className={classes.scopeInsightMeta}>
+                            {insight.estimatedItems.toLocaleString()} indexed items
+                          </span>
+                          <span className={classes.scopeInsightText}>{insight.recommendation}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  );})}
+                </div>
+              </section>
+              ) : null}
+            </div>
+
+            <div className={classes.rightColumn}>
+              {activeTab === 'scopes' ? (
+              <section className={classes.card}>
+                <div className={classes.cardTitle}>Status</div>
+                <div className={classes.cardSubtitle}>Read-only state for this settings session.</div>
+                <div className={classes.statusRow}>
+                  <span className={`${classes.statusPill} ${statusTone === 'ready' ? classes.statusPillReady : statusTone === 'error' ? classes.statusPillError : classes.statusPillPending}`}>
+                    {saveState}
+                  </span>
+                </div>
+                {validation.hasErrors ? (
+                  <ul className={classes.errorList}>
+                    {validation.messages.map((message) => (
+                      <li key={message}>{message}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
+              ) : null}
+
+              {activeTab === 'scopes' ? (
+              <section className={classes.card}>
+                <div className={classes.cardTitle}>Search Performance</div>
+                <div className={classes.cardSubtitle}>Recent measurements from real launcher queries on this machine.</div>
+                <div className={classes.performanceGrid}>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Samples</span>
+                    <span className={classes.performanceValue}>{searchPerformance?.sampleCount ?? 0}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Hot Avg</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.hotAverageMs ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Hot P95</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.hotP95Ms ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Deep Avg</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.deepAverageMs ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Deep P95</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.deepP95Ms ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>First Visible</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.firstVisibleAverageMs ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>First Useful</span>
+                    <span className={classes.performanceValue}>{formatMs(searchPerformance?.firstUsefulAverageMs ?? null)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Top Replacements</span>
+                    <span className={classes.performanceValue}>{formatRate(searchPerformance?.topReplacementRate ?? 0)}</span>
+                  </div>
+                  <div className={classes.performanceMetric}>
+                    <span className={classes.performanceLabel}>Clipboard Flashes</span>
+                    <span className={classes.performanceValue}>{formatRate(searchPerformance?.clipboardFirstFlashRate ?? 0)}</span>
+                  </div>
+                </div>
+              </section>
+              ) : null}
+
+              {activeTab === 'scopes' ? (
+              <section className={classes.card}>
+                <div className={classes.cardTitle}>Scope Guidance</div>
+                <div className={classes.cardSubtitle}>A few rules that matter when you widen hybrid search coverage.</div>
+                <ul className={classes.hintList}>
+                  <li>`Fast Path` means Northlight tries that scope on the low-latency tier before deep search finishes.</li>
+                  <li>Fast paths are optimized for immediate recall. Use them for apps, Desktop-like folders, and high-frequency workspaces.</li>
+                  <li>`~/Library` is usually the highest-value expansion if you want app support files, settings, plugins, or preferences.</li>
+                  <li>Disabled scopes stay in settings but stop feeding the local catalog and scoped fallback search until you enable them again.</li>
+                  <li>Do not promote huge or noisy trees to fast paths unless they are part of your everyday workflow.</li>
+                  <li>Larger scopes take longer to hydrate and tend to push more low-value files into results, even when Spotlight recall is available.</li>
+                  <li>Watching filesystem changes helps stale results disappear faster, but it also makes broad scope sets busier.</li>
+                  <li>The `/` scope is a power-user option. It broadens recall, but it is the slowest and noisiest choice.</li>
+                </ul>
+              </section>
+              ) : null}
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}

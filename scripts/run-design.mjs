@@ -20,7 +20,9 @@ function printLinks(baseUrl) {
   const urls = [
     `${normalized}/design/`,
     `${normalized}/design/launcher-current-view.html`,
-    `${normalized}/design/settings-current-view.html`
+    `${normalized}/design/settings-current-view.html`,
+    `${normalized}/design/settings-current-view2.html`,
+    `${normalized}/design/settings-current-view3.html`
   ];
 
   process.stdout.write('\nDesign links:\n');

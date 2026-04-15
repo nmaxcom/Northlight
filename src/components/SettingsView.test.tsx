@@ -1,12 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import { describe, expect, it, vi } from 'vitest';
-import { SettingsView } from './SettingsView';
+import { SettingsViewV3 } from './SettingsViewV3';
 import { theme } from '../theme';
 import { launcherRuntime } from '../lib/search/runtime';
 import { DEFAULT_LAUNCHER_SHORTCUT } from '../lib/shortcuts';
 
-describe('SettingsView', () => {
+describe('SettingsViewV3', () => {
   it('renders the effective launcher shortcut with Apple-style keycaps', async () => {
     window.launcher = {
       getSettings: vi.fn().mockResolvedValue({
@@ -25,11 +25,11 @@ describe('SettingsView', () => {
 
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
-        <SettingsView />
+        <SettingsViewV3 />
       </MantineProvider>
     );
 
-    await screen.findByText('Northlight Settings');
+    await screen.findByText('Settings');
     expect(screen.getByRole('button', { name: 'Launcher shortcut' })).toBeInTheDocument();
     expect(screen.getByText('⌘')).toBeInTheDocument();
     expect(screen.getByText('⇧')).toBeInTheDocument();
@@ -52,11 +52,11 @@ describe('SettingsView', () => {
 
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
-        <SettingsView />
+        <SettingsViewV3 />
       </MantineProvider>
     );
 
-    await screen.findByText('Northlight Settings');
+    await screen.findByText('Settings');
 
     const tabs = screen.getByRole('tablist', { name: /settings sections/i });
     const panel = screen.getByRole('tabpanel');
@@ -99,21 +99,20 @@ describe('SettingsView', () => {
 
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
-        <SettingsView />
+        <SettingsViewV3 />
       </MantineProvider>
     );
 
-    await screen.findByText('Northlight Settings');
+    await screen.findByText('Settings');
     fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
-    expect(screen.getByText(/choose which roots northlight hydrates and prefers/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /add ~\/library/i })).toBeInTheDocument();
-    expect(screen.getByText(/widest coverage, but the slowest and noisiest option/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /library/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /entire disk/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /add ~\/library/i }));
+    fireEvent.click(screen.getByRole('button', { name: /library/i }));
     expect((screen.getAllByLabelText('Path').at(-1) as HTMLInputElement).value).toBe('/Users/nm4/Library');
 
-    fireEvent.click(screen.getByRole('button', { name: /add ~\/library/i }));
+    fireEvent.click(screen.getByRole('button', { name: /library/i }));
     expect(screen.getAllByDisplayValue('/Users/nm4/Library')).toHaveLength(1);
   });
 
@@ -135,16 +134,16 @@ describe('SettingsView', () => {
 
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
-        <SettingsView />
+        <SettingsViewV3 />
       </MantineProvider>
     );
 
-    await screen.findByText('Northlight Settings');
+    await screen.findByText('Settings');
     fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add Scope' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add scope' }));
 
-    expect(screen.getByText('Add Custom Scope')).toBeInTheDocument();
+    expect(screen.getByText('Custom path')).toBeInTheDocument();
     expect(screen.getAllByLabelText('Path')).toHaveLength(1);
     expect(screen.queryByText('Scopes cannot be empty.')).not.toBeInTheDocument();
   });
@@ -169,14 +168,14 @@ describe('SettingsView', () => {
 
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
-        <SettingsView />
+        <SettingsViewV3 />
       </MantineProvider>
     );
 
-    await screen.findByText('Northlight Settings');
+    await screen.findByText('Settings');
     fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
-    const toggle = await screen.findByRole('checkbox', { name: /watch filesystem changes/i });
+    const toggle = await screen.findByRole('checkbox', { name: /watch filesystem for changes/i });
     expect(toggle).toBeChecked();
 
     fireEvent.click(toggle);
@@ -219,14 +218,14 @@ describe('SettingsView', () => {
 
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
-        <SettingsView />
+        <SettingsViewV3 />
       </MantineProvider>
     );
 
-    await screen.findByText('Northlight Settings');
+    await screen.findByText('Settings');
     fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
-    const toggle = await screen.findByRole('checkbox', { name: 'Fast Path' });
+    const toggle = await screen.findByRole('checkbox', { name: /fast path/i });
     expect(toggle).not.toBeChecked();
 
     fireEvent.click(toggle);
@@ -267,11 +266,11 @@ describe('SettingsView', () => {
 
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
-        <SettingsView />
+        <SettingsViewV3 />
       </MantineProvider>
     );
 
-    await screen.findByText('Northlight Settings');
+    await screen.findByText('Settings');
 
     fireEvent.click(screen.getByRole('checkbox', { name: /prefer apps/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
@@ -327,19 +326,19 @@ describe('SettingsView', () => {
 
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
-        <SettingsView />
+        <SettingsViewV3 />
       </MantineProvider>
     );
 
-    await screen.findByText('Northlight Settings');
+    await screen.findByText('Settings');
     fireEvent.click(screen.getByRole('tab', { name: 'Scopes & Status' }));
 
-    expect(screen.getByText('Search Performance')).toBeInTheDocument();
+    expect(screen.getByText('Latency (local samples)')).toBeInTheDocument();
     expect(screen.getByText('Hot Avg')).toBeInTheDocument();
     expect(screen.getByText('24 ms')).toBeInTheDocument();
     expect(screen.getByText('8%')).toBeInTheDocument();
     expect(screen.getByText('HIGH')).toBeInTheDocument();
-    expect(screen.getByText(/31,500 indexed items/i)).toBeInTheDocument();
+    expect(screen.getByText(/31,500 items/i)).toBeInTheDocument();
     expect(screen.getByText('Better kept as deep search.')).toBeInTheDocument();
   });
 });
