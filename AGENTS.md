@@ -31,6 +31,7 @@
 - Before committing in a dirty worktree, stage only files from the current task.
 - Make a commit for each significant completed slice that changes user-visible behavior, architecture, or persisted settings; avoid commits for tiny churn or half-finished noise.
 - Commit only files or hunks created or modified by the current task; never bundle unrelated user edits.
+- Any meaningful code, config, workflow, or behavior change must update the relevant documentation in the same task.
 - Any visual change that affects the launcher or settings must be verified with Playwright before the task is considered complete.
 - The primary launcher design mock at `design/launcher-current-view.html` must remain interactive: moving across results must update both selection and preview like the real launcher.
 - Any user-visible behavior change must update `docs/user-guide.md` in the same task and commit.
