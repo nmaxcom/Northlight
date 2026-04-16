@@ -250,22 +250,14 @@
 .pathCompletionPanel {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 6px;
+  padding: 8px;
   border-radius: 16px;
   border: 1px solid var(--launcher-panel-border);
   background: var(--launcher-panel-bg);
   max-height: 240px;
   min-height: 0;
-  overflow: hidden;
-}
-
-.pathCompletionList {
-  min-height: 0;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 8px 0;
 }
 
 .pathCompletionRow {
@@ -301,18 +293,6 @@
 .pathCompletionLabel {
   font-size: 0.88rem;
   font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pathCompletionActiveDetail {
-  padding: 8px 12px 10px;
-  border-top: 1px solid var(--launcher-panel-divider);
-  background: var(--launcher-panel-bg);
-  color: var(--launcher-subtle-text);
-  font-size: 0.75rem;
-  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

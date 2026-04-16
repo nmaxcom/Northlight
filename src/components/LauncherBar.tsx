@@ -1603,36 +1603,29 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                 className={classes.pathCompletionPanel}
                 data-launcher-role="path-completion-list"
               >
-                <div className={classes.pathCompletionList} data-launcher-role="path-completion-scroll">
-                  {pathAutocomplete.candidates.map((candidate, index) => (
-                    <button
-                      key={candidate.id}
-                      type="button"
-                      className={classes.pathCompletionRow}
-                      data-launcher-role="path-completion-row"
-                      data-path-completion-kind={candidate.kind}
-                      data-path-completion-selected={index === pathCompletionIndex ? 'true' : 'false'}
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        focusActiveInput();
-                      }}
-                      onMouseEnter={() => setPathCompletionIndex(index)}
-                      onClick={() => {
-                        setPathCompletionIndex(index);
-                        acceptPathCompletion();
-                      }}
-                    >
-                      <span className={classes.pathCompletionCopy}>
-                        <span className={classes.pathCompletionLabel}>{candidate.label}</span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                {activePathCompletion ? (
-                  <div className={classes.pathCompletionActiveDetail} data-launcher-role="path-completion-active-detail">
-                    {activePathCompletion.subtitle}
-                  </div>
-                ) : null}
+                {pathAutocomplete.candidates.map((candidate, index) => (
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    className={classes.pathCompletionRow}
+                    data-launcher-role="path-completion-row"
+                    data-path-completion-kind={candidate.kind}
+                    data-path-completion-selected={index === pathCompletionIndex ? 'true' : 'false'}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      focusActiveInput();
+                    }}
+                    onMouseEnter={() => setPathCompletionIndex(index)}
+                    onClick={() => {
+                      setPathCompletionIndex(index);
+                      acceptPathCompletion();
+                    }}
+                  >
+                    <span className={classes.pathCompletionCopy}>
+                      <span className={classes.pathCompletionLabel}>{candidate.label}</span>
+                    </span>
+                  </button>
+                ))}
               </section>
             ) : null}
             <section

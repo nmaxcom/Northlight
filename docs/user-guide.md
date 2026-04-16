@@ -42,7 +42,7 @@ Current built-in capabilities:
 - On macOS, dismissing the launcher now hides the Northlight app itself instead of leaving an active app with no key window behind, so the underlying app can usually keep keyboard focus without an extra click.
 - Opening the dedicated settings window from the launcher now hides only the launcher surface, not the whole app, so Settings stays accessible instead of getting hidden behind the dismiss flow.
 - Keyboard launch, typing, and live result refreshes now ignore the cursor's resting position until you actually move or use the mouse inside the launcher, so `Enter` keeps targeting the keyboard-selected result and stale hover highlights disappear as soon as you resume typing.
-- Reopening the launcher also clears the previous pointer-hover session, so a resting cursor cannot silently reapply hover styling until the mouse moves again.
+- Reopening the launcher clears the previous pointer-hover session before new typing begins, so a resting cursor cannot silently reapply hover styling until the mouse actually moves again.
 - The top-right status area shows the app version, the exact current catalog count, and the current readiness state.
 - Clicking the `Theme` chip in the launcher header toggles between the fixed `Original` theme and the duplicated `Sandbox` theme for fast visual comparison.
 - `Cmd+Shift+J` toggles detached Chromium DevTools for the Northlight window that is focused or visible, so you can inspect real launcher and settings CSS issues without leaving Electron.
@@ -84,8 +84,7 @@ Current built-in capabilities:
 - Path autocomplete is casing-tolerant while you type, so lowercase input such as `/app` can still suggest and accept `/Applications/` with the real filesystem casing.
 - `Tab` accepts the active folder or path-alias completion, `Up` / `Down` choose between ambiguous candidates, and `Escape` dismisses the completion list without clearing what you typed.
 - Saved path aliases participate in that same completion model inside explicit path contexts such as `in:Northlight`.
-- When multiple path completions are visible, Northlight keeps them in a compact single-line list with internal scroll and shows the active candidate's full path only once as contextual detail.
-- The active path detail now sits in its own footer area below the scrollable completion list, so long paths no longer bleed visually behind the last visible completion row.
+- When multiple path completions are visible, Northlight keeps them in a compact single-line list with internal scroll and relies on the gray path already shown in the search field instead of duplicating that path again under the suggestion list.
 - Scoped search also applies to dotfiles and hidden-style support locations when you point `in:` at them explicitly, for example `in:/Users/nm4/STUFF/Coding/Northlight .env` or `ghost img in:/Users/nm4/Library/Application Support/HiddenGallery`.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
 - `today` means modified on the current local calendar day, `yesterday` means the previous local calendar day, and `recent` means the last 7 days by modification time.

@@ -73,7 +73,7 @@ test('completes paths with Tab and reuses saved path aliases inside in:', async 
   await expect(input).toHaveValue('in:Northlight');
 });
 
-test('renders a compact path completion panel with separate active detail', async ({ page }) => {
+test('renders a compact path completion panel without a duplicated detail footer', async ({ page }) => {
   await page.goto('/');
   const input = page.getByLabel('Launcher query');
 
@@ -81,24 +81,20 @@ test('renders a compact path completion panel with separate active detail', asyn
 
   const panel = page.locator('[data-launcher-role="path-completion-list"]');
   const firstRow = page.locator('[data-launcher-role="path-completion-row"]').first();
-  const activeDetail = page.locator('[data-launcher-role="path-completion-active-detail"]');
 
   await expect(panel).toBeVisible();
   await expect(firstRow).toBeVisible();
   await expect(panel.getByText('Folder')).toHaveCount(0);
   await expect(panel.getByText('Alias')).toHaveCount(0);
-  await expect(activeDetail).toBeVisible();
+  await expect(page.locator('[data-launcher-role="path-completion-active-detail"]')).toHaveCount(0);
 
   const rowBox = await firstRow.boundingBox();
-  const detailBox = await activeDetail.boundingBox();
   expect(rowBox).not.toBeNull();
-  expect(detailBox).not.toBeNull();
-  if (!rowBox || !detailBox) {
+  if (!rowBox) {
     return;
   }
 
   expect(rowBox.height).toBeLessThan(42);
-  expect(detailBox.y).toBeGreaterThan(rowBox.y + rowBox.height);
 });
 
 test('surfaces common system apps from the fast tier without empty intermediate state', async ({ page }) => {
@@ -108,6 +104,35 @@ test('surfaces common system apps from the fast tier without empty intermediate 
 
   await expect(page.getByRole('button', { name: /TextEdit\.app/i })).toBeVisible();
   await expect(page.getByText('No matching result')).toHaveCount(0);
+});
+
+test('sandbox result hover styling only applies while pointer mode is active', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByLabel('Launcher query');
+  await input.fill('al');
+
+  const rows = page.locator('[data-launcher-role="result"]');
+  const secondRow = rows.nth(1);
+  const windowRoot = page.locator('[data-launcher-role="window"]');
+
+  await expect(secondRow).toBeVisible();
+
+  await windowRoot.evaluate((element) => {
+    element.setAttribute('data-pointer-active', 'true');
+  });
+  await secondRow.hover();
+
+  const hoveredBackground = await secondRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+
+  await windowRoot.evaluate((element) => {
+    element.setAttribute('data-pointer-active', 'false');
+  });
+
+  await expect
+    .poll(async () => {
+      return secondRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+    })
+    .not.toBe(hoveredBackground);
 });
 
 test('supports trailing intent refiners for folders and apps', async ({ page }) => {
