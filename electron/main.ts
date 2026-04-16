@@ -365,6 +365,7 @@ async function showLauncher() {
   pendingShow = false;
   blurSuppressionDeadline = createBlurSuppressionDeadline(Date.now());
   positionLauncherWindow();
+  syncLauncherWindowLevel();
   if (platform === 'darwin') {
     app.focus({ steal: true });
   }
@@ -382,12 +383,31 @@ function broadcastDevToolsPinnedChanged() {
   }
 }
 
+function syncLauncherWindowLevel() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  if (launcherDevToolsPinned) {
+    mainWindow.setAlwaysOnTop(false);
+    return;
+  }
+
+  if (platform === 'darwin') {
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    return;
+  }
+
+  mainWindow.setAlwaysOnTop(true);
+}
+
 function setLauncherDevToolsPinned(nextPinned: boolean) {
   if (launcherDevToolsPinned === nextPinned) {
     return nextPinned;
   }
 
   launcherDevToolsPinned = nextPinned;
+  syncLauncherWindowLevel();
   broadcastDevToolsPinnedChanged();
   return launcherDevToolsPinned;
 }

@@ -45,7 +45,7 @@ Current built-in capabilities:
 - The top-right status area shows the app version, the exact current catalog count, and the current readiness state.
 - Clicking the `Theme` chip in the launcher header toggles between the fixed `Original` theme and the duplicated `Sandbox` theme for fast visual comparison.
 - `Cmd+Shift+J` toggles detached Chromium DevTools for the Northlight window that is focused or visible, so you can inspect real launcher and settings CSS issues without leaving Electron.
-- The launcher header also exposes an `Inspect` toggle; turning it on opens detached DevTools for the launcher and keeps the launcher pinned visible until inspect mode is turned off again.
+- The launcher header also exposes an `Inspect` toggle; turning it on opens detached DevTools for the launcher, lowers the launcher out of always-on-top so DevTools stays usable, and keeps the launcher pinned visible until inspect mode is turned off again.
 - The launcher keeps a single active focus model: `Tab` and stray focus events do not move focus away from the active input for the current mode.
 - A persistent bottom bar always shows the primary action for the current result and an `Actions` trigger.
 - `Cmd+,` opens the Northlight settings window.
