@@ -90,12 +90,15 @@ test('renders a compact path completion panel with separate active detail', asyn
   await expect(activeDetail).toBeVisible();
 
   const rowBox = await firstRow.boundingBox();
+  const detailBox = await activeDetail.boundingBox();
   expect(rowBox).not.toBeNull();
-  if (!rowBox) {
+  expect(detailBox).not.toBeNull();
+  if (!rowBox || !detailBox) {
     return;
   }
 
   expect(rowBox.height).toBeLessThan(42);
+  expect(detailBox.y).toBeGreaterThan(rowBox.y + rowBox.height);
 });
 
 test('surfaces common system apps from the fast tier without empty intermediate state', async ({ page }) => {
