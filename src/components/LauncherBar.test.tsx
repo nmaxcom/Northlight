@@ -900,6 +900,92 @@ describe('LauncherBar', () => {
     expect(screen.getByText('Start typing to search')).toBeInTheDocument();
   });
 
+  it('drops stale pointer hover after the launcher hides and reopens', async () => {
+    let visibilityListener: ((visible: boolean) => void) | undefined;
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      searchLocal: vi.fn().mockResolvedValue([
+        {
+          id: '/Users/test/alpha.txt',
+          path: '/Users/test/alpha.txt',
+          name: 'alpha.txt',
+          kind: 'file',
+          score: 200
+        },
+        {
+          id: '/Users/test/beta.txt',
+          path: '/Users/test/beta.txt',
+          name: 'beta.txt',
+          kind: 'file',
+          score: 160
+        }
+      ]),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.60',
+        indexEntryCount: 14,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue({
+        ...launcherRuntime.getSettingsSnapshot(),
+        bestMatchEnabled: false
+      }),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined),
+      onVisibilityChanged: vi.fn().mockImplementation((callback) => {
+        visibilityListener = callback;
+        return () => {};
+      })
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    const input = screen.getByLabelText('Launcher query');
+    fireEvent.change(input, { target: { value: 'a' } });
+    fireEvent.change(input, { target: { value: 'al' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('alpha.txt').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('beta.txt').length).toBeGreaterThan(0);
+    });
+
+    const root = document.querySelector('[data-pointer-active]') as HTMLDivElement | null;
+    const rows = screen.getAllByRole('button').filter((button) => /alpha\.txt|beta\.txt/.test(button.textContent ?? ''));
+    fireEvent.mouseMove(rows[1]!);
+    expect(rows[1]?.dataset.selected).toBe('true');
+
+    act(() => {
+      visibilityListener?.(false);
+      visibilityListener?.(true);
+    });
+
+    expect(root?.dataset.pointerActive).toBe('false');
+    expect(input).toHaveValue('');
+
+    fireEvent.change(input, { target: { value: 'a' } });
+    fireEvent.change(input, { target: { value: 'al' } });
+
+    await waitFor(() => {
+      expect(screen.getAllByText('alpha.txt').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('beta.txt').length).toBeGreaterThan(0);
+    });
+
+    const reopenedRows = screen.getAllByRole('button').filter((button) => /alpha\.txt|beta\.txt/.test(button.textContent ?? ''));
+    expect(reopenedRows[0]?.dataset.selected).toBe('true');
+    expect(reopenedRows[1]?.dataset.selected).toBe('false');
+    expect(root?.dataset.pointerActive).toBe('false');
+  });
+
   it('redirects stray focus back to the textbox', async () => {
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
@@ -1116,8 +1202,8 @@ describe('LauncherBar', () => {
     fireEvent.change(input, { target: { value: 'al' } });
 
     await waitFor(() => {
-      expect(screen.getByText('alpha.txt')).toBeInTheDocument();
-      expect(screen.getByText('beta.txt')).toBeInTheDocument();
+      expect(screen.getAllByText('alpha.txt').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('beta.txt').length).toBeGreaterThan(0);
     });
 
     const rows = screen.getAllByRole('button').filter((button) => /alpha\.txt|beta\.txt/.test(button.textContent ?? ''));
@@ -1184,8 +1270,8 @@ describe('LauncherBar', () => {
     fireEvent.change(input, { target: { value: 'al' } });
 
     await waitFor(() => {
-      expect(screen.getByText('alpha.txt')).toBeInTheDocument();
-      expect(screen.getByText('beta.txt')).toBeInTheDocument();
+      expect(screen.getAllByText('alpha.txt').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('beta.txt').length).toBeGreaterThan(0);
     });
 
     const rows = screen.getAllByRole('button').filter((button) => /alpha\.txt|beta\.txt/.test(button.textContent ?? ''));

@@ -315,12 +315,12 @@
   transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 
-[data-launcher-theme='sandbox'] [data-launcher-role='result']:hover,
+[data-launcher-theme='sandbox'][data-pointer-active='true'] [data-launcher-role='result']:hover,
 [data-launcher-theme='sandbox'] [data-launcher-role='result'][data-selected='true'] {
   background: #697bff36;
 }
 
-[data-launcher-theme='sandbox'] [data-launcher-role='result']:hover {
+[data-launcher-theme='sandbox'][data-pointer-active='true'] [data-launcher-role='result']:hover {
   transform: none !important;
   border: none !important;
   background: #697bff36 !important;

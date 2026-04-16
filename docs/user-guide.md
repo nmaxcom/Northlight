@@ -42,7 +42,7 @@ Current built-in capabilities:
 - On macOS, dismissing the launcher now hides the Northlight app itself instead of leaving an active app with no key window behind, so the underlying app can usually keep keyboard focus without an extra click.
 - Opening the dedicated settings window from the launcher now hides only the launcher surface, not the whole app, so Settings stays accessible instead of getting hidden behind the dismiss flow.
 - Keyboard launch, typing, and live result refreshes now ignore the cursor's resting position until you actually move or use the mouse inside the launcher, so `Enter` keeps targeting the keyboard-selected result and stale hover highlights disappear as soon as you resume typing.
-- Reopening the launcher clears the previous pointer-hover session before new typing begins, so a resting cursor cannot silently reapply hover styling until the mouse actually moves again.
+- Reopening the launcher clears the previous pointer-hover session before new typing begins, including in the `Sandbox` theme, so a resting cursor cannot silently reapply hover styling until the mouse actually moves again.
 - The top-right status area shows the app version, the exact current catalog count, and the current readiness state.
 - Clicking the `Theme` chip in the launcher header toggles between the fixed `Original` theme and the duplicated `Sandbox` theme for fast visual comparison.
 - `Cmd+Shift+J` toggles detached Chromium DevTools for the Northlight window that is focused or visible, so you can inspect real launcher and settings CSS issues without leaving Electron.
