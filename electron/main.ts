@@ -37,6 +37,7 @@ import {
 } from './settings';
 import { buildFilePreview } from './filePreview';
 import { readFileTextPreview } from './previewText';
+import { resolveAppIconDataUrl } from './appIcon';
 
 const WINDOW_WIDTH = 1120;
 const WINDOW_HEIGHT = 760;
@@ -631,7 +632,7 @@ function openSettingsWindow() {
 
 async function getPathPreview(path: string, kind: LocalSearchItem['kind'], requestId?: string): Promise<LauncherPreview | null> {
   const previewKey = `${kind}:${path}`;
-  if (previewCache.has(previewKey)) {
+  if (kind !== 'app' && previewCache.has(previewKey)) {
     recordTrace({
       subsystem: 'preview',
       event: 'preview-cache-hit',
@@ -704,7 +705,6 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind'], reque
           ...(bundleId ? [{ label: 'Bundle ID', value: bundleId }] : [])
         ]
       };
-      previewCache.set(previewKey, preview);
       recordTrace({
         subsystem: 'preview',
         event: 'preview-complete',
@@ -863,50 +863,38 @@ async function getPathIcon(path: string, requestId?: string) {
       cacheState: 'miss'
     });
     if (path.endsWith('.app')) {
-      const plistPath = join(path, 'Contents', 'Info.plist');
-      const iconName = await runCommandOutput('plutil', ['-extract', 'CFBundleIconFile', 'raw', '-o', '-', plistPath]).catch(() => '');
-
-      if (iconName) {
-        const normalizedIconName = extname(iconName) ? iconName : `${iconName}.icns`;
-        const bundleIconPath = join(path, 'Contents', 'Resources', normalizedIconName);
-        await access(bundleIconPath);
-        const iconCacheDir = join(app.getPath('userData'), 'icon-cache');
-        const iconHash = createHash('sha1').update(bundleIconPath).digest('hex');
-        const renderedIconPath = join(iconCacheDir, `${iconHash}.png`);
-
-        await mkdir(iconCacheDir, { recursive: true });
-
-        try {
-          await access(renderedIconPath);
-        } catch {
-          await traceSpan(
+      const resolvedAppIcon = await resolveAppIconDataUrl({
+        appPath: path,
+        userDataPath: app.getPath('userData'),
+        getPlistValue,
+        runCommand,
+        getNativeFileIcon: (appPath) =>
+          traceSpan(
             {
               subsystem: 'icon',
-              event: 'app-icon-render',
+              event: 'native-file-icon',
               requestId,
-              path: bundleIconPath,
-              kind: 'app'
+              path: appPath
             },
-            async () => runCommand('sips', ['-s', 'format', 'png', bundleIconPath, '--out', renderedIconPath])
-          );
-        }
+            async () => app.getFileIcon(appPath, { size: 'normal' })
+          )
+      });
 
-        const renderedIconBuffer = await readFile(renderedIconPath);
-        if (renderedIconBuffer.length > 0) {
-          const icon = bufferToDataUrl(renderedIconBuffer, 'image/png');
-          iconCache.set(path, icon);
-          recordTrace({
-            subsystem: 'icon',
-            event: 'icon-complete',
-            requestId,
-            path,
-            cacheState: 'miss',
-            durationMs: Date.now() - startedAt,
-            kind: 'app'
-          });
-          return icon;
-        }
+      if (resolvedAppIcon.cacheable) {
+        iconCache.set(path, resolvedAppIcon.icon);
       }
+
+      recordTrace({
+        subsystem: 'icon',
+        event: 'icon-complete',
+        requestId,
+        path,
+        cacheState: 'miss',
+        durationMs: Date.now() - startedAt,
+        kind: 'app',
+        outcome: resolvedAppIcon.source
+      });
+      return resolvedAppIcon.icon;
     }
 
     const image = await traceSpan(
