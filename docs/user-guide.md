@@ -85,6 +85,7 @@ Current built-in capabilities:
 - `Tab` accepts the active folder or path-alias completion, `Up` / `Down` choose between ambiguous candidates, and `Escape` dismisses the completion list without clearing what you typed.
 - Saved path aliases participate in that same completion model inside explicit path contexts such as `in:Northlight`.
 - When multiple path completions are visible, Northlight keeps them in a compact single-line list with internal scroll and relies on the gray path already shown in the search field instead of duplicating that path again under the suggestion list.
+- In the `Sandbox` theme, the empty-state panel can drop its border entirely for cleaner composition work.
 - Scoped search also applies to dotfiles and hidden-style support locations when you point `in:` at them explicitly, for example `in:/Users/nm4/STUFF/Coding/Northlight .env` or `ghost img in:/Users/nm4/Library/Application Support/HiddenGallery`.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
 - `today` means modified on the current local calendar day, `yesterday` means the previous local calendar day, and `recent` means the last 7 days by modification time.

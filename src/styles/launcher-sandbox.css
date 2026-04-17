@@ -282,7 +282,7 @@
   display: grid;
   place-items: center;
   border-radius: 22px;
-  border: 1px dashed var(--launcher-empty-border);
+  border: none;
   background: var(--launcher-empty-bg);
   text-align: center;
 }
