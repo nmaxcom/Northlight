@@ -217,6 +217,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     catalogState: mockState?.status.catalogState ?? 'restoring'
   });
   const [iconUrls, setIconUrls] = useState<Record<string, string | null>>(mockState?.iconUrls ?? {});
+  const [iconRetryTick, setIconRetryTick] = useState(0);
   const activeRefiners = useMemo(() => parseIntentQuery(query).intent?.matchedTokens ?? [], [query]);
   const activeTheme = useMemo(() => getLauncherTheme(settings.launcherThemeId), [settings.launcherThemeId]);
   const selectedResult = results[selectedIndex];
@@ -263,6 +264,8 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const pointerSelectionEnabledRef = useRef(false);
   const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null);
   const pointerResetPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const iconRetryCountsRef = useRef<Record<string, number>>({});
+  const iconRetryTimerRef = useRef<number | null>(null);
 
   const nextTraceRequestId = useCallback((prefix: string) => {
     traceRequestSequenceRef.current += 1;
@@ -1120,6 +1123,17 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       void launcherRuntime.getPathPreview(selectedResult.path, selectedResult.kind, traceRequestId).then((nextPreview) => {
         if (!cancelled && requestId === previewRequestRef.current && nextPreview) {
           setPreview(nextPreview);
+          if (selectedResult.kind === 'app' && nextPreview.mediaUrl) {
+            setIconUrls((current) => (
+              current[selectedResult.path] === nextPreview.mediaUrl
+                ? current
+                : {
+                    ...current,
+                    [selectedResult.path]: nextPreview.mediaUrl
+                  }
+            ));
+            delete iconRetryCountsRef.current[selectedResult.path];
+          }
           void traceEvent({
             subsystem: 'preview',
             event: 'complete',
@@ -1157,13 +1171,27 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       return;
     }
 
+    const visibleIconPaths = new Set(
+      results
+        .filter((result) => !result.iconUrl)
+        .map((result) => result.iconPath ?? result.path)
+        .filter((path): path is string => Boolean(path))
+    );
+
+    for (const path of Object.keys(iconRetryCountsRef.current)) {
+      if (!visibleIconPaths.has(path)) {
+        delete iconRetryCountsRef.current[path];
+      }
+    }
+
     const iconPaths = Array.from(
       new Set(
         results
           .filter((result) => !result.iconUrl)
           .map((result) => result.iconPath ?? result.path)
           .filter((path): path is string => Boolean(path))
-          .filter((path) => !(path in iconUrls))
+          .filter((path) => !iconUrls[path])
+          .filter((path) => (iconRetryCountsRef.current[path] ?? 0) < 4)
       )
     );
 
@@ -1197,10 +1225,39 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       setIconUrls((current) => {
         const next = { ...current };
         for (const [path, icon] of Object.entries(iconMap)) {
-          next[path] = icon;
+          if (icon) {
+            next[path] = icon;
+            delete iconRetryCountsRef.current[path];
+          }
         }
         return next;
       });
+
+      const unresolvedPaths = iconPaths.filter((path) => !iconMap[path]);
+      if (unresolvedPaths.length > 0) {
+        let shouldRetry = false;
+        let retryDelay = Number.POSITIVE_INFINITY;
+
+        for (const path of unresolvedPaths) {
+          const attempt = (iconRetryCountsRef.current[path] ?? 0) + 1;
+          iconRetryCountsRef.current[path] = attempt;
+          if (attempt < 4) {
+            shouldRetry = true;
+            retryDelay = Math.min(retryDelay, attempt === 1 ? 150 : attempt === 2 ? 400 : 900);
+          }
+        }
+
+        if (shouldRetry) {
+          if (iconRetryTimerRef.current) {
+            window.clearTimeout(iconRetryTimerRef.current);
+          }
+          iconRetryTimerRef.current = window.setTimeout(() => {
+            iconRetryTimerRef.current = null;
+            setIconRetryTick((current) => current + 1);
+          }, retryDelay);
+        }
+      }
+
       void traceEvent({
         subsystem: 'icon',
         event: 'batch-complete',
@@ -1213,7 +1270,16 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     return () => {
       cancelled = true;
     };
-  }, [iconUrls, isMock, nextTraceRequestId, results, traceEvent]);
+  }, [iconRetryTick, iconUrls, isMock, nextTraceRequestId, results, traceEvent]);
+
+  useEffect(
+    () => () => {
+      if (iconRetryTimerRef.current) {
+        window.clearTimeout(iconRetryTimerRef.current);
+      }
+    },
+    []
+  );
 
   const toggleLauncherTheme = useCallback(() => {
     setSettings((current) => {

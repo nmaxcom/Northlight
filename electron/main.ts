@@ -876,7 +876,7 @@ async function getPathIcon(path: string, requestId?: string) {
               requestId,
               path: appPath
             },
-            async () => app.getFileIcon(appPath, { size: 'normal' })
+            async () => app.getFileIcon(appPath, { size: 'large' })
           )
       });
 
@@ -1114,7 +1114,15 @@ app.whenReady().then(async () => {
         requestId: traceRequestId,
         resultCount: paths.length
       },
-      async () => Object.fromEntries(await Promise.all(paths.map(async (path) => [path, await getPathIcon(path, traceRequestId)] as const)))
+      async () => {
+        const settledIcons = await Promise.allSettled(
+          paths.map(async (path) => [path, await getPathIcon(path, traceRequestId)] as const)
+        );
+
+        return Object.fromEntries(
+          settledIcons.flatMap((entry) => (entry.status === 'fulfilled' ? [entry.value] : []))
+        );
+      }
     );
   });
   ipcMain.handle('launcher:quick-look-path', async (_event, path: string) => {

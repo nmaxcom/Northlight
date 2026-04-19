@@ -361,3 +361,123 @@ test('removes the decorative tile behind image-backed icons', async ({ page }) =
   await expect(glyphIcon).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await expect(glyphIcon.locator('img')).toHaveCount(0);
 });
+
+test('retries late app icons so rows do not stay stuck on fallback glyphs', async ({ page }) => {
+  await page.addInitScript(() => {
+    let iconBatchCalls = 0;
+
+    const settings = {
+      aliases: [],
+      snippets: [],
+      scopes: [
+        { id: 'applications', path: '/Applications', enabled: true, hot: true },
+        { id: 'system-applications', path: '/System/Applications', enabled: true, hot: true }
+      ],
+      launcherThemeId: 'sandbox',
+      watchFsChangesEnabled: true,
+      previewEnabled: true,
+      clipboardHistoryEnabled: true,
+      snippetsEnabled: true,
+      bestMatchEnabled: false,
+      appFirstEnabled: true,
+      quickLookEnabled: true,
+      quickLookStartsOpen: true,
+      maxClipboardItems: 30,
+      launcherHotkey: 'CommandOrControl+Space',
+      launcherPosition: null
+    };
+
+    const appResults = [
+      {
+        id: '/System/Applications/Calendar.app',
+        path: '/System/Applications/Calendar.app',
+        name: 'Calendar.app',
+        kind: 'app',
+        score: 120
+      },
+      {
+        id: '/System/Applications/Calculator.app',
+        path: '/System/Applications/Calculator.app',
+        name: 'Calculator.app',
+        kind: 'app',
+        score: 118
+      }
+    ];
+
+    const status = {
+      appVersion: '0.8.66',
+      indexEntryCount: 114258,
+      indexReady: true,
+      isRestoring: false,
+      isRefreshing: false
+    };
+
+    const noop = async () => undefined;
+    (window as typeof window & { launcher: Record<string, unknown>; __iconBatchCalls: () => number }).launcher = {
+      ready: noop,
+      getStatus: async () => status,
+      getSettings: async () => settings,
+      getClipboardHistory: async () => [],
+      searchLocalHot: async () => appResults,
+      searchLocal: async () => appResults,
+      getPathIcons: async (paths: string[]) => {
+        iconBatchCalls += 1;
+        return Object.fromEntries(
+          paths.map((path) => [path, iconBatchCalls === 1 ? null : `data:image/png;base64,${btoa(path)}`])
+        );
+      },
+      getPathPreview: async (path: string) => ({
+        title: path.split('/').at(-1)?.replace(/\.app$/i, '') ?? 'App',
+        subtitle: path,
+        mediaUrl: `data:image/png;base64,${btoa(`preview:${path}`)}`,
+        mediaKind: 'image',
+        mediaAlt: path.split('/').at(-1) ?? 'App',
+        sections: [{ label: 'Type', value: 'Application' }]
+      }),
+      getPathAutocomplete: async () => ({ context: null, candidates: [], resolvedFolderPath: null }),
+      getSearchPerformance: async () => ({ samples: [], summary: { sampleCount: 0, hotAverageMs: null, hotP95Ms: null, deepAverageMs: null, deepP95Ms: null, firstVisibleAverageMs: null, firstUsefulAverageMs: null, topReplacementRate: 0, clipboardFirstFlashRate: 0, lastRecordedAt: null } }),
+      recordSearchPerformance: noop,
+      getScopeInsights: async () => [],
+      getEffectiveShortcut: async () => 'CommandOrControl+Space',
+      getDevToolsPinned: async () => false,
+      toggleDevToolsPinned: async () => false,
+      saveSettings: async () => settings,
+      openSettings: noop,
+      openSystemSettings: noop,
+      getTraceState: async () => ({ enabled: false, events: [] }),
+      setTraceEnabled: async () => ({ enabled: false, events: [] }),
+      traceEvent: noop,
+      getTraceDump: async () => [],
+      getIdleTraceSummary: async () => null,
+      writeTraceDump: async () => '',
+      recordLocalSelection: noop,
+      quickLookPath: noop,
+      openPath: noop,
+      revealPath: noop,
+      openInTerminal: noop,
+      openWithTextEdit: noop,
+      hide: noop,
+      onSettingsChanged: () => () => {},
+      onIndexChanged: () => () => {},
+      onVisibilityChanged: () => () => {},
+      onDevToolsPinnedChanged: () => () => {}
+    };
+    window.__iconBatchCalls = () => iconBatchCalls;
+  });
+
+  await page.goto('/');
+
+  const input = page.getByLabel('Launcher query');
+  await input.fill('cal');
+
+  await expect(page.getByRole('button', { name: /Calendar\.app/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Calculator\.app/i })).toBeVisible();
+
+  await expect
+    .poll(async () => page.evaluate(() => (window as typeof window & { __iconBatchCalls: () => number }).__iconBatchCalls()))
+    .toBeGreaterThanOrEqual(2);
+
+  await expect
+    .poll(async () => page.locator('[data-launcher-role="result-icon-image"]').count())
+    .toBeGreaterThanOrEqual(2);
+});

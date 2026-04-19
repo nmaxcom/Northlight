@@ -1094,6 +1094,87 @@ describe('LauncherBar', () => {
     expect(iconContainer?.className).toContain('resultIconImageBacked');
   });
 
+  it('retries unresolved app icons instead of getting stuck on fallback glyphs', async () => {
+    let iconBatchCalls = 0;
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.66',
+        indexEntryCount: 14,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      searchLocalHot: vi.fn().mockResolvedValue([
+        {
+          id: '/System/Applications/Calendar.app',
+          path: '/System/Applications/Calendar.app',
+          name: 'Calendar.app',
+          kind: 'app',
+          score: 120
+        },
+        {
+          id: '/System/Applications/Calculator.app',
+          path: '/System/Applications/Calculator.app',
+          name: 'Calculator.app',
+          kind: 'app',
+          score: 118
+        }
+      ]),
+      searchLocal: vi.fn().mockResolvedValue([
+        {
+          id: '/System/Applications/Calendar.app',
+          path: '/System/Applications/Calendar.app',
+          name: 'Calendar.app',
+          kind: 'app',
+          score: 120
+        },
+        {
+          id: '/System/Applications/Calculator.app',
+          path: '/System/Applications/Calculator.app',
+          name: 'Calculator.app',
+          kind: 'app',
+          score: 118
+        }
+      ]),
+      getPathIcons: vi.fn().mockImplementation(async (paths: string[]) => {
+        iconBatchCalls += 1;
+        if (iconBatchCalls === 1) {
+          return Object.fromEntries(paths.map((path) => [path, null]));
+        }
+
+        return Object.fromEntries(paths.map((path) => [path, `data:image/png;base64,${btoa(path)}`]));
+      }),
+      getPathPreview: vi.fn().mockResolvedValue(null),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Launcher query'), { target: { value: 'cal' } });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Calendar\.app/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Calculator\.app/i })).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(iconBatchCalls).toBeGreaterThanOrEqual(2);
+      expect(document.querySelectorAll('[data-launcher-role="result-icon-image"]').length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
   it('keeps fallback glyph icons on the non-image tile styling', async () => {
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">

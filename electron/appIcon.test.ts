@@ -11,8 +11,36 @@ function fakeNativeImage(data = 'native-icon') {
   } as never;
 }
 
+function fakeEmptyNativeImage() {
+  return {
+    isEmpty: () => true,
+    toPNG: () => Buffer.alloc(0)
+  } as never;
+}
+
 describe('resolveAppIconDataUrl', () => {
-  it('prefers an explicit bundle icon resource when CFBundleIconFile is present', async () => {
+  it('prefers the native macOS file icon when available', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'northlight-app-icon-'));
+    const appPath = join(tempDir, 'Sample.app');
+    await mkdir(join(appPath, 'Contents'), { recursive: true });
+
+    const runCommand = vi.fn();
+
+    const result = await resolveAppIconDataUrl({
+      appPath,
+      userDataPath: tempDir,
+      getPlistValue: vi.fn().mockResolvedValue('SampleIcon'),
+      runCommand,
+      getNativeFileIcon: vi.fn().mockResolvedValue(fakeNativeImage('native-primary'))
+    });
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.cacheable).toBe(true);
+    expect(result.source).toBe('native-file-icon');
+    expect(result.icon).toBeTruthy();
+  });
+
+  it('falls back to an explicit bundle icon resource when the native icon is empty', async () => {
     const tempDir = await mkdtemp(join(tmpdir(), 'northlight-app-icon-'));
     const appPath = join(tempDir, 'Sample.app');
     const resourcesDir = join(appPath, 'Contents', 'Resources');
@@ -31,7 +59,7 @@ describe('resolveAppIconDataUrl', () => {
       userDataPath: tempDir,
       getPlistValue: vi.fn().mockImplementation(async (_plistPath, key) => (key === 'CFBundleIconFile' ? 'SampleIcon' : '')),
       runCommand,
-      getNativeFileIcon: vi.fn().mockResolvedValue(fakeNativeImage('unused'))
+      getNativeFileIcon: vi.fn().mockResolvedValue(fakeEmptyNativeImage())
     });
 
     expect(runCommand).toHaveBeenCalledWith('sips', expect.arrayContaining(['--out', expect.stringContaining('.png')]));
@@ -41,7 +69,7 @@ describe('resolveAppIconDataUrl', () => {
     expect(renderedPng).toContain('icon-cache');
   });
 
-  it('falls back to a quick look thumbnail for asset-catalog apps like Calendar', async () => {
+  it('falls back to a quick look thumbnail for asset-catalog apps like Calendar when the native icon is empty', async () => {
     const tempDir = await mkdtemp(join(tmpdir(), 'northlight-app-icon-'));
     const appPath = join(tempDir, 'Calendar.app');
     await mkdir(join(appPath, 'Contents', 'Resources'), { recursive: true });
@@ -60,7 +88,7 @@ describe('resolveAppIconDataUrl', () => {
       userDataPath: tempDir,
       getPlistValue: vi.fn().mockImplementation(async (_plistPath, key) => (key === 'CFBundleIconName' ? 'AppIcon' : '')),
       runCommand,
-      getNativeFileIcon: vi.fn().mockResolvedValue(fakeNativeImage('unused'))
+      getNativeFileIcon: vi.fn().mockResolvedValue(fakeEmptyNativeImage())
     });
 
     expect(runCommand).toHaveBeenCalledWith('qlmanage', expect.arrayContaining(['-t', '-s', '512', '-o', expect.any(String), appPath]));
@@ -69,7 +97,7 @@ describe('resolveAppIconDataUrl', () => {
     expect(result.icon).toBeTruthy();
   });
 
-  it('does not cache native fallback icons when richer app icon sources fail', async () => {
+  it('returns missing when every icon strategy fails', async () => {
     const tempDir = await mkdtemp(join(tmpdir(), 'northlight-app-icon-'));
     const appPath = join(tempDir, 'Fallback.app');
     await mkdir(join(appPath, 'Contents'), { recursive: true });
@@ -79,11 +107,11 @@ describe('resolveAppIconDataUrl', () => {
       userDataPath: tempDir,
       getPlistValue: vi.fn().mockResolvedValue(''),
       runCommand: vi.fn().mockRejectedValue(new Error('quicklook unavailable')),
-      getNativeFileIcon: vi.fn().mockResolvedValue(fakeNativeImage('native-fallback'))
+      getNativeFileIcon: vi.fn().mockResolvedValue(fakeEmptyNativeImage())
     });
 
     expect(result.cacheable).toBe(false);
-    expect(result.source).toBe('native-fallback');
-    expect(result.icon).toBeTruthy();
+    expect(result.source).toBe('missing');
+    expect(result.icon).toBeNull();
   });
 });

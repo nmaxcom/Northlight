@@ -26,7 +26,7 @@ export type ResolveAppIconDeps = {
 export type ResolvedAppIcon = {
   icon: string | null;
   cacheable: boolean;
-  source: 'bundle-resource' | 'quicklook-thumbnail' | 'native-fallback' | 'missing';
+  source: 'native-file-icon' | 'bundle-resource' | 'quicklook-thumbnail' | 'missing';
 };
 
 async function renderBundleResourceIcon(appPath: string, plistPath: string, userDataPath: string, getPlistValue: ResolveAppIconDeps['getPlistValue'], runCommand: ResolveAppIconDeps['runCommand']) {
@@ -95,6 +95,19 @@ export async function resolveAppIconDataUrl({
   const plistPath = join(appPath, 'Contents', 'Info.plist');
 
   try {
+    const nativeIcon = nativeImageToDataUrl(await getNativeFileIcon(appPath));
+    if (nativeIcon) {
+      return {
+        icon: nativeIcon,
+        cacheable: true,
+        source: 'native-file-icon'
+      };
+    }
+  } catch {
+    // Fall through to bundle and thumbnail strategies.
+  }
+
+  try {
     const bundleResourceIcon = await renderBundleResourceIcon(appPath, plistPath, userDataPath, getPlistValue, runCommand);
     if (bundleResourceIcon) {
       return {
@@ -120,19 +133,9 @@ export async function resolveAppIconDataUrl({
     // Fall through to native fallback.
   }
 
-  try {
-    const nativeIcon = nativeImageToDataUrl(await getNativeFileIcon(appPath));
-    return {
-      icon: nativeIcon,
-      cacheable: false,
-      source: nativeIcon ? 'native-fallback' : 'missing'
-    };
-  } catch {
-    return {
-      icon: null,
-      cacheable: false,
-      source: 'missing'
-    };
-  }
+  return {
+    icon: null,
+    cacheable: false,
+    source: 'missing'
+  };
 }
-
