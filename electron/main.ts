@@ -39,6 +39,17 @@ import { buildFilePreview } from './filePreview';
 import { readFileTextPreview } from './previewText';
 import { resolveAppIconDataUrl } from './appIcon';
 
+const APP_NAME = packageJson.productName ?? 'Northlight';
+
+// Set identity paths before single-instance lock so dev runs do not collide with generic Electron apps.
+try {
+  app.setName(APP_NAME);
+  const appDataPath = app.getPath('appData');
+  app.setPath('userData', join(appDataPath, APP_NAME));
+} catch {
+  // Keep default paths when Electron refuses early path overrides.
+}
+
 const WINDOW_WIDTH = 1120;
 const WINDOW_HEIGHT = 760;
 const SETTINGS_WINDOW_WIDTH = 980;
@@ -936,6 +947,7 @@ async function getPathIcon(path: string, requestId?: string) {
 }
 
 if (!hasSingleInstanceLock) {
+  console.error('[main] Northlight is already running in another process; quitting this duplicate instance.');
   app.quit();
 }
 
@@ -955,8 +967,6 @@ app.on('second-instance', () => {
 });
 
 app.whenReady().then(async () => {
-  app.setName(packageJson.productName ?? 'Northlight');
-
   if (platform === 'darwin') {
     app.setActivationPolicy('accessory');
     app.dock?.hide();

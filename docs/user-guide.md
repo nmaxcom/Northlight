@@ -121,6 +121,7 @@ Current built-in capabilities:
 
 - Running an open, reveal, or copy action hides the launcher so the target app or Finder can be seen immediately.
 - Losing launcher focus also hides the launcher so Northlight gets out of the way and the underlying app can resume naturally.
+- Northlight now uses its own macOS app identity and user-data directory (`~/Library/Application Support/Northlight`) from process start, so launch/instance locking no longer collides with generic Electron dev processes.
 - The result list scrolls inside the launcher when there are more results than fit on screen, and every result row uses the same visual layout including the top result.
 - The search textbox keeps focus while you interact with the launcher chrome, and keyboard navigation auto-scrolls to the selected result.
 - The launcher shell and the native utility window now share the same `10px` corner radius, and the search box is intentionally compressed to a very low-profile `35px` field.

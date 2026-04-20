@@ -1,6 +1,6 @@
 {
   "name": "northlight",
-  "version": "0.8.67",
+  "version": "0.8.68",
   "productName": "Northlight",
   "description": "A steel-fast macOS launcher built with Electron, React, and Mantine.",
   "main": "dist-electron/main/main.js",
