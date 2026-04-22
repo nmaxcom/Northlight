@@ -980,7 +980,7 @@ app.whenReady().then(async () => {
   });
   void warmSearchIndex();
   void configureIndexWatchers();
-  void prewarmAppIcons();
+  // Avoid startup crashes in IconServices by loading app icons on demand.
   await createWindow();
   registerShortcuts();
 

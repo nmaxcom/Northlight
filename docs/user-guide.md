@@ -135,6 +135,7 @@ Current built-in capabilities:
 - App previews no longer show the redundant generic `macOS application bundle` body block when there is no useful app-specific text to display.
 - Native app icons and image previews are loaded from real macOS assets so they render consistently inside the launcher.
 - App bundles, including asset-catalog apps such as `Calendar.app`, now resolve through the native macOS file icon path first, and Northlight retries app rows whose first icon lookup comes back empty instead of freezing them on a fallback glyph.
+- App-icon prewarm is deferred from startup to avoid macOS `IconServices` launch crashes; icons still load on demand when results appear.
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.
 - In the `Sandbox` theme, the keyboard-selected result row uses the same background treatment as hover so list states stay visually aligned while iterating.
