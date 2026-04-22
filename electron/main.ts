@@ -69,8 +69,37 @@ const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 let mainRequestSequence = 0;
 const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
+let nativeAppIconLookupQueue: Promise<void> = Promise.resolve();
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 const HOME_PATH = homedir();
+
+function logFatalContext(label: string, payload?: unknown) {
+  try {
+    if (payload instanceof Error) {
+      console.error(`[main] ${label}: ${payload.stack ?? payload.message}`);
+      return;
+    }
+
+    if (payload !== undefined) {
+      console.error(`[main] ${label}: ${JSON.stringify(payload)}`);
+      return;
+    }
+
+    console.error(`[main] ${label}`);
+  } catch {
+    console.error(`[main] ${label}`);
+  }
+}
+
+function getNativeAppFileIconSerial(path: string) {
+  const runLookup = async () => app.getFileIcon(path, { size: 'large' });
+  const queued = nativeAppIconLookupQueue.then(runLookup, runLookup);
+  nativeAppIconLookupQueue = queued.then(
+    () => undefined,
+    () => undefined
+  );
+  return queued;
+}
 
 async function readDirectoryFolderPaths(path: string) {
   try {
@@ -529,6 +558,10 @@ async function createWindow() {
     console.error(`[main] renderer failed: ${code} ${description} ${url}`);
   });
 
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    logFatalContext('main-window-render-process-gone', details);
+  });
+
   mainWindow.webContents.on('console-message', (_event, level, message) => {
     const label = level === 3 ? 'error' : level === 2 ? 'warn' : 'log';
     console[label](`[renderer] ${message}`);
@@ -631,6 +664,10 @@ function openSettingsWindow() {
 
   settingsWindow.once('ready-to-show', () => {
     settingsWindow?.show();
+  });
+
+  settingsWindow.webContents.on('render-process-gone', (_event, details) => {
+    logFatalContext('settings-window-render-process-gone', details);
   });
 
   settingsWindow.on('closed', () => {
@@ -887,7 +924,7 @@ async function getPathIcon(path: string, requestId?: string) {
               requestId,
               path: appPath
             },
-            async () => app.getFileIcon(appPath, { size: 'large' })
+            async () => getNativeAppFileIconSerial(appPath)
           )
       });
 
@@ -951,6 +988,18 @@ if (!hasSingleInstanceLock) {
   app.quit();
 }
 
+process.on('uncaughtException', (error) => {
+  logFatalContext('uncaughtException', error);
+});
+
+process.on('unhandledRejection', (reason) => {
+  logFatalContext('unhandledRejection', reason);
+});
+
+process.on('exit', (code) => {
+  logFatalContext('process-exit', { code });
+});
+
 app.on('second-instance', () => {
   if (!app.isReady()) {
     return;
@@ -964,6 +1013,18 @@ app.on('second-instance', () => {
   }
 
   void showLauncher();
+});
+
+app.on('render-process-gone', (_event, webContents, details) => {
+  logFatalContext('render-process-gone', {
+    details,
+    url: webContents.getURL(),
+    id: webContents.id
+  });
+});
+
+app.on('child-process-gone', (_event, details) => {
+  logFatalContext('child-process-gone', details);
 });
 
 app.whenReady().then(async () => {
