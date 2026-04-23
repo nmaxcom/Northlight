@@ -55,7 +55,7 @@ Current built-in capabilities:
 - `npm run build:design` regenerates local design bundles in `design/assets/bundles/` from the real launcher and settings renderer sources.
 - `npm run export:design` generates one self-contained share file at `design/export/current-design.html` from the current launcher design page, so you can hand off a single HTML that opens directly without separate JS/CSS bundles.
 - `npm run design` regenerates those same local bundles, serves the launcher/settings design pages over HTTP, prints the available design URLs in the terminal, and exposes an index at `/design/`.
-- The local design pages are [design/launcher-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/launcher-current-view.html), [design/settings-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view.html) (classic horizontal tabs), [design/settings-current-view2.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view2.html) (sidebar layout), and [design/settings-current-view3.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view3.html) (dense layout, matches the shipping settings window). All work over `file://` and HTTP from bundles in `design/assets/bundles/`.
+- The local design pages are [design/launcher-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/launcher-current-view.html), [design/settings-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view.html) (classic horizontal tabs), [design/settings-current-view2.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view2.html) (sidebar layout, matches the shipping settings window), and [design/settings-current-view3.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view3.html) (denser experimental variant). All work over `file://` and HTTP from bundles in `design/assets/bundles/`.
 - The exported share files live in `design/export/` and are snapshots for handoff; the local `design/*.html` pages remain the real renderer-backed source of truth.
 - The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css) through the real launcher bundle, so design pages still inherit the real launcher styling source of truth.
 - During `npm run design`, Northlight also serves Chrome DevTools automatic workspace metadata at `/.well-known/appspecific/com.chrome.devtools.json`, so `Sources > Workspaces` can connect directly to this repo and persist `Styles` edits back into the local files when you are using HTTP.
@@ -74,6 +74,7 @@ Current built-in capabilities:
 - Snippets and clipboard items can participate in search without overriding stronger file or app matches for broad queries.
 - Search is local-first and favors common personal locations such as `/Applications`, `/System/Applications`, `~/Desktop`, `~/Documents`, `~/Downloads`, and `~/STUFF/Coding`.
 - Northlight now searches in tiers: fast paths such as apps, macOS settings commands, deterministic answers, and visible personal folders resolve first, while broader or noisier locations can expand the list slightly later.
+- Deep local search now starts after a short idle debounce while you type, and reuses the fast-tier cache instead of reissuing duplicate hot lookups, so typing stays smoother under load.
 - Clipboard and snippets no longer hijack the first visible rows for common app/file intent just because they are cheaper to fetch.
 - Northlight records local search-performance samples so you can see how the hot and deep tiers behave on your own machine instead of guessing from feel alone.
 - Trailing intent refiners stay optional: Northlight first searches broadly, then lets you tighten the result type with suffixes like `/`, `img`, `.jpg`, `.pdf`, `.md`, `app`, `file`, or `folder`.
@@ -136,6 +137,7 @@ Current built-in capabilities:
 - Native app icons and image previews are loaded from real macOS assets so they render consistently inside the launcher.
 - App bundles, including asset-catalog apps such as `Calendar.app`, now resolve through the native macOS file icon path first, and Northlight retries app rows whose first icon lookup comes back empty instead of freezing them on a fallback glyph.
 - App icon lookups now run in a serialized queue in the main process to reduce macOS `IconServices` contention crashes during active search.
+- Native file-icon lookups are serialized globally and launcher icon batches are throttled to visible top results to reduce native icon contention while keeping rows responsive.
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.
 - In the `Sandbox` theme, the keyboard-selected result row uses the same background treatment as hover so list states stay visually aligned while iterating.
@@ -149,7 +151,8 @@ The settings window is the control center for launcher preferences.
 
 - Settings is only draggable from its dedicated top title bar, so the visible header and form controls behave like a normal window surface instead of acting as a giant drag target.
 - The section sidebar stays fixed outside the scrolling content area, so long sections do not push navigation out of view.
-- The shipping settings window uses a left sidebar (Overview, Aliases & Snippets, Scopes & Status), a compact header, dense grouped cards, and switch rows where extra detail lives in native tooltips (`title`) and screen-reader labels—not inline paragraphs between controls. Long scope guidance sits behind a collapsed `Scope reference` disclosure on the Scopes tab. Older layouts remain on `settings-current-view.html` (tabs) and `settings-current-view2.html` (sidebar with more inline copy).
+- The shipping settings window uses the sidebar layout from `settings-current-view2.html` and keeps the top subtitle/context copy.
+- In Scopes & Status, explanatory text is intentionally minimized in-line: detailed scope explanations live behind discreet `?` hover hints so the panel stays clean while still exposing guidance on demand.
 - Primary and secondary settings buttons use a modern treatment with clear hover, pressed, disabled, and saving states.
 - The settings mockup review page now uses a black outer background like the launcher review page, so both design frames sit on the same neutral surround.
 - Toggle best match, app-first ranking, preview, quick look, snippets, and clipboard history.

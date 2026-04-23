@@ -69,7 +69,7 @@ const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 let mainRequestSequence = 0;
 const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
-let nativeAppIconLookupQueue: Promise<void> = Promise.resolve();
+let nativeFileIconLookupQueue: Promise<void> = Promise.resolve();
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 const HOME_PATH = homedir();
 
@@ -91,10 +91,10 @@ function logFatalContext(label: string, payload?: unknown) {
   }
 }
 
-function getNativeAppFileIconSerial(path: string) {
-  const runLookup = async () => app.getFileIcon(path, { size: 'large' });
-  const queued = nativeAppIconLookupQueue.then(runLookup, runLookup);
-  nativeAppIconLookupQueue = queued.then(
+function getNativeFileIconSerial(path: string, size: 'small' | 'normal' | 'large') {
+  const runLookup = async () => app.getFileIcon(path, { size });
+  const queued = nativeFileIconLookupQueue.then(runLookup, runLookup);
+  nativeFileIconLookupQueue = queued.then(
     () => undefined,
     () => undefined
   );
@@ -924,7 +924,7 @@ async function getPathIcon(path: string, requestId?: string) {
               requestId,
               path: appPath
             },
-            async () => getNativeAppFileIconSerial(appPath)
+            async () => getNativeFileIconSerial(appPath, 'large')
           )
       });
 
@@ -952,7 +952,7 @@ async function getPathIcon(path: string, requestId?: string) {
         requestId,
         path
       },
-      async () => app.getFileIcon(path, { size: 'normal' })
+      async () => getNativeFileIconSerial(path, 'normal')
     );
     const icon = nativeImageToDataUrl(image);
     iconCache.set(path, icon);

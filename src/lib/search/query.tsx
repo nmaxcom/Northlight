@@ -10,6 +10,7 @@ import type { AliasEntry, ClipboardEntry, LauncherResult, LocalSearchItem, Searc
 export type QueryContext = {
   scopePath?: string | null;
   traceRequestId?: string;
+  skipHotLocal?: boolean;
 };
 
 function iconForKind(kind: LocalSearchItem['kind'] | 'snippet' | 'clipboard' | 'command') {
@@ -452,10 +453,15 @@ export async function buildResults(query: string, context: QueryContext = {}): P
     return [];
   }
 
-  const [hotLocal, deepLocal] = await Promise.all([
-    launcherRuntime.searchLocalHot(trimmed, context.scopePath, resolvedIntent, context.traceRequestId),
-    launcherRuntime.searchLocal(trimmed, context.scopePath, resolvedIntent, context.traceRequestId)
-  ]);
+  const [hotLocal, deepLocal] = context.skipHotLocal
+    ? [
+        launcherRuntime.getCachedLocalHot(trimmed, context.scopePath, resolvedIntent),
+        await launcherRuntime.searchLocal(trimmed, context.scopePath, resolvedIntent, context.traceRequestId)
+      ]
+    : await Promise.all([
+        launcherRuntime.searchLocalHot(trimmed, context.scopePath, resolvedIntent, context.traceRequestId),
+        launcherRuntime.searchLocal(trimmed, context.scopePath, resolvedIntent, context.traceRequestId)
+      ]);
   const localResults = buildLocalResults(mergeLocalItems(hotLocal, deepLocal), context);
 
   if (resolvedIntent) {

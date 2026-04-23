@@ -25,6 +25,9 @@ const shortcutLabelMap: Record<string, string> = {
   Backspace: 'Delete',
   Right: '→'
 };
+const DEEP_SEARCH_DEBOUNCE_MS = 120;
+const ICON_BATCH_DEBOUNCE_MS = 90;
+const ICON_BATCH_LIMIT = 10;
 
 type FeedbackState = {
   tone: 'success' | 'error';
@@ -1008,73 +1011,79 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     }
 
     let canceled = false;
+    let timer: number | null = null;
 
     if (!query.trim()) {
       setIsResolving(false);
       return;
     }
 
-    const traceRequestId = nextTraceRequestId('search-query');
-    const requestId = ++searchRequestRef.current;
-    const startedAt = Date.now();
-    void traceEvent({
-      subsystem: 'search',
-      event: 'start',
-      requestId: traceRequestId,
-      query,
-      details: {
-        reason: 'query-change-deep'
-      }
-    });
-    void buildResults(query, { traceRequestId }).then((nextResults) => {
-      if (!canceled && requestId === searchRequestRef.current) {
-        const metrics = searchMetricsRef.current;
-        if (metrics && metrics.query === query.trim()) {
-          metrics.deepCompleteMs = Date.now() - metrics.startedAt;
-          metrics.deepResultCount = nextResults.length;
+    timer = window.setTimeout(() => {
+      const traceRequestId = nextTraceRequestId('search-query');
+      const requestId = ++searchRequestRef.current;
+      const startedAt = Date.now();
+      void traceEvent({
+        subsystem: 'search',
+        event: 'start',
+        requestId: traceRequestId,
+        query,
+        details: {
+          reason: 'query-change-deep'
         }
-        setResults(nextResults);
-        setIsResolving(false);
-        if (metrics && metrics.query === query.trim()) {
-          void launcherRuntime.recordSearchPerformance({
-            query: metrics.query,
-            firstVisibleMs: metrics.firstVisibleMs,
-            firstUsefulMs: metrics.firstUsefulMs,
-            hotCompleteMs: metrics.hotCompleteMs,
-            deepCompleteMs: metrics.deepCompleteMs,
-            hotResultCount: metrics.hotResultCount,
-            deepResultCount: metrics.deepResultCount,
-            topReplacementCount: metrics.topReplacementCount,
-            clipboardFirstFlash:
-              metrics.initialTopWasClipboard &&
-              Boolean(nextResults[0]) &&
-              nextResults[0].kind !== 'clipboard' &&
-              nextResults[0].kind !== 'snippet'
+      });
+      void buildResults(query, { traceRequestId, skipHotLocal: true }).then((nextResults) => {
+        if (!canceled && requestId === searchRequestRef.current) {
+          const metrics = searchMetricsRef.current;
+          if (metrics && metrics.query === query.trim()) {
+            metrics.deepCompleteMs = Date.now() - metrics.startedAt;
+            metrics.deepResultCount = nextResults.length;
+          }
+          setResults(nextResults);
+          setIsResolving(false);
+          if (metrics && metrics.query === query.trim()) {
+            void launcherRuntime.recordSearchPerformance({
+              query: metrics.query,
+              firstVisibleMs: metrics.firstVisibleMs,
+              firstUsefulMs: metrics.firstUsefulMs,
+              hotCompleteMs: metrics.hotCompleteMs,
+              deepCompleteMs: metrics.deepCompleteMs,
+              hotResultCount: metrics.hotResultCount,
+              deepResultCount: metrics.deepResultCount,
+              topReplacementCount: metrics.topReplacementCount,
+              clipboardFirstFlash:
+                metrics.initialTopWasClipboard &&
+                Boolean(nextResults[0]) &&
+                nextResults[0].kind !== 'clipboard' &&
+                nextResults[0].kind !== 'snippet'
+            });
+          }
+          void traceEvent({
+            subsystem: 'search',
+            event: 'complete',
+            requestId: traceRequestId,
+            query,
+            durationMs: Date.now() - startedAt,
+            resultCount: nextResults.length
           });
+          return;
         }
+
         void traceEvent({
           subsystem: 'search',
-          event: 'complete',
+          event: 'cancel',
           requestId: traceRequestId,
           query,
           durationMs: Date.now() - startedAt,
-          resultCount: nextResults.length
+          outcome: 'obsolete'
         });
-        return;
-      }
-
-      void traceEvent({
-        subsystem: 'search',
-        event: 'cancel',
-        requestId: traceRequestId,
-        query,
-        durationMs: Date.now() - startedAt,
-        outcome: 'obsolete'
       });
-    });
+    }, DEEP_SEARCH_DEBOUNCE_MS);
 
     return () => {
       canceled = true;
+      if (timer) {
+        window.clearTimeout(timer);
+      }
     };
   }, [isMock, nextTraceRequestId, query, settings, traceEvent]);
 
@@ -1171,8 +1180,16 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       return;
     }
 
+    if (isResolving) {
+      return;
+    }
+
+    let timer: number | null = null;
+    let cancelled = false;
+
     const visibleIconPaths = new Set(
       results
+        .slice(0, ICON_BATCH_LIMIT)
         .filter((result) => !result.iconUrl)
         .map((result) => result.iconPath ?? result.path)
         .filter((path): path is string => Boolean(path))
@@ -1187,6 +1204,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     const iconPaths = Array.from(
       new Set(
         results
+          .slice(0, ICON_BATCH_LIMIT)
           .filter((result) => !result.iconUrl)
           .map((result) => result.iconPath ?? result.path)
           .filter((path): path is string => Boolean(path))
@@ -1199,78 +1217,82 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       return;
     }
 
-    let cancelled = false;
-    const traceRequestId = nextTraceRequestId('icons');
-    const startedAt = Date.now();
-
-    void traceEvent({
-      subsystem: 'icon',
-      event: 'batch-start',
-      requestId: traceRequestId,
-      resultCount: iconPaths.length
-    });
-
-    void launcherRuntime.getPathIcons(iconPaths, traceRequestId).then((iconMap) => {
-      if (cancelled) {
-        void traceEvent({
-          subsystem: 'icon',
-          event: 'batch-cancel',
-          requestId: traceRequestId,
-          durationMs: Date.now() - startedAt,
-          outcome: 'cancelled'
-        });
-        return;
-      }
-
-      setIconUrls((current) => {
-        const next = { ...current };
-        for (const [path, icon] of Object.entries(iconMap)) {
-          if (icon) {
-            next[path] = icon;
-            delete iconRetryCountsRef.current[path];
-          }
-        }
-        return next;
-      });
-
-      const unresolvedPaths = iconPaths.filter((path) => !iconMap[path]);
-      if (unresolvedPaths.length > 0) {
-        let shouldRetry = false;
-        let retryDelay = Number.POSITIVE_INFINITY;
-
-        for (const path of unresolvedPaths) {
-          const attempt = (iconRetryCountsRef.current[path] ?? 0) + 1;
-          iconRetryCountsRef.current[path] = attempt;
-          if (attempt < 4) {
-            shouldRetry = true;
-            retryDelay = Math.min(retryDelay, attempt === 1 ? 150 : attempt === 2 ? 400 : 900);
-          }
-        }
-
-        if (shouldRetry) {
-          if (iconRetryTimerRef.current) {
-            window.clearTimeout(iconRetryTimerRef.current);
-          }
-          iconRetryTimerRef.current = window.setTimeout(() => {
-            iconRetryTimerRef.current = null;
-            setIconRetryTick((current) => current + 1);
-          }, retryDelay);
-        }
-      }
+    timer = window.setTimeout(() => {
+      const traceRequestId = nextTraceRequestId('icons');
+      const startedAt = Date.now();
 
       void traceEvent({
         subsystem: 'icon',
-        event: 'batch-complete',
+        event: 'batch-start',
         requestId: traceRequestId,
-        durationMs: Date.now() - startedAt,
-        resultCount: Object.keys(iconMap).length
+        resultCount: iconPaths.length
       });
-    });
+
+      void launcherRuntime.getPathIcons(iconPaths, traceRequestId).then((iconMap) => {
+        if (cancelled) {
+          void traceEvent({
+            subsystem: 'icon',
+            event: 'batch-cancel',
+            requestId: traceRequestId,
+            durationMs: Date.now() - startedAt,
+            outcome: 'cancelled'
+          });
+          return;
+        }
+
+        setIconUrls((current) => {
+          const next = { ...current };
+          for (const [path, icon] of Object.entries(iconMap)) {
+            if (icon) {
+              next[path] = icon;
+              delete iconRetryCountsRef.current[path];
+            }
+          }
+          return next;
+        });
+
+        const unresolvedPaths = iconPaths.filter((path) => !iconMap[path]);
+        if (unresolvedPaths.length > 0) {
+          let shouldRetry = false;
+          let retryDelay = Number.POSITIVE_INFINITY;
+
+          for (const path of unresolvedPaths) {
+            const attempt = (iconRetryCountsRef.current[path] ?? 0) + 1;
+            iconRetryCountsRef.current[path] = attempt;
+            if (attempt < 4) {
+              shouldRetry = true;
+              retryDelay = Math.min(retryDelay, attempt === 1 ? 150 : attempt === 2 ? 400 : 900);
+            }
+          }
+
+          if (shouldRetry) {
+            if (iconRetryTimerRef.current) {
+              window.clearTimeout(iconRetryTimerRef.current);
+            }
+            iconRetryTimerRef.current = window.setTimeout(() => {
+              iconRetryTimerRef.current = null;
+              setIconRetryTick((current) => current + 1);
+            }, retryDelay);
+          }
+        }
+
+        void traceEvent({
+          subsystem: 'icon',
+          event: 'batch-complete',
+          requestId: traceRequestId,
+          durationMs: Date.now() - startedAt,
+          resultCount: Object.keys(iconMap).length
+        });
+      });
+    }, ICON_BATCH_DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
+      if (timer) {
+        window.clearTimeout(timer);
+      }
     };
-  }, [iconRetryTick, iconUrls, isMock, nextTraceRequestId, results, traceEvent]);
+  }, [iconRetryTick, iconUrls, isMock, isResolving, nextTraceRequestId, results, traceEvent]);
 
   useEffect(
     () => () => {

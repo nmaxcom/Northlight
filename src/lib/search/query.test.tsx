@@ -341,6 +341,39 @@ describe('buildResults', () => {
     expect(results.some((result) => result.title === 'calendar-template.pdf')).toBe(true);
   });
 
+  it('can reuse cached hot results for deep resolution without issuing another hot query', async () => {
+    const searchLocalHot = vi.fn().mockResolvedValue([
+      {
+        id: '/System/Applications/Calendar.app',
+        path: '/System/Applications/Calendar.app',
+        name: 'Calendar.app',
+        kind: 'app',
+        score: 122
+      }
+    ]);
+    const searchLocal = vi.fn().mockResolvedValue([
+      {
+        id: '/Users/nm4/Documents/calendar-template.pdf',
+        path: '/Users/nm4/Documents/calendar-template.pdf',
+        name: 'calendar-template.pdf',
+        kind: 'file',
+        score: 170
+      }
+    ]);
+
+    window.launcher = {
+      searchLocalHot,
+      searchLocal,
+      getClipboardHistory: vi.fn().mockResolvedValue([])
+    } as never;
+
+    await buildHotResults('calendar');
+    await buildResults('calendar', { skipHotLocal: true });
+
+    expect(searchLocalHot).toHaveBeenCalledTimes(1);
+    expect(searchLocal).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps direct app intent above noisy support files under Library containers', async () => {
     installLocalSearchResults([
       {
