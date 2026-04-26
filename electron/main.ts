@@ -1,5 +1,4 @@
 import { app, BrowserWindow, globalShortcut, ipcMain, shell } from 'electron';
-import type { NativeImage } from 'electron';
 import { execFile, spawn } from 'node:child_process';
 import { access, mkdir, readFile, readdir, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -69,10 +68,8 @@ const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 let mainRequestSequence = 0;
 const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
-let nativeFileIconLookupQueue: Promise<void> = Promise.resolve();
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 const HOME_PATH = homedir();
-const NATIVE_ICON_TIMEOUT_MS = 450;
 
 function logFatalContext(label: string, payload?: unknown) {
   try {
@@ -90,22 +87,6 @@ function logFatalContext(label: string, payload?: unknown) {
   } catch {
     console.error(`[main] ${label}`);
   }
-}
-
-function getNativeFileIconSerial(path: string, size: 'small' | 'normal' | 'large') {
-  const runLookup = async () => {
-    const timeoutError = new Error(`native icon timeout for ${path}`);
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(timeoutError), NATIVE_ICON_TIMEOUT_MS);
-    });
-    return Promise.race([app.getFileIcon(path, { size }), timeoutPromise]);
-  };
-  const queued = nativeFileIconLookupQueue.then(runLookup, runLookup);
-  nativeFileIconLookupQueue = queued.then(
-    () => undefined,
-    () => undefined
-  );
-  return queued;
 }
 
 async function readDirectoryFolderPaths(path: string) {
@@ -348,14 +329,6 @@ async function getPdfPreview(path: string, requestId?: string) {
       };
     }
   );
-}
-
-function nativeImageToDataUrl(image: NativeImage) {
-  if (image.isEmpty()) {
-    return null;
-  }
-
-  return bufferToDataUrl(image.toPNG(), 'image/png');
 }
 
 function positionLauncherWindow() {
@@ -923,16 +896,12 @@ async function getPathIcon(path: string, requestId?: string) {
         userDataPath: app.getPath('userData'),
         getPlistValue,
         runCommand,
-        getNativeFileIcon: (appPath) =>
-          traceSpan(
-            {
-              subsystem: 'icon',
-              event: 'native-file-icon',
-              requestId,
-              path: appPath
-            },
-            async () => getNativeFileIconSerial(appPath, 'large')
-          )
+        // Native file icon APIs have been unstable on some macOS/Electron builds.
+        // Keep runtime icon resolution deterministic and crash-safe.
+        disableNativeFileIcon: true,
+        getNativeFileIcon: async () => {
+          throw new Error('native-file-icon-disabled');
+        }
       });
 
       if (resolvedAppIcon.cacheable) {
@@ -952,26 +921,19 @@ async function getPathIcon(path: string, requestId?: string) {
       return resolvedAppIcon.icon;
     }
 
-    const image = await traceSpan(
-      {
-        subsystem: 'icon',
-        event: 'native-file-icon',
-        requestId,
-        path
-      },
-      async () => getNativeFileIconSerial(path, 'normal')
-    );
-    const icon = nativeImageToDataUrl(image);
-    iconCache.set(path, icon);
+    // Non-app paths use deterministic glyphs in renderer to avoid native icon instability.
+    iconCache.set(path, null);
     recordTrace({
       subsystem: 'icon',
       event: 'icon-complete',
       requestId,
       path,
       cacheState: 'miss',
-      durationMs: Date.now() - startedAt
+      durationMs: Date.now() - startedAt,
+      kind: 'non-app',
+      outcome: 'skipped-native'
     });
-    return icon;
+    return null;
   } catch {
     if (path.startsWith('/System/Library/ExtensionKit/Extensions/')) {
       return getPathIcon('/System/Applications/System Settings.app', requestId);

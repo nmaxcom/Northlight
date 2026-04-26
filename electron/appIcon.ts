@@ -21,6 +21,7 @@ export type ResolveAppIconDeps = {
   getPlistValue: (plistPath: string, key: string) => Promise<string>;
   runCommand: (command: string, args: string[]) => Promise<void>;
   getNativeFileIcon: (path: string) => Promise<NativeImage>;
+  disableNativeFileIcon?: boolean;
 };
 
 export type ResolvedAppIcon = {
@@ -90,21 +91,24 @@ export async function resolveAppIconDataUrl({
   userDataPath,
   getPlistValue,
   runCommand,
-  getNativeFileIcon
+  getNativeFileIcon,
+  disableNativeFileIcon = false
 }: ResolveAppIconDeps): Promise<ResolvedAppIcon> {
   const plistPath = join(appPath, 'Contents', 'Info.plist');
 
-  try {
-    const nativeIcon = nativeImageToDataUrl(await getNativeFileIcon(appPath));
-    if (nativeIcon) {
-      return {
-        icon: nativeIcon,
-        cacheable: true,
-        source: 'native-file-icon'
-      };
+  if (!disableNativeFileIcon) {
+    try {
+      const nativeIcon = nativeImageToDataUrl(await getNativeFileIcon(appPath));
+      if (nativeIcon) {
+        return {
+          icon: nativeIcon,
+          cacheable: true,
+          source: 'native-file-icon'
+        };
+      }
+    } catch {
+      // Fall through to bundle and thumbnail strategies.
     }
-  } catch {
-    // Fall through to bundle and thumbnail strategies.
   }
 
   try {

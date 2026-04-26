@@ -135,11 +135,9 @@ Current built-in capabilities:
 - Preview titles, paths, code/text bodies, and metadata are selectable, so you can copy directly from the preview pane with the mouse.
 - App previews no longer show the redundant generic `macOS application bundle` body block when there is no useful app-specific text to display.
 - Native app icons and image previews are loaded from real macOS assets so they render consistently inside the launcher.
-- App bundles, including asset-catalog apps such as `Calendar.app`, now resolve through the native macOS file icon path first, and Northlight retries app rows whose first icon lookup comes back empty instead of freezing them on a fallback glyph.
-- App icon lookups now run in a serialized queue in the main process to reduce macOS `IconServices` contention crashes during active search.
-- Native file-icon lookups are serialized globally and launcher icon batches are throttled to visible top results to reduce native icon contention while keeping rows responsive.
+- App bundles, including asset-catalog apps such as `Calendar.app`, resolve through bundle resources and Quick Look thumbnails instead of live native file-icon calls on each query, so icon rendering stays stable while typing.
+- Launcher list icon hydration is throttled to visible top app rows while typing, and non-app rows keep deterministic glyph icons for responsiveness and crash safety.
 - During active typing, list icon hydration waits for a short idle window and only resolves top app rows first; preview icons still resolve for the selected item.
-- Native icon lookups now have a short timeout guard in the main process so a stalled OS icon request cannot block the launcher pipeline indefinitely.
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.
 - In the `Sandbox` theme, the keyboard-selected result row uses the same background treatment as hover so list states stay visually aligned while iterating.

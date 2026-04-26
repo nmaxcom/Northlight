@@ -97,6 +97,35 @@ describe('resolveAppIconDataUrl', () => {
     expect(result.icon).toBeTruthy();
   });
 
+  it('can skip native icon lookup entirely and still resolve app artwork', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'northlight-app-icon-'));
+    const appPath = join(tempDir, 'SafeMode.app');
+    const resourcesDir = join(appPath, 'Contents', 'Resources');
+    await mkdir(resourcesDir, { recursive: true });
+    await writeFile(join(resourcesDir, 'SafeMode.icns'), 'icon-bytes', 'utf8');
+
+    const getNativeFileIcon = vi.fn().mockResolvedValue(fakeNativeImage('should-not-be-used'));
+    const runCommand = vi.fn().mockImplementation(async (_command: string, args: string[]) => {
+      const outIndex = args.indexOf('--out');
+      await mkdir(join(tempDir, 'icon-cache'), { recursive: true });
+      await writeFile(args[outIndex + 1]!, 'rendered-icon', 'utf8');
+    });
+
+    const result = await resolveAppIconDataUrl({
+      appPath,
+      userDataPath: tempDir,
+      getPlistValue: vi.fn().mockImplementation(async (_plistPath, key) => (key === 'CFBundleIconFile' ? 'SafeMode' : '')),
+      runCommand,
+      getNativeFileIcon,
+      disableNativeFileIcon: true
+    });
+
+    expect(getNativeFileIcon).not.toHaveBeenCalled();
+    expect(result.cacheable).toBe(true);
+    expect(result.source).toBe('bundle-resource');
+    expect(result.icon).toBeTruthy();
+  });
+
   it('returns missing when every icon strategy fails', async () => {
     const tempDir = await mkdtemp(join(tmpdir(), 'northlight-app-icon-'));
     const appPath = join(tempDir, 'Fallback.app');
