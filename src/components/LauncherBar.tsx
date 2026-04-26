@@ -27,7 +27,8 @@ const shortcutLabelMap: Record<string, string> = {
 };
 const DEEP_SEARCH_DEBOUNCE_MS = 120;
 const ICON_BATCH_DEBOUNCE_MS = 90;
-const ICON_BATCH_LIMIT = 10;
+const ICON_BATCH_LIMIT = 4;
+const ICON_BATCH_IDLE_MS = 260;
 
 type FeedbackState = {
   tone: 'success' | 'error';
@@ -269,6 +270,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const pointerResetPositionRef = useRef<{ x: number; y: number } | null>(null);
   const iconRetryCountsRef = useRef<Record<string, number>>({});
   const iconRetryTimerRef = useRef<number | null>(null);
+  const lastQueryChangeAtRef = useRef(Date.now());
 
   const nextTraceRequestId = useCallback((prefix: string) => {
     traceRequestSequenceRef.current += 1;
@@ -393,6 +395,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
   const handleQueryChange = useCallback(
     (nextQuery: string) => {
+      lastQueryChangeAtRef.current = Date.now();
       resetPointerSelection();
       setPathAutocompleteDismissedQuery(null);
       setQuery(nextQuery);
@@ -1184,6 +1187,14 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       return;
     }
 
+    if (iconRetryTick === 0 && Date.now() - lastQueryChangeAtRef.current < ICON_BATCH_IDLE_MS) {
+      const remaining = ICON_BATCH_IDLE_MS - (Date.now() - lastQueryChangeAtRef.current);
+      const idleTimer = window.setTimeout(() => {
+        setIconRetryTick((current) => current + 1);
+      }, Math.max(24, remaining));
+      return () => window.clearTimeout(idleTimer);
+    }
+
     let timer: number | null = null;
     let cancelled = false;
 
@@ -1205,6 +1216,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       new Set(
         results
           .slice(0, ICON_BATCH_LIMIT)
+          .filter((result) => result.kind === 'app')
           .filter((result) => !result.iconUrl)
           .map((result) => result.iconPath ?? result.path)
           .filter((path): path is string => Boolean(path))

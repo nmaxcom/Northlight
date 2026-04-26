@@ -138,6 +138,8 @@ Current built-in capabilities:
 - App bundles, including asset-catalog apps such as `Calendar.app`, now resolve through the native macOS file icon path first, and Northlight retries app rows whose first icon lookup comes back empty instead of freezing them on a fallback glyph.
 - App icon lookups now run in a serialized queue in the main process to reduce macOS `IconServices` contention crashes during active search.
 - Native file-icon lookups are serialized globally and launcher icon batches are throttled to visible top results to reduce native icon contention while keeping rows responsive.
+- During active typing, list icon hydration waits for a short idle window and only resolves top app rows first; preview icons still resolve for the selected item.
+- Native icon lookups now have a short timeout guard in the main process so a stalled OS icon request cannot block the launcher pipeline indefinitely.
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.
 - In the `Sandbox` theme, the keyboard-selected result row uses the same background treatment as hover so list states stay visually aligned while iterating.

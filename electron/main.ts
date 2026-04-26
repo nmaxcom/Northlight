@@ -72,6 +72,7 @@ const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
 let nativeFileIconLookupQueue: Promise<void> = Promise.resolve();
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 const HOME_PATH = homedir();
+const NATIVE_ICON_TIMEOUT_MS = 450;
 
 function logFatalContext(label: string, payload?: unknown) {
   try {
@@ -92,7 +93,13 @@ function logFatalContext(label: string, payload?: unknown) {
 }
 
 function getNativeFileIconSerial(path: string, size: 'small' | 'normal' | 'large') {
-  const runLookup = async () => app.getFileIcon(path, { size });
+  const runLookup = async () => {
+    const timeoutError = new Error(`native icon timeout for ${path}`);
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(timeoutError), NATIVE_ICON_TIMEOUT_MS);
+    });
+    return Promise.race([app.getFileIcon(path, { size }), timeoutPromise]);
+  };
   const queued = nativeFileIconLookupQueue.then(runLookup, runLookup);
   nativeFileIconLookupQueue = queued.then(
     () => undefined,
