@@ -37,6 +37,7 @@ import {
 import { buildFilePreview } from './filePreview';
 import { readFileTextPreview } from './previewText';
 import { resolveAppIconDataUrl } from './appIcon';
+import { resolveFinderIconDataUrl } from './finderIcon';
 
 const APP_NAME = packageJson.productName ?? 'Northlight';
 
@@ -68,6 +69,7 @@ const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 let mainRequestSequence = 0;
 const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
+let finderIconLookupQueue: Promise<void> = Promise.resolve();
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 const HOME_PATH = homedir();
 
@@ -167,6 +169,24 @@ function scheduleLauncherPositionSave() {
 function nextRequestId(prefix: string) {
   mainRequestSequence += 1;
   return `${prefix}-${mainRequestSequence}`;
+}
+
+function iconCacheKey(path: string, size: 'normal' | 'large') {
+  return `${size}:${path}`;
+}
+
+function finderIconPixelSize(size: 'normal' | 'large') {
+  return size === 'large' ? 512 : 128;
+}
+
+function getFinderIconDataUrlSerial(path: string, size: 'normal' | 'large') {
+  const runLookup = () => resolveFinderIconDataUrl(app.getPath('userData'), path, finderIconPixelSize(size));
+  const queued = finderIconLookupQueue.then(runLookup, runLookup);
+  finderIconLookupQueue = queued.then(
+    () => undefined,
+    () => undefined
+  );
+  return queued;
 }
 
 function formatBytes(bytes: number) {
@@ -718,7 +738,7 @@ async function getPathPreview(path: string, kind: LocalSearchItem['kind'], reque
       const bundleId = await getPlistValue(plistPath, 'CFBundleIdentifier');
       const version =
         (await getPlistValue(plistPath, 'CFBundleShortVersionString')) || (await getPlistValue(plistPath, 'CFBundleVersion'));
-      const media = await getPathIcon(path, requestId);
+      const media = await getPathIcon(path, requestId, 'large');
 
       const preview = {
         title: basename(path).replace(/\.app$/i, ''),
@@ -869,16 +889,19 @@ function quickLookPath(path: string) {
   child.unref();
 }
 
-async function getPathIcon(path: string, requestId?: string) {
-  if (iconCache.has(path)) {
+async function getPathIcon(path: string, requestId?: string, size: 'normal' | 'large' = 'normal') {
+  const cacheKey = iconCacheKey(path, size);
+
+  if (iconCache.has(cacheKey)) {
     recordTrace({
       subsystem: 'icon',
       event: 'icon-cache-hit',
       requestId,
       path,
+      kind: size,
       cacheState: 'hit'
     });
-    return iconCache.get(path) ?? null;
+    return iconCache.get(cacheKey) ?? null;
   }
 
   try {
@@ -888,8 +911,36 @@ async function getPathIcon(path: string, requestId?: string) {
       event: 'icon-start',
       requestId,
       path,
+      kind: size,
       cacheState: 'miss'
     });
+
+    const finderIcon = await traceSpan(
+      {
+        subsystem: 'icon',
+        event: 'finder-icon-helper',
+        requestId,
+        path,
+        kind: size
+      },
+      async () => getFinderIconDataUrlSerial(path, size)
+    );
+
+    if (finderIcon) {
+      iconCache.set(cacheKey, finderIcon);
+      recordTrace({
+        subsystem: 'icon',
+        event: 'icon-complete',
+        requestId,
+        path,
+        kind: size,
+        cacheState: 'miss',
+        durationMs: Date.now() - startedAt,
+        outcome: 'finder-icon-helper'
+      });
+      return finderIcon;
+    }
+
     if (path.endsWith('.app')) {
       const resolvedAppIcon = await resolveAppIconDataUrl({
         appPath: path,
@@ -905,7 +956,7 @@ async function getPathIcon(path: string, requestId?: string) {
       });
 
       if (resolvedAppIcon.cacheable) {
-        iconCache.set(path, resolvedAppIcon.icon);
+        iconCache.set(cacheKey, resolvedAppIcon.icon);
       }
 
       recordTrace({
@@ -913,38 +964,38 @@ async function getPathIcon(path: string, requestId?: string) {
         event: 'icon-complete',
         requestId,
         path,
+        kind: size,
         cacheState: 'miss',
         durationMs: Date.now() - startedAt,
-        kind: 'app',
         outcome: resolvedAppIcon.source
       });
       return resolvedAppIcon.icon;
     }
 
-    // Non-app paths use deterministic glyphs in renderer to avoid native icon instability.
-    iconCache.set(path, null);
+    iconCache.set(cacheKey, null);
     recordTrace({
       subsystem: 'icon',
       event: 'icon-complete',
       requestId,
       path,
+      kind: size,
       cacheState: 'miss',
       durationMs: Date.now() - startedAt,
-      kind: 'non-app',
-      outcome: 'skipped-native'
+      outcome: 'missing'
     });
     return null;
   } catch {
     if (path.startsWith('/System/Library/ExtensionKit/Extensions/')) {
-      return getPathIcon('/System/Applications/System Settings.app', requestId);
+      return getPathIcon('/System/Applications/System Settings.app', requestId, size);
     }
 
-    iconCache.set(path, null);
+    iconCache.set(cacheKey, null);
     recordTrace({
       subsystem: 'icon',
       event: 'icon-complete',
       requestId,
       path,
+      kind: size,
       cacheState: 'miss',
       outcome: 'error'
     });

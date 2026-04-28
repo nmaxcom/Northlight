@@ -84,8 +84,10 @@ Current built-in capabilities:
 - Path-like input now autocompletes one folder segment at a time in the launcher, both for direct path typing and inside `in:`.
 - Path autocomplete is casing-tolerant while you type, so lowercase input such as `/app` can still suggest and accept `/Applications/` with the real filesystem casing.
 - `Tab` accepts the active folder or path-alias completion, `Up` / `Down` choose between ambiguous candidates, and `Escape` dismisses the completion list without clearing what you typed.
+- `ArrowRight` on a selected local folder scopes directly into that folder as `in:/path/to/folder `, and on a selected local file or app it scopes into that item's parent folder.
 - Saved path aliases participate in that same completion model inside explicit path contexts such as `in:Northlight`.
 - When multiple path completions are visible, Northlight keeps them in a compact single-line list with internal scroll and relies on the gray path already shown in the search field instead of duplicating that path again under the suggestion list.
+- Standalone extension filters now work without a filename term, so searches such as `.mkv`, `in:downloads .mkv`, and `.pdf in:desktop` narrow directly by extension.
 - In the `Sandbox` theme, the empty-state panel can drop its border entirely for cleaner composition work.
 - Scoped search also applies to dotfiles and hidden-style support locations when you point `in:` at them explicitly, for example `in:/Users/nm4/STUFF/Coding/Northlight .env` or `ghost img in:/Users/nm4/Library/Application Support/HiddenGallery`.
 - Time refiners let you narrow local results with `today`, `yesterday`, and `recent`.
@@ -97,8 +99,9 @@ Current built-in capabilities:
 
 ## Deterministic Calculations
 
-- Full expressions work inline for units, currencies, percentages, time zones, durations, data sizes, and volume conversions.
-- Examples: `30mph to kmh`, `9km/h to mi/h`, `15% of 240`, `45 usd to eur`, `2pm CET in Tokyo`, `90 min to h`, `2048 mb to gb`, and `500ml to cup`.
+- Full expressions work inline for units, currencies, percentages, time zones, durations, data sizes, volume conversions, and plain arithmetic.
+- Arithmetic supports `+`, `-`, `*`, `/`, parentheses, unary minus, and exponentiation with `^`.
+- Examples: `30mph to kmh`, `9km/h to mi/h`, `15% of 240`, `45 usd to eur`, `2pm CET in Tokyo`, `90 min to h`, `2048 mb to gb`, `500ml to cup`, `(2+2)*3`, and `3^4`.
 - Northlight also surfaces obvious conversion suggestions early from compact tokens such as `40F`, `20USD`, `90min`, `2048MB`, and `500ml`.
 - Currency conversions use a deterministic local rate table for quick answers, not live market rates.
 
@@ -113,6 +116,7 @@ Current built-in capabilities:
 - `Cmd+Backspace`: clear the current query or action filter when the text field is focused.
 - `Cmd+K`: open the current result's `Actions` panel.
 - `Tab`: accept the active path completion when the query is currently resolving a path or `in:` reference.
+- `ArrowRight`: scope into the selected folder, or into the selected file/app parent folder, as a new `in:` query.
 - `Cmd+,`: open the settings window.
 - `Arrow Up` / `Arrow Down`: move through results.
 - When the path completion list is visible, `Arrow Up` / `Arrow Down` move through completions instead of the main results.
@@ -135,8 +139,9 @@ Current built-in capabilities:
 - Preview titles, paths, code/text bodies, and metadata are selectable, so you can copy directly from the preview pane with the mouse.
 - App previews no longer show the redundant generic `macOS application bundle` body block when there is no useful app-specific text to display.
 - Native app icons and image previews are loaded from real macOS assets so they render consistently inside the launcher.
-- App bundles, including asset-catalog apps such as `Calendar.app`, resolve through bundle resources and Quick Look thumbnails instead of live native file-icon calls on each query, so icon rendering stays stable while typing.
-- Launcher list icon hydration is throttled to visible top app rows while typing, and non-app rows keep deterministic glyph icons for responsiveness and crash safety.
+- App bundles, including asset-catalog apps such as `Calendar.app`, now resolve through bundle resources, asset-catalog lookups, and Finder-compatible native fallbacks so both the small result icon and the large preview icon can show the real app artwork.
+- File rows also resolve real Finder-style file icons, including associated-app icons when macOS exposes them for that path, instead of staying on the generic file glyph forever.
+- Launcher list icon hydration is throttled to visible rows while typing, and the selected result requests its icon immediately so the first row and preview do not wait for hover to look correct.
 - During active typing, list icon hydration waits for a short idle window and only resolves top app rows first; preview icons still resolve for the selected item.
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.

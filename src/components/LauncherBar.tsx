@@ -188,6 +188,22 @@ function defaultPathAliasName(path: string) {
     .trim();
 }
 
+function scopeTargetPathForResult(result: LauncherResult | undefined) {
+  if (!result?.path) {
+    return null;
+  }
+
+  if (result.kind === 'folder') {
+    return result.path;
+  }
+
+  if (result.kind === 'file' || result.kind === 'app') {
+    return result.path.split('/').slice(0, -1).join('/') || '/';
+  }
+
+  return null;
+}
+
 export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState }) {
   const isMock = Boolean(mockState);
   const [query, setQuery] = useState(mockState?.query ?? '');
@@ -438,9 +454,36 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     showFeedback('error', 'Trace unavailable');
   }, [showFeedback]);
 
+  const applyScopeFromResult = useCallback(
+    (result: LauncherResult | undefined) => {
+      const targetPath = scopeTargetPathForResult(result);
+      if (!targetPath) {
+        return false;
+      }
+
+      resetPointerSelection();
+      setPathAutocompleteDismissedQuery(null);
+      setIsActionsOpen(false);
+      setActionQuery('');
+      setActionSelectedIndex(0);
+      setQuery(`in:${targetPath} `);
+      setSelectedIndex(0);
+      setIsResolving(false);
+      return true;
+    },
+    [resetPointerSelection]
+  );
+
   const invokeAction = useCallback(
     async (action: LauncherAction | undefined) => {
       if (!action) {
+        return;
+      }
+
+      if (action.id === 'scope-into') {
+        if (applyScopeFromResult(selectedResult)) {
+          focusActiveInput();
+        }
         return;
       }
 
@@ -470,7 +513,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
 
       focusActiveInput();
     },
-    [focusActiveInput, isMock, showFeedback]
+    [applyScopeFromResult, focusActiveInput, isMock, selectedResult, showFeedback]
   );
 
   const savePathAlias = useCallback(async () => {
@@ -1179,6 +1222,58 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   }, [isMock, nextTraceRequestId, previewVisible, selectedResult, traceEvent]);
 
   useEffect(() => {
+    if (isMock || !selectedResult?.path || selectedResult.iconUrl) {
+      return;
+    }
+
+    const targetPath = selectedResult.iconPath ?? selectedResult.path;
+    if (!targetPath || iconUrls[targetPath]) {
+      return;
+    }
+
+    let cancelled = false;
+    const traceRequestId = nextTraceRequestId('icon-selected');
+    const startedAt = Date.now();
+
+    void traceEvent({
+      subsystem: 'icon',
+      event: 'selected-start',
+      requestId: traceRequestId,
+      path: targetPath,
+      kind: selectedResult.kind
+    });
+
+    void launcherRuntime.getPathIcon(targetPath, traceRequestId).then((iconUrl) => {
+      if (cancelled || !iconUrl) {
+        return;
+      }
+
+      setIconUrls((current) => (
+        current[targetPath] === iconUrl
+          ? current
+          : {
+              ...current,
+              [targetPath]: iconUrl
+            }
+      ));
+
+      void traceEvent({
+        subsystem: 'icon',
+        event: 'selected-complete',
+        requestId: traceRequestId,
+        path: targetPath,
+        kind: selectedResult.kind,
+        durationMs: Date.now() - startedAt,
+        outcome: 'applied'
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [iconUrls, isMock, nextTraceRequestId, selectedResult, traceEvent]);
+
+  useEffect(() => {
     if (isMock) {
       return;
     }
@@ -1216,7 +1311,6 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       new Set(
         results
           .slice(0, ICON_BATCH_LIMIT)
-          .filter((result) => result.kind === 'app')
           .filter((result) => !result.iconUrl)
           .map((result) => result.iconPath ?? result.path)
           .filter((path): path is string => Boolean(path))

@@ -19,6 +19,14 @@ type SuggestedConversion = {
   from: string;
 };
 
+type ArithmeticOperator = '+' | '-' | '*' | '/' | '^' | 'u-';
+
+type ArithmeticToken =
+  | { kind: 'number'; value: number }
+  | { kind: 'operator'; value: ArithmeticOperator }
+  | { kind: 'left-paren' }
+  | { kind: 'right-paren' };
+
 const UNIT_TOKEN_PATTERN = '[-a-zA-Z0-9/^².]+';
 
 const unitAliasMap: Record<string, string> = {
@@ -321,6 +329,185 @@ function formatNumber(value: number) {
   return Number(value.toFixed(2)).toString();
 }
 
+function tokenizeArithmeticExpression(query: string): ArithmeticToken[] | null {
+  const trimmed = query.trim();
+
+  if (!trimmed || !/^[\d+\-*/^().\s]+$/.test(trimmed) || !/[+\-*/^()]/.test(trimmed)) {
+    return null;
+  }
+
+  const tokens: ArithmeticToken[] = [];
+  let index = 0;
+  let expectOperand = true;
+
+  while (index < trimmed.length) {
+    const character = trimmed[index];
+
+    if (!character) {
+      break;
+    }
+
+    if (/\s/.test(character)) {
+      index += 1;
+      continue;
+    }
+
+    if (character === '(') {
+      tokens.push({ kind: 'left-paren' });
+      index += 1;
+      expectOperand = true;
+      continue;
+    }
+
+    if (character === ')') {
+      tokens.push({ kind: 'right-paren' });
+      index += 1;
+      expectOperand = false;
+      continue;
+    }
+
+    if (/[+\-*/^]/.test(character)) {
+      const operator = character === '-' && expectOperand ? 'u-' : (character as ArithmeticOperator);
+      tokens.push({ kind: 'operator', value: operator });
+      index += 1;
+      expectOperand = true;
+      continue;
+    }
+
+    const numberMatch = trimmed.slice(index).match(/^\d+(?:\.\d+)?/);
+    if (!numberMatch) {
+      return null;
+    }
+
+    tokens.push({ kind: 'number', value: Number(numberMatch[0]) });
+    index += numberMatch[0].length;
+    expectOperand = false;
+  }
+
+  return tokens;
+}
+
+function arithmeticPrecedence(operator: ArithmeticOperator) {
+  switch (operator) {
+    case 'u-':
+      return 4;
+    case '^':
+      return 3;
+    case '*':
+    case '/':
+      return 2;
+    case '+':
+    case '-':
+      return 1;
+  }
+}
+
+function arithmeticRightAssociative(operator: ArithmeticOperator) {
+  return operator === '^' || operator === 'u-';
+}
+
+function applyArithmeticOperator(values: number[], operator: ArithmeticOperator) {
+  if (operator === 'u-') {
+    const value = values.pop();
+    if (value === undefined) {
+      throw new Error('missing unary operand');
+    }
+
+    values.push(-value);
+    return;
+  }
+
+  const right = values.pop();
+  const left = values.pop();
+  if (left === undefined || right === undefined) {
+    throw new Error('missing binary operand');
+  }
+
+  switch (operator) {
+    case '+':
+      values.push(left + right);
+      return;
+    case '-':
+      values.push(left - right);
+      return;
+    case '*':
+      values.push(left * right);
+      return;
+    case '/':
+      if (right === 0) {
+        throw new Error('division by zero');
+      }
+      values.push(left / right);
+      return;
+    case '^':
+      values.push(left ** right);
+      return;
+  }
+}
+
+function evaluateArithmeticExpression(query: string) {
+  const tokens = tokenizeArithmeticExpression(query);
+  if (!tokens) {
+    return null;
+  }
+
+  const values: number[] = [];
+  const operators: Array<ArithmeticOperator | '('> = [];
+
+  for (const token of tokens) {
+    if (token.kind === 'number') {
+      values.push(token.value);
+      continue;
+    }
+
+    if (token.kind === 'left-paren') {
+      operators.push('(');
+      continue;
+    }
+
+    if (token.kind === 'right-paren') {
+      while (operators.length > 0 && operators[operators.length - 1] !== '(') {
+        applyArithmeticOperator(values, operators.pop() as ArithmeticOperator);
+      }
+
+      if (operators.pop() !== '(') {
+        return null;
+      }
+      continue;
+    }
+
+    while (operators.length > 0 && operators[operators.length - 1] !== '(') {
+      const previous = operators[operators.length - 1] as ArithmeticOperator;
+      const shouldPop = arithmeticRightAssociative(token.value)
+        ? arithmeticPrecedence(previous) > arithmeticPrecedence(token.value)
+        : arithmeticPrecedence(previous) >= arithmeticPrecedence(token.value);
+
+      if (!shouldPop) {
+        break;
+      }
+
+      applyArithmeticOperator(values, operators.pop() as ArithmeticOperator);
+    }
+
+    operators.push(token.value);
+  }
+
+  while (operators.length > 0) {
+    const operator = operators.pop();
+    if (operator === '(' || operator === undefined) {
+      return null;
+    }
+
+    applyArithmeticOperator(values, operator);
+  }
+
+  if (values.length !== 1 || !Number.isFinite(values[0])) {
+    return null;
+  }
+
+  return formatNumber(values[0]);
+}
+
 function buildResult(builder: Builder, score = 160): LauncherResult {
   return {
     id: builder.id,
@@ -403,6 +590,20 @@ function buildPercentageResult(query: string): Builder | null {
     id: `conversion:percent:${query}`,
     title: `${percent}% of ${amount} = ${result}`,
     subtitle: 'Deterministic percentage calculation',
+    value: result
+  };
+}
+
+function buildArithmeticResult(query: string): Builder | null {
+  const result = evaluateArithmeticExpression(query);
+  if (result === null) {
+    return null;
+  }
+
+  return {
+    id: `conversion:arithmetic:${query}`,
+    title: `${query.trim()} = ${result}`,
+    subtitle: 'Deterministic arithmetic',
     value: result
   };
 }
@@ -575,6 +776,7 @@ function buildTimeZoneResult(query: string): Builder | null {
 
 export function buildDeterministicCalculation(query: string): Builder | null {
   return (
+    buildArithmeticResult(query) ??
     buildPercentageResult(query) ??
     buildTimeZoneResult(query) ??
     buildCurrencyResult(query) ??

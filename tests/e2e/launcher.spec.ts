@@ -28,6 +28,9 @@ test('shows extended deterministic calculations', async ({ page }) => {
 
   await page.getByLabel('Launcher query').fill('45 usd to eur');
   await expect(page.getByText(/45 USD = .* EUR/).first()).toBeVisible();
+
+  await page.getByLabel('Launcher query').fill('3^4');
+  await expect(page.getByText('3^4 = 81').first()).toBeVisible();
 });
 
 test('shows local fixture results and keyboard action hints', async ({ page }) => {
@@ -71,6 +74,16 @@ test('completes paths with Tab and reuses saved path aliases inside in:', async 
   await input.fill('in:nor');
   await page.keyboard.press('Tab');
   await expect(input).toHaveValue('in:Northlight');
+});
+
+test('scopes into the selected result with ArrowRight', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByLabel('Launcher query');
+
+  await input.fill('steel');
+  await expect(page.locator('[data-launcher-role="result"][data-result-id="/Users/nm4/Documents/Brand/steel-moodboard"]')).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await expect(input).toHaveValue('in:/Users/nm4/Documents/Brand/steel-moodboard ');
 });
 
 test('renders a compact path completion panel without a duplicated detail footer', async ({ page }) => {
@@ -198,18 +211,17 @@ test('filters actions inside the actions panel', async ({ page }) => {
 test('shows the settings view route', async ({ page }) => {
   await page.goto('/?view=settings');
 
-  await expect(page.locator('[data-settings-role="header-copy"]')).toContainText('Settings');
+  await expect(page.locator('[data-settings-role="header-copy"]')).toContainText('Northlight Settings');
   await expect(page.getByRole('button', { name: /save settings/i })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible();
-  await expect(page.getByText('Search', { exact: true })).toBeVisible();
+  await expect(page.getByText('Search And Ranking')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Launcher shortcut' })).toBeVisible();
   await expect(page.getByText('⌘')).toBeVisible();
   await expect(page.getByText('⇧')).toBeVisible();
   await page.getByRole('tab', { name: 'Scopes & Status' }).click();
-  await expect(page.getByRole('checkbox', { name: /watch filesystem for changes/i })).toBeChecked();
-  await expect(page.getByRole('checkbox', { name: /fast path/i }).first()).toBeVisible();
-  await expect(page.getByText('Latency (local samples)')).toBeVisible();
-  await expect(page.getByText('Scope reference')).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /watch filesystem changes/i })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Fast Path' }).first()).toBeVisible();
+  await expect(page.getByText('Search Performance')).toBeVisible();
 });
 
 test('keeps settings tabs outside the content scroll region', async ({ page }) => {
@@ -240,11 +252,11 @@ test('keeps settings tabs outside the content scroll region', async ({ page }) =
   expect(after.y).toBe(before.y);
 });
 
-test('shows the shared settings v3 mockup with persistent sidebar and refreshed controls', async ({ page }) => {
-  await page.goto(localDesignUrl('settings-current-view3.html'));
+test('shows the shared settings v2 mockup with persistent sidebar and refreshed controls', async ({ page }) => {
+  await page.goto(localDesignUrl('settings-current-view2.html'));
 
-  const reviewFrame = page.locator('main[title="Northlight settings current view v3"]');
-  await expect(page.getByText(/980×760/i)).toBeVisible();
+  const reviewFrame = page.locator('main[title="Northlight settings current view v2"]');
+  await expect(page.getByText(/same viewport: 980×760/i)).toBeVisible();
   const tabs = page.locator('[data-settings-role="tabs"]');
   const content = page.locator('[data-settings-role="content"]');
   const primaryButton = page.locator('[data-settings-role="primary-button"]');

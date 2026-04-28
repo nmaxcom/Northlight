@@ -6,6 +6,13 @@ describe('buildDeterministicCalculation', () => {
     expect(buildDeterministicCalculation('15% of 240')?.value).toBe('36');
   });
 
+  it('builds arithmetic calculations with precedence, parentheses, and exponents', () => {
+    expect(buildDeterministicCalculation('2+2*3')?.value).toBe('8');
+    expect(buildDeterministicCalculation('(2+2)*3')?.value).toBe('12');
+    expect(buildDeterministicCalculation('3^4')?.value).toBe('81');
+    expect(buildDeterministicCalculation('-(2+3)*4')?.value).toBe('-20');
+  });
+
   it('builds timezone conversions', () => {
     const result = buildDeterministicCalculation('2pm CET in Tokyo');
     expect(result?.title).toContain('Tokyo');

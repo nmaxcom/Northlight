@@ -65,6 +65,25 @@ const TIME_TOKENS: Record<string, SearchTimeToken> = {
   recent: 'recent'
 };
 
+function extensionFilterForToken(token: string): LocalIntentFilter | null {
+  const normalized = token.toLowerCase();
+  const predefined = DOT_EXTENSION_FILTERS[normalized];
+
+  if (predefined) {
+    return predefined;
+  }
+
+  const genericMatch = normalized.match(/^\.(?<extension>[a-z0-9][a-z0-9+-]{0,15})$/i);
+  if (!genericMatch?.groups?.extension) {
+    return null;
+  }
+
+  return {
+    kind: 'file',
+    extensions: [genericMatch.groups.extension]
+  };
+}
+
 function mergeIntentFilters(current: LocalIntentFilter | null, next: LocalIntentFilter) {
   if (!current) {
     return {
@@ -222,7 +241,7 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
       continue;
     }
 
-    const candidateExtensionFilter = DOT_EXTENSION_FILTERS[candidate];
+    const candidateExtensionFilter = extensionFilterForToken(candidate);
     if (candidateExtensionFilter) {
       const merged = mergeIntentFilters(localFilter, candidateExtensionFilter);
       if (!merged) {
@@ -296,6 +315,26 @@ export function parseIntentQuery(query: string): ParsedIntentQuery {
   }
 
   let searchText = tokens.slice(startIndex, endIndex + 1).join(' ').trim();
+
+  const standaloneExtensionFilter = searchText ? extensionFilterForToken(searchText) : null;
+  if (standaloneExtensionFilter) {
+    const merged = mergeIntentFilters(localFilter, standaloneExtensionFilter);
+    if (!merged) {
+      return {
+        rawQuery,
+        searchText: trimmed,
+        intent: null,
+        localFilter: null,
+        matchedTokens: []
+      };
+    }
+
+    localFilter = merged;
+    if (!matchedTokens.includes(searchText)) {
+      matchedTokens.unshift(searchText);
+    }
+  }
+
   if (searchText.endsWith('/') && !searchText.endsWith('//')) {
     const folderText = searchText.slice(0, -1).trim();
     if (folderText) {

@@ -48,6 +48,16 @@ describe('parseIntentQuery', () => {
     });
   });
 
+  it('parses an unknown extension token as a file extension filter while keeping it searchable', () => {
+    expect(parseIntentQuery('.mkv')).toEqual({
+      rawQuery: '.mkv',
+      searchText: '.mkv',
+      intent: { localFilter: { kind: 'file', extensions: ['mkv'] }, matchedTokens: ['.mkv'] },
+      localFilter: { kind: 'file', extensions: ['mkv'] },
+      matchedTokens: ['.mkv']
+    });
+  });
+
   it('parses app refiners case-insensitively', () => {
     expect(parseIntentQuery('figma APP')).toEqual({
       rawQuery: 'figma APP',
@@ -227,6 +237,22 @@ describe('parseIntentQuery', () => {
       },
       localFilter: { kind: 'file', extensions: ['md', 'markdown', 'mdx'] },
       matchedTokens: ['.md', 'in:/Users/nm4/My Projects/Northlight']
+    });
+  });
+
+  it('parses a standalone extension token inside an explicit in: scope', () => {
+    expect(parseIntentQuery('in:/Users/nm4/Downloads .mkv')).toEqual({
+      rawQuery: 'in:/Users/nm4/Downloads .mkv',
+      searchText: '.mkv',
+      intent: {
+        localFilter: { kind: 'file', extensions: ['mkv'] },
+        scopeToken: undefined,
+        scopePath: '/Users/nm4/Downloads',
+        timeToken: undefined,
+        matchedTokens: ['.mkv', 'in:/Users/nm4/Downloads']
+      },
+      localFilter: { kind: 'file', extensions: ['mkv'] },
+      matchedTokens: ['.mkv', 'in:/Users/nm4/Downloads']
     });
   });
 });

@@ -40,6 +40,14 @@ function scopedSubtitle(path: string, scopePath?: string | null) {
 
 function buildLocalResult(item: LocalSearchItem, context: QueryContext = {}): LauncherResult {
   const actions = buildLocalActionDescriptors(item).map(resolveActionDescriptor);
+  actions.push({
+    id: 'scope-into',
+    label: item.kind === 'folder' ? 'Search In This Folder' : 'Search In Parent Folder',
+    hint: 'Right',
+    group: 'Search',
+    feedbackLabel: 'Scoped search',
+    run: async () => undefined
+  });
 
   return {
     id: item.id,

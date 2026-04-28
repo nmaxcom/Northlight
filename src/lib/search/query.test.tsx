@@ -672,6 +672,37 @@ describe('buildResults', () => {
     expect(results[0]?.path).toBe('/Users/nm4/Desktop/Invoice-April.pdf');
   });
 
+  it('passes standalone extension-only scoped queries into local search as structured intent', async () => {
+    const searchLocal = vi.fn().mockResolvedValue([
+      {
+        id: '/Users/nm4/Downloads/movie.mkv',
+        path: '/Users/nm4/Downloads/movie.mkv',
+        name: 'movie.mkv',
+        kind: 'file',
+        score: 124
+      }
+    ]);
+
+    window.launcher = {
+      searchLocal,
+      getClipboardHistory: vi.fn().mockResolvedValue([])
+    } as never;
+
+    const results = await buildResults('in:/Users/nm4/Downloads .mkv');
+
+    expect(searchLocal).toHaveBeenCalledWith('.mkv', undefined, {
+      localFilter: {
+        kind: 'file',
+        extensions: ['mkv']
+      },
+      scopeToken: undefined,
+      scopePath: '/Users/nm4/Downloads',
+      timeToken: undefined,
+      matchedTokens: ['.mkv', 'in:/Users/nm4/Downloads']
+    }, undefined);
+    expect(results[0]?.path).toBe('/Users/nm4/Downloads/movie.mkv');
+  });
+
   it('finds results inside an indexed but non-hot coding scope', async () => {
     const results = await buildResults('product .md in:/Users/nm4/STUFF/Coding/Northlight');
 

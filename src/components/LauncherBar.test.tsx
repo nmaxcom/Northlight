@@ -1582,7 +1582,7 @@ describe('LauncherBar', () => {
     });
   });
 
-  it('does not open native quick look with ArrowRight for a local result', async () => {
+  it('scopes into the selected local result with ArrowRight instead of opening quick look', async () => {
     const quickLookPath = vi.fn().mockResolvedValue(undefined);
 
     window.launcher = {
@@ -1638,6 +1638,7 @@ describe('LauncherBar', () => {
     });
 
     expect(quickLookPath).not.toHaveBeenCalled();
+    expect(input).toHaveValue('in:/Users/nm4/Documents/Brand/steel-moodboard ');
   });
 
   it('keeps existing results visible while an index refresh is resolving', async () => {
