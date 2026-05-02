@@ -17,8 +17,10 @@ Some result icons can appear late or stay on fallback glyphs until another inter
 ## Scope
 
 - In scope: visible result icon hydration starts immediately while typing.
+- In scope: local app, folder, and file rows render polished fallback artwork on first paint while native artwork hydrates.
+- In scope: cached native app icons are attached to local search results before they reach the renderer.
 - In scope: native icon lookup failures are retryable and do not permanently poison the icon cache.
-- In scope: the Finder icon helper is prewarmed after app startup.
+- In scope: the Finder icon helper and common app icons are prewarmed after app startup.
 - In scope: `npm run dev` runs a local supervisor around `electron-vite dev --watch`.
 - In scope: the supervisor restarts the child after watched file changes and unexpected child exits.
 
@@ -39,14 +41,17 @@ Some result icons can appear late or stay on fallback glyphs until another inter
 
 - Pointer movement is not a trigger for icon loading.
 - Fallback glyphs remain visible while native icons are resolving.
+- Polished fallback artwork is used for local app, folder, and file rows when the native icon is not cached yet.
 - If an icon lookup fails, Northlight keeps the fallback glyph and the renderer may retry up to its bounded cap.
 - The dev supervisor restarts after a short debounce so save bursts become one restart.
 
 ## Acceptance Criteria
 
 - [ ] Typing a query with local file/app results starts icon hydration for visible rows without pointer movement.
+- [ ] Local app, folder, and file rows have immediate fallback artwork before native icon IPC completes.
+- [ ] Cached native app icons are present in local results before first renderer paint.
 - [ ] Failed icon results retry without being blocked by permanent `null` cache entries.
-- [ ] Finder icon helper compilation is started proactively after the app is ready.
+- [ ] Finder icon helper compilation and common app icon prewarming start proactively after the app is ready.
 - [ ] `npm run dev` restarts the Electron dev child when watched main-process, preload, renderer, package, or config files change.
 - [ ] `npm run dev` restarts the Electron dev child if it exits unexpectedly.
 - [ ] Dev restarts back off enough to avoid a tight crash loop.

@@ -36,7 +36,7 @@ import {
 } from './settings';
 import { buildFilePreview } from './filePreview';
 import { readFileTextPreview } from './previewText';
-import { resolveAppIconDataUrl } from './appIcon';
+import { resolveAppIconDataUrl, resolveCachedAppIconDataUrl } from './appIcon';
 import { prewarmFinderIconHelper, resolveFinderIconDataUrl } from './finderIcon';
 
 const APP_NAME = packageJson.productName ?? 'Northlight';
@@ -71,6 +71,9 @@ let mainRequestSequence = 0;
 const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 const HOME_PATH = homedir();
+const APP_ICON_PREWARM_ROOTS = ['/Applications', '/System/Applications', join(HOME_PATH, 'Applications')];
+const APP_ICON_PREWARM_LIMIT = 96;
+const APP_ICON_PREWARM_CONCURRENCY = 4;
 
 function logFatalContext(label: string, payload?: unknown) {
   try {
@@ -180,6 +183,36 @@ function finderIconPixelSize(size: 'normal' | 'large') {
 
 function getFinderIconDataUrl(path: string, size: 'normal' | 'large') {
   return resolveFinderIconDataUrl(app.getPath('userData'), path, finderIconPixelSize(size));
+}
+
+async function getCachedPathIcon(path: string, size: 'normal' | 'large' = 'normal') {
+  const cacheKey = iconCacheKey(path, size);
+  if (iconCache.has(cacheKey)) {
+    return iconCache.get(cacheKey) ?? null;
+  }
+
+  if (!path.endsWith('.app')) {
+    return null;
+  }
+
+  const cachedAppIcon = await resolveCachedAppIconDataUrl(path, app.getPath('userData'));
+  if (cachedAppIcon) {
+    iconCache.set(cacheKey, cachedAppIcon);
+    return cachedAppIcon;
+  }
+
+  return null;
+}
+
+async function attachCachedIcons<T extends LocalSearchItem>(items: T[]) {
+  const enriched = await Promise.all(
+    items.map(async (item) => {
+      const iconUrl = await getCachedPathIcon(item.path);
+      return iconUrl ? { ...item, iconUrl } : item;
+    })
+  );
+
+  return enriched;
 }
 
 function formatBytes(bytes: number) {
@@ -358,11 +391,15 @@ function positionLauncherWindow() {
 }
 
 async function prewarmAppIcons() {
-  const appScopes = launcherSettingsCache.scopes
-    .filter((scope) => scope.enabled && /\/Applications$/i.test(scope.path))
-    .map((scope) => scope.path);
+  const appScopes = Array.from(new Set([
+    ...APP_ICON_PREWARM_ROOTS,
+    ...launcherSettingsCache.scopes
+      .filter((scope) => scope.enabled && /\/Applications$/i.test(scope.path))
+      .map((scope) => scope.path)
+  ]));
 
   const seen = new Set<string>();
+  const appPaths: string[] = [];
 
   for (const scopePath of appScopes) {
     try {
@@ -378,15 +415,34 @@ async function prewarmAppIcons() {
         }
 
         seen.add(appPath);
-        void getPathIcon(appPath);
+        appPaths.push(appPath);
 
-        if (seen.size >= 48) {
-          return;
+        if (appPaths.length >= APP_ICON_PREWARM_LIMIT) {
+          break;
         }
       }
     } catch {
       // Ignore individual scope failures during icon warmup.
     }
+
+    if (appPaths.length >= APP_ICON_PREWARM_LIMIT) {
+      break;
+    }
+  }
+
+  let nextIndex = 0;
+  await Promise.all(
+    Array.from({ length: APP_ICON_PREWARM_CONCURRENCY }, async () => {
+      while (nextIndex < appPaths.length) {
+        const appPath = appPaths[nextIndex];
+        nextIndex += 1;
+        if (appPath) {
+          await getPathIcon(appPath).catch(() => null);
+        }
+      }
+    })
+  );
+}
   }
 }
 
@@ -1054,6 +1110,7 @@ app.whenReady().then(async () => {
     broadcastIndexChanged();
   });
   void warmSearchIndex();
+  void prewarmAppIcons().catch(() => undefined);
   void configureIndexWatchers();
   // Avoid startup crashes in IconServices by loading app icons on demand.
   await createWindow();
@@ -1078,7 +1135,7 @@ app.whenReady().then(async () => {
           scopePath,
           localFilter: intent?.localFilter
         },
-        async () => searchHotPaths(query, scopePath, intent, { requestId: traceRequestId })
+        async () => attachCachedIcons(await searchHotPaths(query, scopePath, intent, { requestId: traceRequestId }))
       );
     }
   );
@@ -1096,7 +1153,7 @@ app.whenReady().then(async () => {
           scopePath,
           localFilter: intent?.localFilter
         },
-        async () => searchIndexedPaths(query, scopePath, intent, { requestId: traceRequestId })
+        async () => attachCachedIcons(await searchIndexedPaths(query, scopePath, intent, { requestId: traceRequestId }))
       );
     }
   );

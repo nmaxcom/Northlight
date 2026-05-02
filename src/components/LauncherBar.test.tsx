@@ -1248,7 +1248,7 @@ describe('LauncherBar', () => {
     });
   });
 
-  it('keeps fallback glyph icons on the non-image tile styling', async () => {
+  it('renders immediate fallback artwork while native file icons hydrate', async () => {
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">
         <LauncherBar />
@@ -1264,6 +1264,7 @@ describe('LauncherBar', () => {
 
     const iconContainer = document.querySelector('[data-launcher-role="result-icon"]') as HTMLElement | null;
     expect(iconContainer?.className).not.toContain('resultIconImageBacked');
+    expect(document.querySelector('[data-launcher-role="result-icon-fallback-image"]')).toBeTruthy();
     expect(document.querySelector('[data-launcher-role="result-icon-image"]')).toBeFalsy();
   });
 

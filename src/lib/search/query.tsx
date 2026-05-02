@@ -29,6 +29,22 @@ function iconForKind(kind: LocalSearchItem['kind'] | 'snippet' | 'clipboard' | '
   return <IconFileText size={18} stroke={1.7} />;
 }
 
+function svgDataUrl(svg: string) {
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+const fallbackIconUrls: Record<LocalSearchItem['kind'], string> = {
+  app: svgDataUrl(
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#5f7fff'/><stop offset='1' stop-color='#25306d'/></linearGradient></defs><rect x='6' y='6' width='52' height='52' rx='13' fill='url(#bg)'/><g fill='rgba(255,255,255,.9)'><rect x='18' y='18' width='11' height='11' rx='3'/><rect x='35' y='18' width='11' height='11' rx='3'/><rect x='18' y='35' width='11' height='11' rx='3'/><rect x='35' y='35' width='11' height='11' rx='3'/></g></svg>"
+  ),
+  folder: svgDataUrl(
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='tab' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#9bd7ff'/><stop offset='1' stop-color='#56a7ec'/></linearGradient><linearGradient id='body' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#77c8ff'/><stop offset='1' stop-color='#3f8ed8'/></linearGradient></defs><path d='M7 18c0-4 3-7 7-7h12c2 0 3 1 5 3l4 4h15c4 0 7 3 7 7v3H7z' fill='url(#tab)'/><path d='M7 24h50v18c0 7-5 12-12 12H19C12 54 7 49 7 42z' fill='url(#body)'/><path d='M10 26h44v3H10z' fill='rgba(255,255,255,.18)'/></svg>"
+  ),
+  file: svgDataUrl(
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M16 6h25l9 9v43H16z' fill='#f7fafc'/><path d='M41 6v11h9z' fill='#dce4ec'/><path d='M22 30h20M22 38h20M22 46h13' stroke='#8a97a5' stroke-width='3' stroke-linecap='round'/></svg>"
+  )
+};
+
 function scopedSubtitle(path: string, scopePath?: string | null) {
   if (!scopePath || !path.startsWith(scopePath)) {
     return path;
@@ -58,6 +74,8 @@ function buildLocalResult(item: LocalSearchItem, context: QueryContext = {}): La
     path: item.path,
     value: item.kind === 'app' ? 'Application' : item.kind === 'folder' ? 'Folder' : 'File',
     icon: iconForKind(item.kind),
+    iconUrl: item.iconUrl,
+    fallbackIconUrl: fallbackIconUrls[item.kind],
     preview: {
       title: item.name,
       subtitle: item.path,

@@ -1873,6 +1873,8 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
                           <img className={classes.resultIconImage} data-launcher-role="result-icon-image" src={iconUrls[result.iconPath] ?? ''} alt="" />
                         ) : result.path && iconUrls[result.path] ? (
                           <img className={classes.resultIconImage} data-launcher-role="result-icon-image" src={iconUrls[result.path] ?? ''} alt="" />
+                        ) : result.fallbackIconUrl ? (
+                          <img className={classes.resultIconImage} data-launcher-role="result-icon-fallback-image" src={result.fallbackIconUrl} alt="" />
                         ) : (
                           result.icon ?? iconGlyph(result.kind)
                         )}

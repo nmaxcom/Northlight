@@ -144,6 +144,8 @@ Current built-in capabilities:
 - File rows also resolve real Finder-style file icons, including associated-app icons when macOS exposes them for that path, instead of staying on the generic file glyph forever.
 - Launcher list icon hydration is throttled to visible rows while typing, and the selected result requests its icon immediately so the first row and preview do not wait for hover to look correct.
 - Visible result icons now start hydrating immediately while you type instead of waiting for an extra idle window, so the first rows and selected preview settle faster without needing hover.
+- Local app, folder, and file rows now render polished fallback artwork on the first paint while real native icons hydrate, so the launcher does not flash raw glyph tiles before macOS artwork is ready.
+- Search results attach already-cached native app icons before they reach the renderer, and Northlight prewarms common app icons in the background after startup.
 - App rows resolve their artwork from bundle and preview assets first, then fall back to Finder-native icon lookup when needed, so common apps such as Calendar and Calculator appear promptly and still keep real macOS artwork.
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.

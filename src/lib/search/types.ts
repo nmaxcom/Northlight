@@ -121,6 +121,7 @@ export type LocalSearchItem = {
   name: string;
   kind: Extract<ResultKind, 'file' | 'folder' | 'app'>;
   score: number;
+  iconUrl?: string;
   providerId?: SearchProviderKind;
   modifiedAt?: number | null;
   metadata?: {
@@ -358,6 +359,7 @@ export type LauncherResult = {
   value?: string;
   icon: ReactNode;
   iconUrl?: string;
+  fallbackIconUrl?: string;
   iconPath?: string;
   kind: ResultKind;
   score: number;

@@ -86,6 +86,29 @@ async function renderQuickLookThumbnail(appPath: string, userDataPath: string, r
   return bufferToDataUrl(thumbnailBuffer, 'image/png');
 }
 
+export async function resolveCachedAppIconDataUrl(appPath: string, userDataPath: string) {
+  try {
+    const appStats = await stat(appPath);
+    const quickLookCacheDir = join(userDataPath, 'icon-cache', 'quicklook');
+    const thumbnailHash = createHash('sha1').update(`${appPath}:${appStats.mtimeMs}`).digest('hex');
+    const outputDir = join(quickLookCacheDir, thumbnailHash);
+    const existingPng = (await readdir(outputDir)).find((entry) => entry.endsWith('.png'));
+
+    if (!existingPng) {
+      return null;
+    }
+
+    const thumbnailBuffer = await readFile(join(outputDir, existingPng));
+    if (thumbnailBuffer.length === 0) {
+      return null;
+    }
+
+    return bufferToDataUrl(thumbnailBuffer, 'image/png');
+  } catch {
+    return null;
+  }
+}
+
 export async function resolveAppIconDataUrl({
   appPath,
   userDataPath,

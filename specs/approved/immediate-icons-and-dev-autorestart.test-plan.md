@@ -17,6 +17,8 @@
 ## Test Cases
 
 - [ ] Visible app results call `launcher:get-path-icons` before deep search settles and without pointer movement.
+- [ ] Local app, folder, and file rows render fallback image artwork immediately while icon IPC is pending.
+- [ ] Search IPC includes cached native app icon URLs when the icon cache already has the app artwork.
 - [ ] A first failed icon batch can retry and render image-backed icons on a later attempt.
 - [ ] Main-process icon errors leave the icon retryable rather than returning a permanent cache hit.
 - [ ] `npm run dev` starts `electron-vite dev --watch`.
