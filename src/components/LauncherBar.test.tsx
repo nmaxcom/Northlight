@@ -1175,6 +1175,79 @@ describe('LauncherBar', () => {
     });
   });
 
+  it('starts visible icon hydration before deep search settles', async () => {
+    let resolveDeepSearch:
+      | ((items: Array<{ id: string; path: string; name: string; kind: 'app'; score: number }>) => void)
+      | undefined;
+    const getPathIcons = vi.fn().mockImplementation(async (paths: string[]) =>
+      Object.fromEntries(paths.map((path) => [path, `data:image/png;base64,${btoa(path)}`]))
+    );
+
+    window.launcher = {
+      ready: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockResolvedValue({
+        appVersion: '0.8.74',
+        indexEntryCount: 14,
+        indexReady: true,
+        isRestoring: false,
+        isRefreshing: false
+      }),
+      getSettings: vi.fn().mockResolvedValue(launcherRuntime.getSettingsSnapshot()),
+      getClipboardHistory: vi.fn().mockResolvedValue([]),
+      searchLocalHot: vi.fn().mockResolvedValue([
+        {
+          id: '/System/Applications/Calendar.app',
+          path: '/System/Applications/Calendar.app',
+          name: 'Calendar.app',
+          kind: 'app',
+          score: 120
+        }
+      ]),
+      searchLocal: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveDeepSearch = resolve;
+          })
+      ),
+      getPathIcons,
+      getPathPreview: vi.fn().mockResolvedValue(null),
+      openPath: vi.fn().mockResolvedValue(undefined),
+      revealPath: vi.fn().mockResolvedValue(undefined),
+      openInTerminal: vi.fn().mockResolvedValue(undefined),
+      openWithTextEdit: vi.fn().mockResolvedValue(undefined),
+      hide: vi.fn().mockResolvedValue(undefined)
+    } as never;
+
+    render(
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <LauncherBar />
+      </MantineProvider>
+    );
+
+    fireEvent.change(screen.getByLabelText('Launcher query'), { target: { value: 'cal' } });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Calendar\.app/i })).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(getPathIcons).toHaveBeenCalledWith(['/System/Applications/Calendar.app'], expect.any(String));
+    });
+
+    await act(async () => {
+      resolveDeepSearch?.([
+        {
+          id: '/System/Applications/Calendar.app',
+          path: '/System/Applications/Calendar.app',
+          name: 'Calendar.app',
+          kind: 'app',
+          score: 120
+        }
+      ]);
+      await Promise.resolve();
+    });
+  });
+
   it('keeps fallback glyph icons on the non-image tile styling', async () => {
     render(
       <MantineProvider theme={theme} defaultColorScheme="dark">

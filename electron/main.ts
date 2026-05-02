@@ -37,7 +37,7 @@ import {
 import { buildFilePreview } from './filePreview';
 import { readFileTextPreview } from './previewText';
 import { resolveAppIconDataUrl } from './appIcon';
-import { resolveFinderIconDataUrl } from './finderIcon';
+import { prewarmFinderIconHelper, resolveFinderIconDataUrl } from './finderIcon';
 
 const APP_NAME = packageJson.productName ?? 'Northlight';
 
@@ -69,7 +69,6 @@ const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 let mainRequestSequence = 0;
 const LAUNCHER_POSITION_SAVE_DEBOUNCE_MS = 160;
-let finderIconLookupQueue: Promise<void> = Promise.resolve();
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 const HOME_PATH = homedir();
 
@@ -179,14 +178,8 @@ function finderIconPixelSize(size: 'normal' | 'large') {
   return size === 'large' ? 512 : 128;
 }
 
-function getFinderIconDataUrlSerial(path: string, size: 'normal' | 'large') {
-  const runLookup = () => resolveFinderIconDataUrl(app.getPath('userData'), path, finderIconPixelSize(size));
-  const queued = finderIconLookupQueue.then(runLookup, runLookup);
-  finderIconLookupQueue = queued.then(
-    () => undefined,
-    () => undefined
-  );
-  return queued;
+function getFinderIconDataUrl(path: string, size: 'normal' | 'large') {
+  return resolveFinderIconDataUrl(app.getPath('userData'), path, finderIconPixelSize(size));
 }
 
 function formatBytes(bytes: number) {
@@ -915,6 +908,39 @@ async function getPathIcon(path: string, requestId?: string, size: 'normal' | 'l
       cacheState: 'miss'
     });
 
+    if (path.endsWith('.app')) {
+      const resolvedAppIcon = await resolveAppIconDataUrl({
+        appPath: path,
+        userDataPath: app.getPath('userData'),
+        getPlistValue,
+        runCommand,
+        // Native file icon APIs have been unstable on some macOS/Electron builds.
+        // Keep runtime icon resolution deterministic and crash-safe.
+        disableNativeFileIcon: true,
+        getNativeFileIcon: async () => {
+          throw new Error('native-file-icon-disabled');
+        }
+      });
+
+      if (resolvedAppIcon.icon) {
+        if (resolvedAppIcon.cacheable) {
+          iconCache.set(cacheKey, resolvedAppIcon.icon);
+        }
+
+        recordTrace({
+          subsystem: 'icon',
+          event: 'icon-complete',
+          requestId,
+          path,
+          kind: size,
+          cacheState: 'miss',
+          durationMs: Date.now() - startedAt,
+          outcome: resolvedAppIcon.source
+        });
+        return resolvedAppIcon.icon;
+      }
+    }
+
     const finderIcon = await traceSpan(
       {
         subsystem: 'icon',
@@ -923,7 +949,7 @@ async function getPathIcon(path: string, requestId?: string, size: 'normal' | 'l
         path,
         kind: size
       },
-      async () => getFinderIconDataUrlSerial(path, size)
+      async () => getFinderIconDataUrl(path, size)
     );
 
     if (finderIcon) {
@@ -941,38 +967,6 @@ async function getPathIcon(path: string, requestId?: string, size: 'normal' | 'l
       return finderIcon;
     }
 
-    if (path.endsWith('.app')) {
-      const resolvedAppIcon = await resolveAppIconDataUrl({
-        appPath: path,
-        userDataPath: app.getPath('userData'),
-        getPlistValue,
-        runCommand,
-        // Native file icon APIs have been unstable on some macOS/Electron builds.
-        // Keep runtime icon resolution deterministic and crash-safe.
-        disableNativeFileIcon: true,
-        getNativeFileIcon: async () => {
-          throw new Error('native-file-icon-disabled');
-        }
-      });
-
-      if (resolvedAppIcon.cacheable) {
-        iconCache.set(cacheKey, resolvedAppIcon.icon);
-      }
-
-      recordTrace({
-        subsystem: 'icon',
-        event: 'icon-complete',
-        requestId,
-        path,
-        kind: size,
-        cacheState: 'miss',
-        durationMs: Date.now() - startedAt,
-        outcome: resolvedAppIcon.source
-      });
-      return resolvedAppIcon.icon;
-    }
-
-    iconCache.set(cacheKey, null);
     recordTrace({
       subsystem: 'icon',
       event: 'icon-complete',
@@ -989,7 +983,6 @@ async function getPathIcon(path: string, requestId?: string, size: 'normal' | 'l
       return getPathIcon('/System/Applications/System Settings.app', requestId, size);
     }
 
-    iconCache.set(cacheKey, null);
     recordTrace({
       subsystem: 'icon',
       event: 'icon-complete',
@@ -1056,6 +1049,7 @@ app.whenReady().then(async () => {
   await ensureLauncherState();
   launcherSettingsCache = getLauncherStateSnapshot().settings;
   startClipboardMonitor();
+  void prewarmFinderIconHelper(app.getPath('userData')).catch(() => undefined);
   setIndexChangedListener(() => {
     broadcastIndexChanged();
   });

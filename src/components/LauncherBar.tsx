@@ -26,9 +26,8 @@ const shortcutLabelMap: Record<string, string> = {
   Right: '→'
 };
 const DEEP_SEARCH_DEBOUNCE_MS = 120;
-const ICON_BATCH_DEBOUNCE_MS = 90;
-const ICON_BATCH_LIMIT = 4;
-const ICON_BATCH_IDLE_MS = 260;
+const ICON_BATCH_DEBOUNCE_MS = 16;
+const ICON_BATCH_LIMIT = 8;
 
 type FeedbackState = {
   tone: 'success' | 'error';
@@ -1278,18 +1277,6 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       return;
     }
 
-    if (isResolving) {
-      return;
-    }
-
-    if (iconRetryTick === 0 && Date.now() - lastQueryChangeAtRef.current < ICON_BATCH_IDLE_MS) {
-      const remaining = ICON_BATCH_IDLE_MS - (Date.now() - lastQueryChangeAtRef.current);
-      const idleTimer = window.setTimeout(() => {
-        setIconRetryTick((current) => current + 1);
-      }, Math.max(24, remaining));
-      return () => window.clearTimeout(idleTimer);
-    }
-
     let timer: number | null = null;
     let cancelled = false;
 
@@ -1398,7 +1385,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         window.clearTimeout(timer);
       }
     };
-  }, [iconRetryTick, iconUrls, isMock, isResolving, nextTraceRequestId, results, traceEvent]);
+  }, [iconRetryTick, iconUrls, isMock, nextTraceRequestId, results, traceEvent]);
 
   useEffect(
     () => () => {

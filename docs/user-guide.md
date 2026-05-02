@@ -55,6 +55,7 @@ Current built-in capabilities:
 - `npm run build:design` regenerates local design bundles in `design/assets/bundles/` from the real launcher and settings renderer sources.
 - `npm run export:design` generates one self-contained share file at `design/export/current-design.html` from the current launcher design page, so you can hand off a single HTML that opens directly without separate JS/CSS bundles.
 - `npm run design` regenerates those same local bundles, serves the launcher/settings design pages over HTTP, prints the available design URLs in the terminal, and exposes an index at `/design/`.
+- `npm run dev` runs through a supervisor that starts `electron-vite dev --watch`, restarts it after relevant source/config changes, and brings it back after unexpected child exits.
 - The local design pages are [design/launcher-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/launcher-current-view.html), [design/settings-current-view.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view.html) (classic horizontal tabs), [design/settings-current-view2.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view2.html) (sidebar layout, matches the shipping settings window), and [design/settings-current-view3.html](/Users/nm4/STUFF/Coding/Northlight/design/settings-current-view3.html) (denser experimental variant). All work over `file://` and HTTP from bundles in `design/assets/bundles/`.
 - The exported share files live in `design/export/` and are snapshots for handoff; the local `design/*.html` pages remain the real renderer-backed source of truth.
 - The `Sandbox` launcher theme loads [src/styles/launcher-sandbox.css](/Users/nm4/STUFF/Coding/Northlight/src/styles/launcher-sandbox.css) through the real launcher bundle, so design pages still inherit the real launcher styling source of truth.
@@ -142,7 +143,8 @@ Current built-in capabilities:
 - App bundles, including asset-catalog apps such as `Calendar.app`, now resolve through bundle resources, asset-catalog lookups, and Finder-compatible native fallbacks so both the small result icon and the large preview icon can show the real app artwork.
 - File rows also resolve real Finder-style file icons, including associated-app icons when macOS exposes them for that path, instead of staying on the generic file glyph forever.
 - Launcher list icon hydration is throttled to visible rows while typing, and the selected result requests its icon immediately so the first row and preview do not wait for hover to look correct.
-- During active typing, list icon hydration waits for a short idle window and only resolves top app rows first; preview icons still resolve for the selected item.
+- Visible result icons now start hydrating immediately while you type instead of waiting for an extra idle window, so the first rows and selected preview settle faster without needing hover.
+- App rows resolve their artwork from bundle and preview assets first, then fall back to Finder-native icon lookup when needed, so common apps such as Calendar and Calculator appear promptly and still keep real macOS artwork.
 - Real image-backed result icons render without the extra decorative tile, so app icons and pane-style command icons read more cleanly in the list.
 - In the `Sandbox` theme, result-icon backgrounds are removed across all result kinds for a cleaner icon-only treatment.
 - In the `Sandbox` theme, the keyboard-selected result row uses the same background treatment as hover so list states stay visually aligned while iterating.

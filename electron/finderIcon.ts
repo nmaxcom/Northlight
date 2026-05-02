@@ -170,6 +170,10 @@ async function ensureFinderIconHelper(userDataPath: string, deps: FinderIconDeps
   return helperBuildPromise;
 }
 
+export async function prewarmFinderIconHelper(userDataPath: string, deps: FinderIconDeps = {}) {
+  await ensureFinderIconHelper(userDataPath, deps);
+}
+
 export async function resolveFinderIconDataUrl(
   userDataPath: string,
   targetPath: string,
