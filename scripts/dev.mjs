@@ -5,6 +5,7 @@ import process from 'node:process';
 const RESTART_DEBOUNCE_MS = 300;
 const EXIT_RESTART_BASE_DELAY_MS = 700;
 const EXIT_RESTART_MAX_DELAY_MS = 5000;
+const MAIN_ENTRY = 'dist-electron/main/main.js';
 
 const watchTargets = [
   'electron',
@@ -51,6 +52,11 @@ function startChild(reason = 'initial start') {
     if (code === 0 && !signal) {
       log('child exited cleanly; supervisor stopping');
       shutdown('SIGTERM');
+      return;
+    }
+
+    if (!existsSync(MAIN_ENTRY)) {
+      log(`child exited (${signal ?? code ?? 'unknown'}) and ${MAIN_ENTRY} is missing; waiting for a source change before retrying`);
       return;
     }
 

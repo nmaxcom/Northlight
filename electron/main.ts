@@ -443,8 +443,6 @@ async function prewarmAppIcons() {
     })
   );
 }
-  }
-}
 
 async function showLauncher() {
   if (!mainWindow || !rendererReady) {
