@@ -32,6 +32,7 @@ Current built-in capabilities:
 
 - Toggle the launcher with `Cmd+Shift+Space`.
 - If the launcher is open, the same shortcut hides it.
+- If the saved launcher shortcut cannot be registered, Northlight now registers the default fallback instead of leaving the launcher without a working global hotkey.
 - The launcher uses a single edge-to-edge shell inside its frameless utility window.
 - Northlight enforces a single launcher instance, so reopening the app or retriggering activation reuses the same launcher window instead of creating duplicates.
 - The header acts as a drag region, so you can reposition the launcher like a native utility window.

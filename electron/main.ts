@@ -876,7 +876,15 @@ function registerShortcuts() {
     const requested = settings.launcherHotkey ?? '';
     const resolved = resolveLauncherShortcut(requested, app.isPackaged);
     const fallback = DEFAULT_LAUNCHER_SHORTCUT;
-    const nextShortcut = registerLauncherShortcut(resolved) ? resolved : fallback;
+    let nextShortcut = resolved;
+
+    if (!registerLauncherShortcut(resolved)) {
+      nextShortcut = fallback;
+      if (!registerLauncherShortcut(fallback)) {
+        nextShortcut = '';
+        console.warn(`[main] failed to register fallback launcher shortcut: ${fallback}`);
+      }
+    }
 
     if (requested && nextShortcut !== requested) {
       void saveLauncherSettings({
