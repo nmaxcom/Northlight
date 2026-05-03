@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut, shortcutTokens } from './shortcuts';
+import { DEFAULT_LAUNCHER_SHORTCUT, FALLBACK_LAUNCHER_SHORTCUT, resolveLauncherShortcut, shortcutTokens } from './shortcuts';
 
 describe('shortcut helpers', () => {
   it('keeps an explicit shortcut unchanged', () => {
@@ -15,7 +15,7 @@ describe('shortcut helpers', () => {
   });
 
   it('breaks an accelerator into displayable Apple-style tokens', () => {
-    expect(shortcutTokens('CommandOrControl+Shift+Space')).toEqual([
+    expect(shortcutTokens(FALLBACK_LAUNCHER_SHORTCUT)).toEqual([
       { id: 'CommandOrControl-0', label: 'CommandOrControl', symbol: '⌘' },
       { id: 'Shift-1', label: 'Shift', symbol: '⇧' },
       { id: 'Space-2', label: 'Space', symbol: '␣' }

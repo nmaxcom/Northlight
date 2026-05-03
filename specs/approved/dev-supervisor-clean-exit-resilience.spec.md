@@ -5,6 +5,8 @@
 - `npm run dev` keeps watching source files after the Electron child exits cleanly.
 - A duplicate-instance child exit no longer shuts down the dev supervisor.
 - The next watched source change can start Electron again without manually rerunning `npm run dev`.
+- Startup logs show the exact Electron dev command, concise build milestones, and any existing Northlight Dev process PID.
+- Vite renderer URLs and repetitive build progress lines are filtered from normal supervisor output.
 
 ## Non-goals
 
@@ -19,5 +21,6 @@
 ## Acceptance criteria
 
 - A clean Electron child exit logs that the supervisor remains alive.
+- If Northlight Dev is already running, the supervisor reports the existing PID and does not launch a duplicate child just to fail the single-instance lock.
 - Non-zero Electron exits continue to restart with backoff when the main entry exists.
 - Manual `SIGINT`/`SIGTERM` still closes watchers and child processes.

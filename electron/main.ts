@@ -8,7 +8,7 @@ import { platform } from 'node:process';
 import packageJson from '../package.json';
 import { shouldHideLauncherApp } from '../src/lib/launcher/dismissBehavior';
 import { getLauncherOpenStrategy } from '../src/lib/launcher/openTarget';
-import { DEFAULT_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/shortcuts';
+import { DEFAULT_LAUNCHER_SHORTCUT, FALLBACK_LAUNCHER_SHORTCUT, resolveLauncherShortcut } from '../src/lib/shortcuts';
 import type { LauncherPreview, LauncherSettings, LocalSearchItem, SearchIntent } from '../src/lib/search/types';
 import { buildPathAutocompleteState, expandHomePath } from '../src/lib/search/pathAutocomplete';
 import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/lib/windowVisibility';
@@ -631,6 +631,17 @@ async function createWindow() {
   });
 
   mainWindow.webContents.on('console-message', (_event, level, message) => {
+    if (
+      IS_DEV_SESSION &&
+      (message.includes('[vite] connecting') ||
+        message.includes('[vite] connected') ||
+        message.includes('[vite] server connection lost') ||
+        message.includes('Download the React DevTools') ||
+        message.includes('Electron Security Warning (Insecure Content-Security-Policy)'))
+    ) {
+      return;
+    }
+
     const label = level === 3 ? 'error' : level === 2 ? 'warn' : 'log';
     console[label](`[renderer] ${message}`);
   });
@@ -894,7 +905,7 @@ function registerShortcuts() {
   void getLauncherSettings().then((settings) => {
     const requested = settings.launcherHotkey ?? '';
     const resolved = resolveLauncherShortcut(requested, app.isPackaged);
-    const fallback = DEFAULT_LAUNCHER_SHORTCUT;
+    const fallback = FALLBACK_LAUNCHER_SHORTCUT;
     let nextShortcut = resolved;
 
     if (!registerLauncherShortcut(resolved)) {
@@ -904,6 +915,8 @@ function registerShortcuts() {
         console.warn(`[main] failed to register fallback launcher shortcut: ${fallback}`);
       }
     }
+
+    console.log(`[main] launcher shortcut active: ${nextShortcut || 'disabled'}`);
 
     if (requested && nextShortcut !== requested) {
       void saveLauncherSettings({
@@ -1235,7 +1248,7 @@ app.whenReady().then(async () => {
     const nextRegisteredShortcut = resolveLauncherShortcut(nextSettings.launcherHotkey, app.isPackaged);
 
     if (currentRegisteredShortcut !== nextRegisteredShortcut) {
-      const fallback = currentRegisteredShortcut || DEFAULT_LAUNCHER_SHORTCUT;
+      const fallback = currentRegisteredShortcut || FALLBACK_LAUNCHER_SHORTCUT;
       const registered = registerLauncherShortcut(nextRegisteredShortcut);
 
       if (!registered) {
@@ -1258,8 +1271,8 @@ app.whenReady().then(async () => {
   });
   ipcMain.handle('launcher:get-clipboard-history', async () => getClipboardHistory());
   ipcMain.handle('launcher:get-recent-items', async () => ({
-    local: attachCachedIcons(await getRecentLocalSelections(5)),
-    clipboard: getClipboardHistory().slice(0, 3)
+    local: await attachCachedIcons(await getRecentLocalSelections(5)),
+    clipboard: (await getClipboardHistory()).slice(0, 3)
   }));
   ipcMain.handle('launcher:set-layout-mode', async (_event, mode: 'compact' | 'full') => {
     applyLauncherLayoutMode(mode === 'compact' ? 'compact' : 'full');

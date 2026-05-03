@@ -62,7 +62,7 @@ const defaultSettings: LauncherSettings = {
   quickLookEnabled: true,
   quickLookStartsOpen: true,
   maxClipboardItems: 20,
-  launcherHotkey: 'CommandOrControl+Shift+Space',
+  launcherHotkey: 'CommandOrControl+Space',
   launcherPosition: null
 };
 let settingsCache: LauncherSettings = defaultSettings;

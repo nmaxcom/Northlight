@@ -1,4 +1,5 @@
-export const DEFAULT_LAUNCHER_SHORTCUT = 'CommandOrControl+Shift+Space';
+export const DEFAULT_LAUNCHER_SHORTCUT = 'CommandOrControl+Space';
+export const FALLBACK_LAUNCHER_SHORTCUT = 'CommandOrControl+Shift+Space';
 
 type ShortcutToken = {
   id: string;

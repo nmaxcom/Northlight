@@ -30,10 +30,12 @@ Current built-in capabilities:
 
 ## Opening The Launcher
 
-- Toggle the launcher with `Cmd+Shift+Space`.
+- Toggle the launcher with `Cmd+Space`.
 - If the launcher is open, the same shortcut hides it.
 - If the saved launcher shortcut cannot be registered, Northlight now registers the default fallback instead of leaving the launcher without a working global hotkey.
 - Opening Northlight with an empty query uses a compact fresh-open window with a short recent list from local selections and clipboard history; typing expands back to the full search layout with preview.
+- Fresh-open recent clipboard loading is awaited in Electron so the compact launcher opens without renderer Promise errors.
+- Fresh-open recent local icon hydration is also awaited before IPC returns, so Electron receives cloneable recent-item payloads.
 - The launcher uses a single edge-to-edge shell inside its frameless utility window.
 - Northlight enforces a single launcher instance, so reopening the app or retriggering activation reuses the same launcher window instead of creating duplicates.
 - The header acts as a drag region, so you can reposition the launcher like a native utility window.
@@ -58,6 +60,7 @@ Current built-in capabilities:
 - `npm run export:design` generates one self-contained share file at `design/export/current-design.html` from the current launcher design page, so you can hand off a single HTML that opens directly without separate JS/CSS bundles.
 - `npm run design` regenerates those same local bundles, serves the launcher/settings design pages over HTTP, prints the available design URLs in the terminal, and exposes an index at `/design/`.
 - `npm run dev` keeps its supervisor alive after a clean Electron child exit, so duplicate-instance exits or short-lived app quits do not disable file-change restarts.
+- `npm run dev` prints the exact Electron dev command, reports existing Northlight Dev processes by PID, and filters Vite's renderer URL/build chatter so startup status stays readable.
 - `npm run dev` runs through a supervisor that starts `electron-vite dev --watch`, restarts it after relevant source/config changes, and brings it back after unexpected child exits.
 - Dev sessions use a separate `Northlight Dev` app identity and user-data directory, so they can run beside a normal Northlight instance instead of immediately quitting on the single-instance lock.
 - If the dev build fails before producing the Electron main entry, the supervisor waits for the next source change instead of looping restarts against a missing `dist-electron/main/main.js`.
@@ -171,7 +174,7 @@ The settings window is the control center for launcher preferences.
 - The settings mockup review page now uses a black outer background like the launcher review page, so both design frames sit on the same neutral surround.
 - Toggle best match, app-first ranking, preview, quick look, snippets, and clipboard history.
 - Capture a new global launcher shortcut directly by pressing the combination in settings, or clear it entirely to disable the launcher hotkey.
-- During `npm run dev`, a cleared launcher shortcut still falls back to `Cmd+Shift+Space` for that session so the launcher cannot strand itself hidden while you are iterating.
+- During `npm run dev`, a cleared launcher shortcut resolves to `Cmd+Space`; if macOS or another Northlight process blocks it, Northlight falls back to `Cmd+Shift+Space` for that session so the launcher cannot strand itself hidden while you are iterating.
 - The shortcut field in settings renders Apple-style keycaps and still shows the active session shortcut when development fallback is in effect.
 - All settings mock pages use the native settings content size of `980×760` for visual design checks.
 - Set how many clipboard items to retain.
