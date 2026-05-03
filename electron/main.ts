@@ -39,7 +39,9 @@ import { readFileTextPreview } from './previewText';
 import { resolveAppIconDataUrl, resolveCachedAppIconDataUrl } from './appIcon';
 import { prewarmFinderIconHelper, resolveFinderIconDataUrl } from './finderIcon';
 
-const APP_NAME = packageJson.productName ?? 'Northlight';
+const BASE_APP_NAME = packageJson.productName ?? 'Northlight';
+const IS_DEV_SESSION = process.env.NORTHLIGHT_DEV === '1' || Boolean(process.env.ELECTRON_RENDERER_URL);
+const APP_NAME = IS_DEV_SESSION ? `${BASE_APP_NAME} Dev` : BASE_APP_NAME;
 
 // Set identity paths before single-instance lock so dev runs do not collide with generic Electron apps.
 try {
@@ -1051,7 +1053,7 @@ async function getPathIcon(path: string, requestId?: string, size: 'normal' | 'l
 }
 
 if (!hasSingleInstanceLock) {
-  console.error('[main] Northlight is already running in another process; quitting this duplicate instance.');
+  console.error(`[main] ${APP_NAME} is already running in another process; quitting this duplicate instance.`);
   app.quit();
 }
 

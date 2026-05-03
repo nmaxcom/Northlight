@@ -3,6 +3,7 @@ import { existsSync, statSync, watch } from 'node:fs';
 import process from 'node:process';
 
 const RESTART_DEBOUNCE_MS = 300;
+const RESTART_SETTLE_MS = 700;
 const EXIT_RESTART_BASE_DELAY_MS = 700;
 const EXIT_RESTART_MAX_DELAY_MS = 5000;
 const MAIN_ENTRY = 'dist-electron/main/main.js';
@@ -37,6 +38,10 @@ function startChild(reason = 'initial start') {
 
   log(`starting electron-vite dev --watch (${reason})`);
   child = spawn('npx', ['electron-vite', 'dev', '--watch'], {
+    env: {
+      ...process.env,
+      NORTHLIGHT_DEV: '1'
+    },
     stdio: 'inherit'
   });
 
@@ -102,7 +107,9 @@ function scheduleRestart(reason) {
     log(`restarting after ${reasonText}`);
     const previousChild = child;
     expectedRestartChildren.add(previousChild);
-    previousChild.once('exit', () => startChild(reasonText));
+    previousChild.once('exit', () => {
+      setTimeout(() => startChild(reasonText), RESTART_SETTLE_MS);
+    });
     previousChild.kill('SIGTERM');
   }, RESTART_DEBOUNCE_MS);
 }
