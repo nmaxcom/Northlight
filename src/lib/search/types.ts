@@ -132,6 +132,13 @@ export type LocalSearchItem = {
   };
 };
 
+export type RecentLauncherItems = {
+  local: LocalSearchItem[];
+  clipboard: ClipboardEntry[];
+};
+
+export type LauncherLayoutMode = 'compact' | 'full';
+
 export type LocalIntentFilter = {
   kind?: LocalSearchItem['kind'];
   extensions?: string[];
@@ -396,6 +403,8 @@ export type LauncherBridge = {
   recordSearchPerformance?: (sample: Omit<SearchPerformanceSample, 'id' | 'recordedAt'>) => Promise<void>;
   getScopeInsights?: () => Promise<ScopePerformanceInsight[]>;
   getClipboardHistory: () => Promise<ClipboardEntry[]>;
+  getRecentItems?: () => Promise<RecentLauncherItems>;
+  setLayoutMode?: (mode: LauncherLayoutMode) => Promise<void>;
   openSettings: () => Promise<void>;
   openSystemSettings?: (url: string) => Promise<void>;
   getPathPreview: (path: string, kind: LocalSearchItem['kind'], requestId?: string) => Promise<LauncherPreview | null>;

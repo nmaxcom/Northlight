@@ -1061,6 +1061,31 @@ export async function recordLocalSelection(item: Pick<LocalSearchItem, 'path' | 
   await persistIndex(fallbackIndex);
 }
 
+export async function getRecentLocalSelections(limit = 6): Promise<LocalSearchItem[]> {
+  await warmSearchIndex();
+
+  return fallbackIndex
+    .filter((entry) => Boolean(entry.lastSelectedAt))
+    .sort((left, right) => (right.lastSelectedAt ?? 0) - (left.lastSelectedAt ?? 0))
+    .slice(0, limit)
+    .map((entry, index) => ({
+      id: entry.id,
+      path: entry.path,
+      name: entry.name,
+      kind: entry.kind,
+      score: 180 - index,
+      iconUrl: entry.iconUrl,
+      providerId: entry.providerId,
+      modifiedAt: entry.modifiedAt,
+      metadata: {
+        extension: entry.metadata?.extension,
+        selectionCount: entry.selectionCount,
+        lastSelectedAt: entry.lastSelectedAt,
+        primaryActionId: entry.metadata?.primaryActionId
+      }
+    }));
+}
+
 function scheduleWatcherRefresh() {
   recordTrace({
     subsystem: 'watcher',

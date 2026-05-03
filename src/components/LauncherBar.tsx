@@ -11,7 +11,7 @@ import type {
 } from '../lib/search/types';
 import { parseIntentQuery } from '../lib/search/intentParser';
 import { applyPathAutocompleteCandidate, pathAutocompleteSuffix } from '../lib/search/pathAutocomplete';
-import { buildHotResults, buildImmediateResults, buildResults } from '../lib/search/query';
+import { buildFreshOpenResults, buildHotResults, buildImmediateResults, buildResults } from '../lib/search/query';
 import { launcherRuntime } from '../lib/search/runtime';
 import { getLauncherTheme, getLauncherThemeStyle, getNextLauncherThemeId } from '../launcherTheme';
 import classes from './LauncherBar.module.css';
@@ -251,7 +251,8 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
   const selectedAction = filteredActions[actionSelectedIndex];
   const primaryAction = isActionsOpen ? selectedAction : selectedResult?.actions[0];
   const canOpenActions = Boolean(selectedResult || resolvedFolderPath);
-  const previewVisible = settings.previewEnabled && isPreviewOpen;
+  const isFreshOpen = !query.trim() && !isActionsOpen;
+  const previewVisible = settings.previewEnabled && isPreviewOpen && !isFreshOpen;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const actionInputRef = useRef<HTMLInputElement | null>(null);
   const pathAliasInputRef = useRef<HTMLInputElement | null>(null);
@@ -624,6 +625,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     });
 
     void launcherRuntime.getClipboardHistory();
+    void launcherRuntime.getRecentItems().then(() => {
+      if (!cancelled && !query.trim()) {
+        setResults(buildFreshOpenResults());
+      }
+    });
     void launcherRuntime.getDevToolsPinned().then((nextPinned) => {
       if (!cancelled) {
         setIsDevToolsPinned(nextPinned);
@@ -709,7 +715,9 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       });
 
       if (!query.trim()) {
-        setResults(buildImmediateResults(''));
+        void launcherRuntime.getRecentItems().then(() => {
+          setResults(buildFreshOpenResults());
+        });
         setIsResolving(false);
         return;
       }
@@ -913,7 +921,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       resetPointerSelection();
       if (!visible) {
         setQuery('');
-        setResults([]);
+        setResults(buildFreshOpenResults());
         setSelectedIndex(0);
         setIsResolving(false);
         setIsActionsOpen(false);
@@ -924,6 +932,11 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         return;
       }
 
+      void launcherRuntime.getRecentItems().then(() => {
+        if (!(inputRef.current?.value ?? '').trim()) {
+          setResults(buildFreshOpenResults());
+        }
+      });
       focusActiveInput();
     });
   }, [focusActiveInput, isMock, resetPointerSelection]);
@@ -973,7 +986,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
     });
 
     if (!query.trim()) {
-      setResults([]);
+      setResults(buildFreshOpenResults());
       setIsResolving(false);
       return;
     }
@@ -987,6 +1000,14 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       }
     };
   }, [isMock, query, settings, traceEvent]);
+
+  useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
+    void launcherRuntime.setLayoutMode(isFreshOpen ? 'compact' : 'full');
+  }, [isFreshOpen, isMock]);
 
   useEffect(() => {
     if (isMock) {
@@ -1570,7 +1591,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
         if (query.trim()) {
           event.preventDefault();
           setQuery('');
-          setResults(buildImmediateResults(''));
+          setResults(buildFreshOpenResults());
           setIsResolving(false);
           return;
         }
@@ -1652,6 +1673,7 @@ export function LauncherBar({ mockState }: { mockState?: LauncherBarMockState })
       data-launcher-theme={activeTheme.id}
       data-pointer-active={isPointerActive ? 'true' : 'false'}
       data-devtools-pinned={isDevToolsPinned ? 'true' : 'false'}
+      data-launcher-compact={isFreshOpen ? 'true' : 'false'}
       style={getLauncherThemeStyle(activeTheme.id)}
       onFocusCapture={(event) => {
         const target = event.target as HTMLElement;

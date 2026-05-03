@@ -414,13 +414,24 @@ export function buildConversionResult(query: string): LauncherResult[] {
   return buildCalculationResults(query);
 }
 
+export function buildFreshOpenResults(context: QueryContext = {}): LauncherResult[] {
+  const settings = launcherRuntime.getSettingsSnapshot();
+  const recentItems = launcherRuntime.getRecentItemsSnapshot();
+  const localResults = buildLocalResults(recentItems.local.slice(0, 5), context);
+  const clipboardResults = settings.clipboardHistoryEnabled
+    ? recentItems.clipboard.slice(0, Math.max(0, 5 - localResults.length)).map((entry, index) => buildClipboardResult(entry, 140 - index))
+    : [];
+
+  return [...localResults, ...clipboardResults].slice(0, 5);
+}
+
 export function buildImmediateResults(query: string, context: QueryContext = {}): LauncherResult[] {
   const parsedQuery = parseIntentQuery(query);
   const resolvedIntent = resolveIntentScopeAliases(parsedQuery.intent);
   const trimmed = parsedQuery.searchText.trim();
 
   if (!trimmed) {
-    return [];
+    return buildFreshOpenResults(context);
   }
 
   const localResults = buildLocalResults(

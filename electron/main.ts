@@ -15,6 +15,7 @@ import { createBlurSuppressionDeadline, shouldHideLauncherOnBlur } from '../src/
 import { getIdleTraceSummary, getTraceDump, getTraceState, ingestRendererTrace, recordTrace, setTraceEnabled, traceSpan, writeTraceDumpFile } from './diagnostics';
 import {
   configureIndexWatchers,
+  getRecentLocalSelections,
   getScopeInsights,
   getSearchStatus,
   recordLocalSelection,
@@ -54,6 +55,8 @@ try {
 
 const WINDOW_WIDTH = 1120;
 const WINDOW_HEIGHT = 760;
+const COMPACT_WINDOW_WIDTH = 760;
+const COMPACT_WINDOW_HEIGHT = 360;
 const SETTINGS_WINDOW_WIDTH = 980;
 const SETTINGS_WINDOW_HEIGHT = 760;
 const DEVTOOLS_SHORTCUT = 'CommandOrControl+Shift+J';
@@ -67,6 +70,7 @@ let launcherSettingsCache = getLauncherStateSnapshot().settings;
 let blurSuppressionDeadline = 0;
 let pendingLauncherPositionSave: ReturnType<typeof setTimeout> | null = null;
 let launcherDevToolsPinned = false;
+let launcherLayoutMode: 'compact' | 'full' = 'compact';
 const iconCache = new Map<string, string | null>();
 const previewCache = new Map<string, LauncherPreview | null>();
 let mainRequestSequence = 0;
@@ -454,6 +458,7 @@ async function showLauncher() {
 
   pendingShow = false;
   blurSuppressionDeadline = createBlurSuppressionDeadline(Date.now());
+  applyLauncherLayoutMode(launcherLayoutMode);
   positionLauncherWindow();
   syncLauncherWindowLevel();
   if (platform === 'darwin') {
@@ -464,6 +469,20 @@ async function showLauncher() {
   mainWindow.focus();
   mainWindow.webContents.focus();
   mainWindow.webContents.send('launcher:visibility-changed', true);
+}
+
+function applyLauncherLayoutMode(mode: 'compact' | 'full') {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  launcherLayoutMode = mode;
+  const [width, height] = mode === 'compact' ? [COMPACT_WINDOW_WIDTH, COMPACT_WINDOW_HEIGHT] : [WINDOW_WIDTH, WINDOW_HEIGHT];
+  const [currentWidth, currentHeight] = mainWindow.getContentSize();
+
+  if (currentWidth !== width || currentHeight !== height) {
+    mainWindow.setContentSize(width, height);
+  }
 }
 
 function broadcastDevToolsPinnedChanged() {
@@ -1238,6 +1257,13 @@ app.whenReady().then(async () => {
     return nextSettings;
   });
   ipcMain.handle('launcher:get-clipboard-history', async () => getClipboardHistory());
+  ipcMain.handle('launcher:get-recent-items', async () => ({
+    local: attachCachedIcons(await getRecentLocalSelections(5)),
+    clipboard: getClipboardHistory().slice(0, 3)
+  }));
+  ipcMain.handle('launcher:set-layout-mode', async (_event, mode: 'compact' | 'full') => {
+    applyLauncherLayoutMode(mode === 'compact' ? 'compact' : 'full');
+  });
   ipcMain.handle('launcher:open-settings', async () => {
     openSettingsWindow();
   });

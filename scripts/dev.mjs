@@ -55,8 +55,7 @@ function startChild(reason = 'initial start') {
     }
 
     if (code === 0 && !signal) {
-      log('child exited cleanly; supervisor stopping');
-      shutdown('SIGTERM');
+      log('child exited cleanly; keeping supervisor alive for the next source change');
       return;
     }
 

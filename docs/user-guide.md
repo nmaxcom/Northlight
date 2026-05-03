@@ -33,6 +33,7 @@ Current built-in capabilities:
 - Toggle the launcher with `Cmd+Shift+Space`.
 - If the launcher is open, the same shortcut hides it.
 - If the saved launcher shortcut cannot be registered, Northlight now registers the default fallback instead of leaving the launcher without a working global hotkey.
+- Opening Northlight with an empty query uses a compact fresh-open window with a short recent list from local selections and clipboard history; typing expands back to the full search layout with preview.
 - The launcher uses a single edge-to-edge shell inside its frameless utility window.
 - Northlight enforces a single launcher instance, so reopening the app or retriggering activation reuses the same launcher window instead of creating duplicates.
 - The header acts as a drag region, so you can reposition the launcher like a native utility window.
@@ -56,6 +57,7 @@ Current built-in capabilities:
 - `npm run build:design` regenerates local design bundles in `design/assets/bundles/` from the real launcher and settings renderer sources.
 - `npm run export:design` generates one self-contained share file at `design/export/current-design.html` from the current launcher design page, so you can hand off a single HTML that opens directly without separate JS/CSS bundles.
 - `npm run design` regenerates those same local bundles, serves the launcher/settings design pages over HTTP, prints the available design URLs in the terminal, and exposes an index at `/design/`.
+- `npm run dev` keeps its supervisor alive after a clean Electron child exit, so duplicate-instance exits or short-lived app quits do not disable file-change restarts.
 - `npm run dev` runs through a supervisor that starts `electron-vite dev --watch`, restarts it after relevant source/config changes, and brings it back after unexpected child exits.
 - Dev sessions use a separate `Northlight Dev` app identity and user-data directory, so they can run beside a normal Northlight instance instead of immediately quitting on the single-instance lock.
 - If the dev build fails before producing the Electron main entry, the supervisor waits for the next source change instead of looping restarts against a missing `dist-electron/main/main.js`.

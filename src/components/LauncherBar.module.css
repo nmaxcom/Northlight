@@ -94,6 +94,46 @@
   flex-wrap: wrap;
 }
 
+.window[data-launcher-compact='true'] .themeSwitch,
+.window[data-launcher-compact='true'] .status,
+.window[data-launcher-compact='true'] .footer {
+  display: none;
+}
+
+.window[data-launcher-compact='true'] .shell {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.window[data-launcher-compact='true'] .header {
+  padding: 18px 18px 9px;
+}
+
+.window[data-launcher-compact='true'] .search {
+  margin: 0 18px 12px;
+}
+
+.window[data-launcher-compact='true'] .body {
+  padding: 0 18px 18px;
+}
+
+.window[data-launcher-compact='true'] .results {
+  gap: 6px;
+  padding-right: 0;
+}
+
+.window[data-launcher-compact='true'] .result {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.window[data-launcher-compact='true'] .resultSubtitle {
+  display: none;
+}
+
+.window[data-launcher-compact='true'] .emptyState {
+  min-height: 150px;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;

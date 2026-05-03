@@ -9,6 +9,7 @@ import { modifiedAtMatchesIntentTime, pathMatchesIntentScope } from './intentSco
 import type {
   ClipboardEntry,
   LauncherPreview,
+  RecentLauncherItems,
   LauncherSettings,
   LauncherStatus,
   LocalSearchItem,
@@ -66,6 +67,10 @@ const defaultSettings: LauncherSettings = {
 };
 let settingsCache: LauncherSettings = defaultSettings;
 let clipboardCache: ClipboardEntry[] = [];
+let recentItemsCache: RecentLauncherItems = {
+  local: [],
+  clipboard: []
+};
 let searchPerformanceCache: { samples: SearchPerformanceSample[]; summary: SearchPerformanceSummary } = {
   samples: [],
   summary: {
@@ -331,6 +336,22 @@ export const launcherRuntime = {
   },
   getClipboardHistorySnapshot() {
     return clipboardCache;
+  },
+  getRecentItems() {
+    if (!window.launcher?.getRecentItems) {
+      return Promise.resolve(recentItemsCache);
+    }
+
+    return window.launcher.getRecentItems().then((items) => {
+      recentItemsCache = items;
+      return items;
+    });
+  },
+  getRecentItemsSnapshot() {
+    return recentItemsCache;
+  },
+  setLayoutMode(mode: 'compact' | 'full') {
+    return window.launcher?.setLayoutMode?.(mode) ?? Promise.resolve();
   },
   openSettings() {
     return window.launcher?.openSettings?.() ?? Promise.resolve();
