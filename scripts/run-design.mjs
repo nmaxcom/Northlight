@@ -19,7 +19,9 @@ function printLinks(baseUrl) {
   const normalized = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   const urls = [
     `${normalized}/design/`,
+    `${normalized}/design/launcher-fresh-open-view.html`,
     `${normalized}/design/launcher-current-view.html`,
+    `${normalized}/design/launcher-results-view.html`,
     `${normalized}/design/settings-current-view.html`,
     `${normalized}/design/settings-current-view2.html`,
     `${normalized}/design/settings-current-view3.html`

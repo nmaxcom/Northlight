@@ -30,6 +30,10 @@ body {
   width: 1120px;
 }
 
+.meta[data-design-size='launcher-fresh'] {
+  width: 760px;
+}
+
 .meta[data-design-shell='settings'] {
   width: 980px;
 }
@@ -60,6 +64,11 @@ body {
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
 }
 
+.frame[data-design-size='launcher-fresh'] {
+  width: 760px;
+  height: 360px;
+}
+
 .frame[data-design-shell='settings'] {
   width: 980px;
   height: 760px;
@@ -86,6 +95,10 @@ body {
 
 .bundleNote[data-design-shell='launcher'] {
   width: 1120px;
+}
+
+.bundleNote[data-design-size='launcher-fresh'] {
+  width: 760px;
 }
 
 .bundleNote[data-design-shell='settings'] {

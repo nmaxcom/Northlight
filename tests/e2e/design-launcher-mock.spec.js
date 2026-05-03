@@ -43,3 +43,24 @@ test('standalone launcher design mock updates preview on hover', async ({ page }
   expect(consoleErrors).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
+
+test('standalone launcher design pages use real Electron launcher sizes', async ({ page }) => {
+  await page.goto(pathToFileURL(resolve('design/launcher-fresh-open-view.html')).href, { waitUntil: 'load' });
+
+  const freshFrame = page.locator('main[title="Northlight launcher fresh open view"]');
+  await expect(freshFrame).toHaveJSProperty('offsetWidth', 760);
+  await expect(freshFrame).toHaveJSProperty('offsetHeight', 360);
+  await expect(page.locator('[data-launcher-role="window"]')).toHaveAttribute('data-launcher-compact', 'true');
+  await expect(page.locator('[data-launcher-role="search-input"]')).toHaveValue('');
+  await expect(page.getByRole('button', { name: /Stremio\.app/i })).toBeVisible();
+  await expect(page.locator('[data-launcher-role="preview-pane"]')).toHaveCount(0);
+
+  await page.goto(pathToFileURL(resolve('design/launcher-results-view.html')).href, { waitUntil: 'load' });
+
+  const resultsFrame = page.locator('main[title="Northlight launcher results view"]');
+  await expect(resultsFrame).toHaveJSProperty('offsetWidth', 1120);
+  await expect(resultsFrame).toHaveJSProperty('offsetHeight', 760);
+  await expect(page.locator('[data-launcher-role="window"]')).toHaveAttribute('data-launcher-compact', 'false');
+  await expect(page.locator('[data-launcher-role="search-input"]')).toHaveValue('str');
+  await expect(page.locator('[data-launcher-role="preview-pane"]')).toBeVisible();
+});

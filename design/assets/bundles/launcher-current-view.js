@@ -8443,6 +8443,22 @@
     yesterday: "yesterday",
     recent: "recent"
   };
+  function extensionFilterForToken(token) {
+    var _a;
+    const normalized = token.toLowerCase();
+    const predefined = DOT_EXTENSION_FILTERS[normalized];
+    if (predefined) {
+      return predefined;
+    }
+    const genericMatch = normalized.match(/^\.(?<extension>[a-z0-9][a-z0-9+-]{0,15})$/i);
+    if (!((_a = genericMatch == null ? void 0 : genericMatch.groups) == null ? void 0 : _a.extension)) {
+      return null;
+    }
+    return {
+      kind: "file",
+      extensions: [genericMatch.groups.extension]
+    };
+  }
   function mergeIntentFilters(current, next) {
     if (!current) {
       return {
@@ -8579,7 +8595,7 @@
         endIndex -= 1;
         continue;
       }
-      const candidateExtensionFilter = DOT_EXTENSION_FILTERS[candidate];
+      const candidateExtensionFilter = extensionFilterForToken(candidate);
       if (candidateExtensionFilter) {
         const merged = mergeIntentFilters(localFilter, candidateExtensionFilter);
         if (!merged) {
@@ -8644,6 +8660,23 @@
       break;
     }
     let searchText = tokens.slice(startIndex, endIndex + 1).join(" ").trim();
+    const standaloneExtensionFilter = searchText ? extensionFilterForToken(searchText) : null;
+    if (standaloneExtensionFilter) {
+      const merged = mergeIntentFilters(localFilter, standaloneExtensionFilter);
+      if (!merged) {
+        return {
+          rawQuery,
+          searchText: trimmed,
+          intent: null,
+          localFilter: null,
+          matchedTokens: []
+        };
+      }
+      localFilter = merged;
+      if (!matchedTokens.includes(searchText)) {
+        matchedTokens.unshift(searchText);
+      }
+    }
     if (searchText.endsWith("/") && !searchText.endsWith("//")) {
       const folderText = searchText.slice(0, -1).trim();
       if (folderText) {
@@ -9484,7 +9517,7 @@
     }
     return Math.max(0, baseScore + carryScore + appIntentBonus(baseScore, item, options.appFirstEnabled ?? false) - bundleNoisePenalty(item));
   }
-  const DEFAULT_LAUNCHER_SHORTCUT = "CommandOrControl+Shift+Space";
+  const DEFAULT_LAUNCHER_SHORTCUT = "CommandOrControl+Space";
   function resolveLauncherShortcut(accelerator, isPackaged) {
     const trimmed = (accelerator == null ? void 0 : accelerator.trim()) ?? "";
     if (trimmed) {
@@ -9684,11 +9717,15 @@
     quickLookEnabled: true,
     quickLookStartsOpen: true,
     maxClipboardItems: 20,
-    launcherHotkey: "CommandOrControl+Shift+Space",
+    launcherHotkey: "CommandOrControl+Space",
     launcherPosition: null
   };
   let settingsCache = defaultSettings;
   let clipboardCache = [];
+  let recentItemsCache = {
+    local: [],
+    clipboard: []
+  };
   let searchPerformanceCache = {
     samples: [],
     summary: {
@@ -9917,6 +9954,23 @@
     },
     getClipboardHistorySnapshot() {
       return clipboardCache;
+    },
+    getRecentItems() {
+      var _a;
+      if (!((_a = window.launcher) == null ? void 0 : _a.getRecentItems)) {
+        return Promise.resolve(recentItemsCache);
+      }
+      return window.launcher.getRecentItems().then((items) => {
+        recentItemsCache = items;
+        return items;
+      });
+    },
+    getRecentItemsSnapshot() {
+      return recentItemsCache;
+    },
+    setLayoutMode(mode) {
+      var _a, _b;
+      return ((_b = (_a = window.launcher) == null ? void 0 : _a.setLayoutMode) == null ? void 0 : _b.call(_a, mode)) ?? Promise.resolve();
     },
     openSettings() {
       var _a, _b;
@@ -13080,6 +13134,155 @@
   function formatNumber(value) {
     return Number(value.toFixed(2)).toString();
   }
+  function tokenizeArithmeticExpression(query) {
+    const trimmed = query.trim();
+    if (!trimmed || !/^[\d+\-*/^().\s]+$/.test(trimmed) || !/[+\-*/^()]/.test(trimmed)) {
+      return null;
+    }
+    const tokens = [];
+    let index = 0;
+    let expectOperand = true;
+    while (index < trimmed.length) {
+      const character = trimmed[index];
+      if (!character) {
+        break;
+      }
+      if (/\s/.test(character)) {
+        index += 1;
+        continue;
+      }
+      if (character === "(") {
+        tokens.push({ kind: "left-paren" });
+        index += 1;
+        expectOperand = true;
+        continue;
+      }
+      if (character === ")") {
+        tokens.push({ kind: "right-paren" });
+        index += 1;
+        expectOperand = false;
+        continue;
+      }
+      if (/[+\-*/^]/.test(character)) {
+        const operator = character === "-" && expectOperand ? "u-" : character;
+        tokens.push({ kind: "operator", value: operator });
+        index += 1;
+        expectOperand = true;
+        continue;
+      }
+      const numberMatch = trimmed.slice(index).match(/^\d+(?:\.\d+)?/);
+      if (!numberMatch) {
+        return null;
+      }
+      tokens.push({ kind: "number", value: Number(numberMatch[0]) });
+      index += numberMatch[0].length;
+      expectOperand = false;
+    }
+    return tokens;
+  }
+  function arithmeticPrecedence(operator) {
+    switch (operator) {
+      case "u-":
+        return 4;
+      case "^":
+        return 3;
+      case "*":
+      case "/":
+        return 2;
+      case "+":
+      case "-":
+        return 1;
+    }
+  }
+  function arithmeticRightAssociative(operator) {
+    return operator === "^" || operator === "u-";
+  }
+  function applyArithmeticOperator(values, operator) {
+    if (operator === "u-") {
+      const value = values.pop();
+      if (value === void 0) {
+        throw new Error("missing unary operand");
+      }
+      values.push(-value);
+      return;
+    }
+    const right = values.pop();
+    const left = values.pop();
+    if (left === void 0 || right === void 0) {
+      throw new Error("missing binary operand");
+    }
+    switch (operator) {
+      case "+":
+        values.push(left + right);
+        return;
+      case "-":
+        values.push(left - right);
+        return;
+      case "*":
+        values.push(left * right);
+        return;
+      case "/":
+        if (right === 0) {
+          throw new Error("division by zero");
+        }
+        values.push(left / right);
+        return;
+      case "^":
+        values.push(left ** right);
+        return;
+    }
+  }
+  function evaluateArithmeticExpression(query) {
+    const tokens = tokenizeArithmeticExpression(query);
+    if (!tokens) {
+      return null;
+    }
+    try {
+      const values = [];
+      const operators = [];
+      for (const token of tokens) {
+        if (token.kind === "number") {
+          values.push(token.value);
+          continue;
+        }
+        if (token.kind === "left-paren") {
+          operators.push("(");
+          continue;
+        }
+        if (token.kind === "right-paren") {
+          while (operators.length > 0 && operators[operators.length - 1] !== "(") {
+            applyArithmeticOperator(values, operators.pop());
+          }
+          if (operators.pop() !== "(") {
+            return null;
+          }
+          continue;
+        }
+        while (operators.length > 0 && operators[operators.length - 1] !== "(") {
+          const previous = operators[operators.length - 1];
+          const shouldPop = arithmeticRightAssociative(token.value) ? arithmeticPrecedence(previous) > arithmeticPrecedence(token.value) : arithmeticPrecedence(previous) >= arithmeticPrecedence(token.value);
+          if (!shouldPop) {
+            break;
+          }
+          applyArithmeticOperator(values, operators.pop());
+        }
+        operators.push(token.value);
+      }
+      while (operators.length > 0) {
+        const operator = operators.pop();
+        if (operator === "(" || operator === void 0) {
+          return null;
+        }
+        applyArithmeticOperator(values, operator);
+      }
+      if (values.length !== 1 || !Number.isFinite(values[0])) {
+        return null;
+      }
+      return formatNumber(values[0]);
+    } catch {
+      return null;
+    }
+  }
   function buildResult(builder, score = 160) {
     return {
       id: builder.id,
@@ -13148,6 +13351,18 @@
       id: `conversion:percent:${query}`,
       title: `${percent}% of ${amount} = ${result2}`,
       subtitle: "Deterministic percentage calculation",
+      value: result2
+    };
+  }
+  function buildArithmeticResult(query) {
+    const result2 = evaluateArithmeticExpression(query);
+    if (result2 === null) {
+      return null;
+    }
+    return {
+      id: `conversion:arithmetic:${query}`,
+      title: `${query.trim()} = ${result2}`,
+      subtitle: "Deterministic arithmetic",
       value: result2
     };
   }
@@ -13289,7 +13504,7 @@
     };
   }
   function buildDeterministicCalculation(query) {
-    return buildPercentageResult(query) ?? buildTimeZoneResult(query) ?? buildCurrencyResult(query) ?? buildUnitResult(query);
+    return buildArithmeticResult(query) ?? buildPercentageResult(query) ?? buildTimeZoneResult(query) ?? buildCurrencyResult(query) ?? buildUnitResult(query);
   }
   function buildDeterministicResult(query) {
     const explicitResult = buildDeterministicCalculation(query);
@@ -16714,6 +16929,20 @@
     }
     return /* @__PURE__ */ jsxRuntimeExports.jsx(IconFileText, { size: 18, stroke: 1.7 });
   }
+  function svgDataUrl(svg) {
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+  const fallbackIconUrls = {
+    app: svgDataUrl(
+      "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#5f7fff'/><stop offset='1' stop-color='#25306d'/></linearGradient></defs><rect x='6' y='6' width='52' height='52' rx='13' fill='url(#bg)'/><g fill='rgba(255,255,255,.9)'><rect x='18' y='18' width='11' height='11' rx='3'/><rect x='35' y='18' width='11' height='11' rx='3'/><rect x='18' y='35' width='11' height='11' rx='3'/><rect x='35' y='35' width='11' height='11' rx='3'/></g></svg>"
+    ),
+    folder: svgDataUrl(
+      "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='tab' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#9bd7ff'/><stop offset='1' stop-color='#56a7ec'/></linearGradient><linearGradient id='body' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#77c8ff'/><stop offset='1' stop-color='#3f8ed8'/></linearGradient></defs><path d='M7 18c0-4 3-7 7-7h12c2 0 3 1 5 3l4 4h15c4 0 7 3 7 7v3H7z' fill='url(#tab)'/><path d='M7 24h50v18c0 7-5 12-12 12H19C12 54 7 49 7 42z' fill='url(#body)'/><path d='M10 26h44v3H10z' fill='rgba(255,255,255,.18)'/></svg>"
+    ),
+    file: svgDataUrl(
+      "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M16 6h25l9 9v43H16z' fill='#f7fafc'/><path d='M41 6v11h9z' fill='#dce4ec'/><path d='M22 30h20M22 38h20M22 46h13' stroke='#8a97a5' stroke-width='3' stroke-linecap='round'/></svg>"
+    )
+  };
   function scopedSubtitle(path, scopePath) {
     if (!scopePath || !path.startsWith(scopePath)) {
       return path;
@@ -16723,6 +16952,14 @@
   }
   function buildLocalResult(item, context = {}) {
     const actions = buildLocalActionDescriptors(item).map(resolveActionDescriptor);
+    actions.push({
+      id: "scope-into",
+      label: item.kind === "folder" ? "Search In This Folder" : "Search In Parent Folder",
+      hint: "Right",
+      group: "Search",
+      feedbackLabel: "Scoped search",
+      run: async () => void 0
+    });
     return {
       id: item.id,
       title: item.name,
@@ -16732,6 +16969,8 @@
       path: item.path,
       value: item.kind === "app" ? "Application" : item.kind === "folder" ? "Folder" : "File",
       icon: iconForKind(item.kind),
+      iconUrl: item.iconUrl,
+      fallbackIconUrl: fallbackIconUrls[item.kind],
       preview: {
         title: item.name,
         subtitle: item.path,
@@ -17016,12 +17255,19 @@
       score: Math.max(specialMatchScore(query, alias.trigger), specialMatchScore(query, alias.note ?? ""))
     })).filter((entry) => entry.score > 0).map((entry) => buildAliasResult(entry.alias, entry.score)).filter((entry) => Boolean(entry));
   }
+  function buildFreshOpenResults(context = {}) {
+    const settings2 = launcherRuntime.getSettingsSnapshot();
+    const recentItems = launcherRuntime.getRecentItemsSnapshot();
+    const localResults = buildLocalResults(recentItems.local.slice(0, 5), context);
+    const clipboardResults = settings2.clipboardHistoryEnabled ? recentItems.clipboard.slice(0, Math.max(0, 5 - localResults.length)).map((entry, index) => buildClipboardResult(entry, 140 - index)) : [];
+    return [...localResults, ...clipboardResults].slice(0, 5);
+  }
   function buildImmediateResults(query, context = {}) {
     const parsedQuery = parseIntentQuery(query);
     const resolvedIntent = resolveIntentScopeAliases(parsedQuery.intent);
     const trimmed = parsedQuery.searchText.trim();
     if (!trimmed) {
-      return [];
+      return buildFreshOpenResults(context);
     }
     const localResults = buildLocalResults(
       mergeLocalItems(
@@ -17070,7 +17316,10 @@
     if (!trimmed) {
       return [];
     }
-    const [hotLocal, deepLocal] = await Promise.all([
+    const [hotLocal, deepLocal] = context.skipHotLocal ? [
+      launcherRuntime.getCachedLocalHot(trimmed, context.scopePath, resolvedIntent),
+      await launcherRuntime.searchLocal(trimmed, context.scopePath, resolvedIntent, context.traceRequestId)
+    ] : await Promise.all([
       launcherRuntime.searchLocalHot(trimmed, context.scopePath, resolvedIntent, context.traceRequestId),
       launcherRuntime.searchLocal(trimmed, context.scopePath, resolvedIntent, context.traceRequestId)
     ]);
@@ -17088,97 +17337,97 @@
       ...localResults
     ].sort((a, b) => b.score - a.score);
   }
-  const window$1 = "_window_17baa_1";
-  const shell = "_shell_17baa_19";
-  const header = "_header_17baa_29";
-  const headerLeft = "_headerLeft_17baa_38";
-  const brand = "_brand_17baa_44";
-  const themeSwitch = "_themeSwitch_17baa_51";
-  const themeSwitchActive = "_themeSwitchActive_17baa_71";
-  const themeSwitchLabel = "_themeSwitchLabel_17baa_76";
-  const themeSwitchValue = "_themeSwitchValue_17baa_84";
-  const status$1 = "_status_17baa_90";
-  const badge = "_badge_17baa_97";
-  const readyBadge = "_readyBadge_17baa_112";
-  const search = "_search_17baa_117";
-  const searchCenter = "_searchCenter_17baa_132";
-  const searchInputWrap = "_searchInputWrap_17baa_140";
-  const searchSuggestion = "_searchSuggestion_17baa_146";
-  const searchSuggestionTyped = "_searchSuggestionTyped_17baa_160";
-  const refinerBar = "_refinerBar_17baa_164";
-  const refinerChip = "_refinerChip_17baa_175";
-  const searchIcon = "_searchIcon_17baa_191";
-  const searchArrow = "_searchArrow_17baa_192";
-  const searchInput = "_searchInput_17baa_140";
-  const searchInputWithRefiners = "_searchInputWithRefiners_17baa_217";
-  const versionBadge = "_versionBadge_17baa_227";
-  const body = "_body_17baa_231";
-  const bodyWithPreview = "_bodyWithPreview_17baa_239";
-  const resultsColumn = "_resultsColumn_17baa_243";
-  const pathCompletionPanel = "_pathCompletionPanel_17baa_250";
-  const pathCompletionRow = "_pathCompletionRow_17baa_263";
-  const pathCompletionCopy = "_pathCompletionCopy_17baa_287";
-  const pathCompletionLabel = "_pathCompletionLabel_17baa_293";
-  const result$1 = "_result_17baa_243";
-  const results$1 = "_results_17baa_243";
-  const actionList = "_actionList_17baa_393";
-  const previewBody = "_previewBody_17baa_394";
-  const emptyState = "_emptyState_17baa_407";
-  const actionsTrigger = "_actionsTrigger_17baa_453";
-  const actionRow = "_actionRow_17baa_455";
-  const actionSearch = "_actionSearch_17baa_459";
-  const resultIcon = "_resultIcon_17baa_465";
-  const resultIconImageBacked = "_resultIconImageBacked_17baa_477";
-  const resultIconImage = "_resultIconImage_17baa_477";
-  const iconFolder = "_iconFolder_17baa_494";
-  const iconApp = "_iconApp_17baa_498";
-  const iconFile = "_iconFile_17baa_502";
-  const iconConversion = "_iconConversion_17baa_506";
-  const iconClipboard = "_iconClipboard_17baa_510";
-  const iconSnippet = "_iconSnippet_17baa_514";
-  const iconCommand = "_iconCommand_17baa_518";
-  const iconAlias = "_iconAlias_17baa_522";
-  const resultCopy = "_resultCopy_17baa_526";
-  const resultTitle = "_resultTitle_17baa_530";
-  const resultSubtitle = "_resultSubtitle_17baa_536";
-  const resultKind = "_resultKind_17baa_546";
-  const previewPane = "_previewPane_17baa_560";
-  const previewHeader = "_previewHeader_17baa_570";
-  const previewEyebrow = "_previewEyebrow_17baa_579";
-  const previewContent = "_previewContent_17baa_587";
-  const previewTitle = "_previewTitle_17baa_596";
-  const previewSubtitle = "_previewSubtitle_17baa_604";
-  const previewMediaFrame = "_previewMediaFrame_17baa_641";
-  const previewMediaImage = "_previewMediaImage_17baa_653";
-  const previewMeta = "_previewMeta_17baa_660";
-  const previewMetaRow = "_previewMetaRow_17baa_666";
-  const previewMetaLabel = "_previewMetaLabel_17baa_677";
-  const previewMetaValue = "_previewMetaValue_17baa_685";
-  const previewPlaceholder = "_previewPlaceholder_17baa_694";
-  const footer = "_footer_17baa_703";
-  const footerLeft = "_footerLeft_17baa_713";
-  const footerRight = "_footerRight_17baa_714";
-  const footerText = "_footerText_17baa_724";
-  const footerTextStrong = "_footerTextStrong_17baa_729";
-  const kbd = "_kbd_17baa_734";
-  const actionsPanel = "_actionsPanel_17baa_773";
-  const actionHeader = "_actionHeader_17baa_787";
-  const actionHeaderTitle = "_actionHeaderTitle_17baa_792";
-  const actionHeaderSubtitle = "_actionHeaderSubtitle_17baa_797";
-  const aliasBuilder = "_aliasBuilder_17baa_803";
-  const aliasBuilderCopy = "_aliasBuilderCopy_17baa_811";
-  const aliasBuilderControls = "_aliasBuilderControls_17baa_817";
-  const aliasBuilderInput = "_aliasBuilderInput_17baa_822";
-  const aliasBuilderButton = "_aliasBuilderButton_17baa_835";
-  const actionGroup = "_actionGroup_17baa_859";
-  const actionGroupLabel = "_actionGroupLabel_17baa_869";
-  const actionCopy = "_actionCopy_17baa_895";
-  const actionLabel = "_actionLabel_17baa_908";
-  const actionRowHint = "_actionRowHint_17baa_913";
-  const actionShortcuts = "_actionShortcuts_17baa_919";
-  const actionEmpty = "_actionEmpty_17baa_947";
-  const feedback = "_feedback_17baa_955";
-  const feedbackError = "_feedbackError_17baa_971";
+  const window$1 = "_window_qqd4w_1";
+  const shell = "_shell_qqd4w_19";
+  const header = "_header_qqd4w_29";
+  const headerLeft = "_headerLeft_qqd4w_38";
+  const brand = "_brand_qqd4w_44";
+  const themeSwitch = "_themeSwitch_qqd4w_51";
+  const themeSwitchActive = "_themeSwitchActive_qqd4w_71";
+  const themeSwitchLabel = "_themeSwitchLabel_qqd4w_76";
+  const themeSwitchValue = "_themeSwitchValue_qqd4w_84";
+  const status$1 = "_status_qqd4w_90";
+  const footer = "_footer_qqd4w_99";
+  const search = "_search_qqd4w_111";
+  const body = "_body_qqd4w_115";
+  const results$1 = "_results_qqd4w_119";
+  const result$1 = "_result_qqd4w_119";
+  const resultSubtitle = "_resultSubtitle_qqd4w_129";
+  const emptyState = "_emptyState_qqd4w_133";
+  const badge = "_badge_qqd4w_137";
+  const readyBadge = "_readyBadge_qqd4w_152";
+  const searchCenter = "_searchCenter_qqd4w_172";
+  const searchInputWrap = "_searchInputWrap_qqd4w_180";
+  const searchSuggestion = "_searchSuggestion_qqd4w_186";
+  const searchSuggestionTyped = "_searchSuggestionTyped_qqd4w_200";
+  const refinerBar = "_refinerBar_qqd4w_204";
+  const refinerChip = "_refinerChip_qqd4w_215";
+  const searchIcon = "_searchIcon_qqd4w_231";
+  const searchArrow = "_searchArrow_qqd4w_232";
+  const searchInput = "_searchInput_qqd4w_180";
+  const searchInputWithRefiners = "_searchInputWithRefiners_qqd4w_257";
+  const versionBadge = "_versionBadge_qqd4w_267";
+  const bodyWithPreview = "_bodyWithPreview_qqd4w_279";
+  const resultsColumn = "_resultsColumn_qqd4w_283";
+  const pathCompletionPanel = "_pathCompletionPanel_qqd4w_290";
+  const pathCompletionRow = "_pathCompletionRow_qqd4w_303";
+  const pathCompletionCopy = "_pathCompletionCopy_qqd4w_327";
+  const pathCompletionLabel = "_pathCompletionLabel_qqd4w_333";
+  const actionList = "_actionList_qqd4w_433";
+  const previewBody = "_previewBody_qqd4w_434";
+  const actionsTrigger = "_actionsTrigger_qqd4w_493";
+  const actionRow = "_actionRow_qqd4w_495";
+  const actionSearch = "_actionSearch_qqd4w_499";
+  const resultIcon = "_resultIcon_qqd4w_505";
+  const resultIconImageBacked = "_resultIconImageBacked_qqd4w_517";
+  const resultIconImage = "_resultIconImage_qqd4w_517";
+  const iconFolder = "_iconFolder_qqd4w_534";
+  const iconApp = "_iconApp_qqd4w_538";
+  const iconFile = "_iconFile_qqd4w_542";
+  const iconConversion = "_iconConversion_qqd4w_546";
+  const iconClipboard = "_iconClipboard_qqd4w_550";
+  const iconSnippet = "_iconSnippet_qqd4w_554";
+  const iconCommand = "_iconCommand_qqd4w_558";
+  const iconAlias = "_iconAlias_qqd4w_562";
+  const resultCopy = "_resultCopy_qqd4w_566";
+  const resultTitle = "_resultTitle_qqd4w_570";
+  const resultKind = "_resultKind_qqd4w_586";
+  const previewPane = "_previewPane_qqd4w_600";
+  const previewHeader = "_previewHeader_qqd4w_610";
+  const previewEyebrow = "_previewEyebrow_qqd4w_619";
+  const previewContent = "_previewContent_qqd4w_627";
+  const previewTitle = "_previewTitle_qqd4w_636";
+  const previewSubtitle = "_previewSubtitle_qqd4w_644";
+  const previewMediaFrame = "_previewMediaFrame_qqd4w_681";
+  const previewMediaImage = "_previewMediaImage_qqd4w_693";
+  const previewMeta = "_previewMeta_qqd4w_700";
+  const previewMetaRow = "_previewMetaRow_qqd4w_706";
+  const previewMetaLabel = "_previewMetaLabel_qqd4w_717";
+  const previewMetaValue = "_previewMetaValue_qqd4w_725";
+  const previewPlaceholder = "_previewPlaceholder_qqd4w_734";
+  const footerLeft = "_footerLeft_qqd4w_753";
+  const footerRight = "_footerRight_qqd4w_754";
+  const footerText = "_footerText_qqd4w_764";
+  const footerTextStrong = "_footerTextStrong_qqd4w_769";
+  const kbd = "_kbd_qqd4w_774";
+  const actionsPanel = "_actionsPanel_qqd4w_813";
+  const actionHeader = "_actionHeader_qqd4w_827";
+  const actionHeaderTitle = "_actionHeaderTitle_qqd4w_832";
+  const actionHeaderSubtitle = "_actionHeaderSubtitle_qqd4w_837";
+  const aliasBuilder = "_aliasBuilder_qqd4w_843";
+  const aliasBuilderCopy = "_aliasBuilderCopy_qqd4w_851";
+  const aliasBuilderControls = "_aliasBuilderControls_qqd4w_857";
+  const aliasBuilderInput = "_aliasBuilderInput_qqd4w_862";
+  const aliasBuilderButton = "_aliasBuilderButton_qqd4w_875";
+  const actionGroup = "_actionGroup_qqd4w_899";
+  const actionGroupLabel = "_actionGroupLabel_qqd4w_909";
+  const actionCopy = "_actionCopy_qqd4w_935";
+  const actionLabel = "_actionLabel_qqd4w_948";
+  const actionRowHint = "_actionRowHint_qqd4w_953";
+  const actionShortcuts = "_actionShortcuts_qqd4w_959";
+  const actionEmpty = "_actionEmpty_qqd4w_987";
+  const feedback = "_feedback_qqd4w_995";
+  const feedbackError = "_feedbackError_qqd4w_1011";
   const classes = {
     window: window$1,
     shell,
@@ -17190,9 +17439,15 @@
     themeSwitchLabel,
     themeSwitchValue,
     status: status$1,
+    footer,
+    search,
+    body,
+    results: results$1,
+    result: result$1,
+    resultSubtitle,
+    emptyState,
     badge,
     readyBadge,
-    search,
     searchCenter,
     searchInputWrap,
     searchSuggestion,
@@ -17204,18 +17459,14 @@
     searchInput,
     searchInputWithRefiners,
     versionBadge,
-    body,
     bodyWithPreview,
     resultsColumn,
     pathCompletionPanel,
     pathCompletionRow,
     pathCompletionCopy,
     pathCompletionLabel,
-    result: result$1,
-    results: results$1,
     actionList,
     previewBody,
-    emptyState,
     actionsTrigger,
     actionRow,
     actionSearch,
@@ -17232,7 +17483,6 @@
     iconAlias,
     resultCopy,
     resultTitle,
-    resultSubtitle,
     resultKind,
     previewPane,
     previewHeader,
@@ -17247,7 +17497,6 @@
     previewMetaLabel,
     previewMetaValue,
     previewPlaceholder,
-    footer,
     footerLeft,
     footerRight,
     footerText,
@@ -17281,6 +17530,9 @@
     Backspace: "Delete",
     Right: "→"
   };
+  const DEEP_SEARCH_DEBOUNCE_MS = 120;
+  const ICON_BATCH_DEBOUNCE_MS = 16;
+  const ICON_BATCH_LIMIT = 8;
   function renderShortcut(hint, prefix = "") {
     if (!hint.trim()) {
       return null;
@@ -17386,6 +17638,18 @@
   function defaultPathAliasName(path) {
     return (path.split("/").at(-1) ?? "").replace(/\s+/g, "").trim();
   }
+  function scopeTargetPathForResult(result2) {
+    if (!(result2 == null ? void 0 : result2.path)) {
+      return null;
+    }
+    if (result2.kind === "folder") {
+      return result2.path;
+    }
+    if (result2.kind === "file" || result2.kind === "app") {
+      return result2.path.split("/").slice(0, -1).join("/") || "/";
+    }
+    return null;
+  }
   function LauncherBar({ mockState: mockState2 }) {
     const isMock = Boolean(mockState2);
     const [query, setQuery] = reactExports.useState((mockState2 == null ? void 0 : mockState2.query) ?? "");
@@ -17419,6 +17683,7 @@
       catalogState: (mockState2 == null ? void 0 : mockState2.status.catalogState) ?? "restoring"
     });
     const [iconUrls, setIconUrls] = reactExports.useState((mockState2 == null ? void 0 : mockState2.iconUrls) ?? {});
+    const [iconRetryTick, setIconRetryTick] = reactExports.useState(0);
     const activeRefiners = reactExports.useMemo(() => {
       var _a;
       return ((_a = parseIntentQuery(query).intent) == null ? void 0 : _a.matchedTokens) ?? [];
@@ -17436,7 +17701,8 @@
     const selectedAction = filteredActions[actionSelectedIndex];
     const primaryAction = isActionsOpen ? selectedAction : selectedResult == null ? void 0 : selectedResult.actions[0];
     const canOpenActions = Boolean(selectedResult || resolvedFolderPath);
-    const previewVisible = settings2.previewEnabled && isPreviewOpen;
+    const isFreshOpen = !query.trim() && !isActionsOpen;
+    const previewVisible = settings2.previewEnabled && isPreviewOpen && !isFreshOpen;
     const inputRef = reactExports.useRef(null);
     const actionInputRef = reactExports.useRef(null);
     const pathAliasInputRef = reactExports.useRef(null);
@@ -17455,6 +17721,9 @@
     const pointerSelectionEnabledRef = reactExports.useRef(false);
     const lastPointerPositionRef = reactExports.useRef(null);
     const pointerResetPositionRef = reactExports.useRef(null);
+    const iconRetryCountsRef = reactExports.useRef({});
+    const iconRetryTimerRef = reactExports.useRef(null);
+    const lastQueryChangeAtRef = reactExports.useRef(Date.now());
     const nextTraceRequestId = reactExports.useCallback((prefix) => {
       traceRequestSequenceRef.current += 1;
       return `${prefix}-${traceRequestSequenceRef.current}`;
@@ -17556,6 +17825,7 @@
     }, [query]);
     const handleQueryChange = reactExports.useCallback(
       (nextQuery) => {
+        lastQueryChangeAtRef.current = Date.now();
         resetPointerSelection();
         setPathAutocompleteDismissedQuery(null);
         setQuery(nextQuery);
@@ -17591,9 +17861,33 @@
       }
       showFeedback("error", "Trace unavailable");
     }, [showFeedback]);
+    const applyScopeFromResult = reactExports.useCallback(
+      (result2) => {
+        const targetPath = scopeTargetPathForResult(result2);
+        if (!targetPath) {
+          return false;
+        }
+        resetPointerSelection();
+        setPathAutocompleteDismissedQuery(null);
+        setIsActionsOpen(false);
+        setActionQuery("");
+        setActionSelectedIndex(0);
+        setQuery(`in:${targetPath} `);
+        setSelectedIndex(0);
+        setIsResolving(false);
+        return true;
+      },
+      [resetPointerSelection]
+    );
     const invokeAction = reactExports.useCallback(
       async (action2) => {
         if (!action2) {
+          return;
+        }
+        if (action2.id === "scope-into") {
+          if (applyScopeFromResult(selectedResult)) {
+            focusActiveInput();
+          }
           return;
         }
         if (isMock) {
@@ -17619,7 +17913,7 @@
         }
         focusActiveInput();
       },
-      [focusActiveInput, isMock, showFeedback]
+      [applyScopeFromResult, focusActiveInput, isMock, selectedResult, showFeedback]
     );
     const savePathAlias = reactExports.useCallback(async () => {
       if (!resolvedFolderPath) {
@@ -17715,6 +18009,11 @@
         }
       });
       void launcherRuntime.getClipboardHistory();
+      void launcherRuntime.getRecentItems().then(() => {
+        if (!cancelled && !query.trim()) {
+          setResults(buildFreshOpenResults());
+        }
+      });
       void launcherRuntime.getDevToolsPinned().then((nextPinned) => {
         if (!cancelled) {
           setIsDevToolsPinned(nextPinned);
@@ -17787,7 +18086,9 @@
           query
         });
         if (!query.trim()) {
-          setResults(buildImmediateResults(""));
+          void launcherRuntime.getRecentItems().then(() => {
+            setResults(buildFreshOpenResults());
+          });
           setIsResolving(false);
           return;
         }
@@ -17965,7 +18266,7 @@
         resetPointerSelection();
         if (!visible) {
           setQuery("");
-          setResults([]);
+          setResults(buildFreshOpenResults());
           setSelectedIndex(0);
           setIsResolving(false);
           setIsActionsOpen(false);
@@ -17975,6 +18276,12 @@
           launcherRuntime.clearVisibleSearchState();
           return;
         }
+        void launcherRuntime.getRecentItems().then(() => {
+          var _a;
+          if (!(((_a = inputRef.current) == null ? void 0 : _a.value) ?? "").trim()) {
+            setResults(buildFreshOpenResults());
+          }
+        });
         focusActiveInput();
       });
     }, [focusActiveInput, isMock, resetPointerSelection]);
@@ -18018,7 +18325,7 @@
         }
       });
       if (!query.trim()) {
-        setResults([]);
+        setResults(buildFreshOpenResults());
         setIsResolving(false);
         return;
       }
@@ -18031,6 +18338,12 @@
         }
       };
     }, [isMock, query, settings2, traceEvent]);
+    reactExports.useEffect(() => {
+      if (isMock) {
+        return;
+      }
+      void launcherRuntime.setLayoutMode(isFreshOpen ? "compact" : "full");
+    }, [isFreshOpen, isMock]);
     reactExports.useEffect(() => {
       if (isMock) {
         return;
@@ -18092,65 +18405,71 @@
         return;
       }
       let canceled = false;
+      let timer = null;
       if (!query.trim()) {
         setIsResolving(false);
         return;
       }
-      const traceRequestId = nextTraceRequestId("search-query");
-      const requestId = ++searchRequestRef.current;
-      const startedAt = Date.now();
-      void traceEvent({
-        subsystem: "search",
-        event: "start",
-        requestId: traceRequestId,
-        query,
-        details: {
-          reason: "query-change-deep"
-        }
-      });
-      void buildResults(query, { traceRequestId }).then((nextResults) => {
-        if (!canceled && requestId === searchRequestRef.current) {
-          const metrics = searchMetricsRef.current;
-          if (metrics && metrics.query === query.trim()) {
-            metrics.deepCompleteMs = Date.now() - metrics.startedAt;
-            metrics.deepResultCount = nextResults.length;
+      timer = window.setTimeout(() => {
+        const traceRequestId = nextTraceRequestId("search-query");
+        const requestId = ++searchRequestRef.current;
+        const startedAt = Date.now();
+        void traceEvent({
+          subsystem: "search",
+          event: "start",
+          requestId: traceRequestId,
+          query,
+          details: {
+            reason: "query-change-deep"
           }
-          setResults(nextResults);
-          setIsResolving(false);
-          if (metrics && metrics.query === query.trim()) {
-            void launcherRuntime.recordSearchPerformance({
-              query: metrics.query,
-              firstVisibleMs: metrics.firstVisibleMs,
-              firstUsefulMs: metrics.firstUsefulMs,
-              hotCompleteMs: metrics.hotCompleteMs,
-              deepCompleteMs: metrics.deepCompleteMs,
-              hotResultCount: metrics.hotResultCount,
-              deepResultCount: metrics.deepResultCount,
-              topReplacementCount: metrics.topReplacementCount,
-              clipboardFirstFlash: metrics.initialTopWasClipboard && Boolean(nextResults[0]) && nextResults[0].kind !== "clipboard" && nextResults[0].kind !== "snippet"
+        });
+        void buildResults(query, { traceRequestId, skipHotLocal: true }).then((nextResults) => {
+          if (!canceled && requestId === searchRequestRef.current) {
+            const metrics = searchMetricsRef.current;
+            if (metrics && metrics.query === query.trim()) {
+              metrics.deepCompleteMs = Date.now() - metrics.startedAt;
+              metrics.deepResultCount = nextResults.length;
+            }
+            setResults(nextResults);
+            setIsResolving(false);
+            if (metrics && metrics.query === query.trim()) {
+              void launcherRuntime.recordSearchPerformance({
+                query: metrics.query,
+                firstVisibleMs: metrics.firstVisibleMs,
+                firstUsefulMs: metrics.firstUsefulMs,
+                hotCompleteMs: metrics.hotCompleteMs,
+                deepCompleteMs: metrics.deepCompleteMs,
+                hotResultCount: metrics.hotResultCount,
+                deepResultCount: metrics.deepResultCount,
+                topReplacementCount: metrics.topReplacementCount,
+                clipboardFirstFlash: metrics.initialTopWasClipboard && Boolean(nextResults[0]) && nextResults[0].kind !== "clipboard" && nextResults[0].kind !== "snippet"
+              });
+            }
+            void traceEvent({
+              subsystem: "search",
+              event: "complete",
+              requestId: traceRequestId,
+              query,
+              durationMs: Date.now() - startedAt,
+              resultCount: nextResults.length
             });
+            return;
           }
           void traceEvent({
             subsystem: "search",
-            event: "complete",
+            event: "cancel",
             requestId: traceRequestId,
             query,
             durationMs: Date.now() - startedAt,
-            resultCount: nextResults.length
+            outcome: "obsolete"
           });
-          return;
-        }
-        void traceEvent({
-          subsystem: "search",
-          event: "cancel",
-          requestId: traceRequestId,
-          query,
-          durationMs: Date.now() - startedAt,
-          outcome: "obsolete"
         });
-      });
+      }, DEEP_SEARCH_DEBOUNCE_MS);
       return () => {
         canceled = true;
+        if (timer) {
+          window.clearTimeout(timer);
+        }
       };
     }, [isMock, nextTraceRequestId, query, settings2, traceEvent]);
     reactExports.useEffect(() => {
@@ -18189,6 +18508,13 @@
         void launcherRuntime.getPathPreview(selectedResult.path, selectedResult.kind, traceRequestId).then((nextPreview) => {
           if (!cancelled && requestId === previewRequestRef.current && nextPreview) {
             setPreview(nextPreview);
+            if (selectedResult.kind === "app" && nextPreview.mediaUrl) {
+              setIconUrls((current) => current[selectedResult.path] === nextPreview.mediaUrl ? current : {
+                ...current,
+                [selectedResult.path]: nextPreview.mediaUrl
+              });
+              delete iconRetryCountsRef.current[selectedResult.path];
+            }
             void traceEvent({
               subsystem: "preview",
               event: "complete",
@@ -18219,56 +18545,143 @@
       };
     }, [isMock, nextTraceRequestId, previewVisible, selectedResult, traceEvent]);
     reactExports.useEffect(() => {
-      if (isMock) {
+      if (isMock || !(selectedResult == null ? void 0 : selectedResult.path) || selectedResult.iconUrl) {
         return;
       }
-      const iconPaths = Array.from(
-        new Set(
-          results2.filter((result2) => !result2.iconUrl).map((result2) => result2.iconPath ?? result2.path).filter((path) => Boolean(path)).filter((path) => !(path in iconUrls))
-        )
-      );
-      if (iconPaths.length === 0) {
+      const targetPath = selectedResult.iconPath ?? selectedResult.path;
+      if (!targetPath || iconUrls[targetPath]) {
         return;
       }
       let cancelled = false;
-      const traceRequestId = nextTraceRequestId("icons");
+      const traceRequestId = nextTraceRequestId("icon-selected");
       const startedAt = Date.now();
       void traceEvent({
         subsystem: "icon",
-        event: "batch-start",
+        event: "selected-start",
         requestId: traceRequestId,
-        resultCount: iconPaths.length
+        path: targetPath,
+        kind: selectedResult.kind
       });
-      void launcherRuntime.getPathIcons(iconPaths, traceRequestId).then((iconMap) => {
-        if (cancelled) {
-          void traceEvent({
-            subsystem: "icon",
-            event: "batch-cancel",
-            requestId: traceRequestId,
-            durationMs: Date.now() - startedAt,
-            outcome: "cancelled"
-          });
+      void launcherRuntime.getPathIcon(targetPath, traceRequestId).then((iconUrl) => {
+        if (cancelled || !iconUrl) {
           return;
         }
-        setIconUrls((current) => {
-          const next = { ...current };
-          for (const [path, icon] of Object.entries(iconMap)) {
-            next[path] = icon;
-          }
-          return next;
+        setIconUrls((current) => current[targetPath] === iconUrl ? current : {
+          ...current,
+          [targetPath]: iconUrl
         });
         void traceEvent({
           subsystem: "icon",
-          event: "batch-complete",
+          event: "selected-complete",
           requestId: traceRequestId,
+          path: targetPath,
+          kind: selectedResult.kind,
           durationMs: Date.now() - startedAt,
-          resultCount: Object.keys(iconMap).length
+          outcome: "applied"
         });
       });
       return () => {
         cancelled = true;
       };
-    }, [iconUrls, isMock, nextTraceRequestId, results2, traceEvent]);
+    }, [iconUrls, isMock, nextTraceRequestId, selectedResult, traceEvent]);
+    reactExports.useEffect(() => {
+      if (isMock) {
+        return;
+      }
+      let timer = null;
+      let cancelled = false;
+      const visibleIconPaths = new Set(
+        results2.slice(0, ICON_BATCH_LIMIT).filter((result2) => !result2.iconUrl).map((result2) => result2.iconPath ?? result2.path).filter((path) => Boolean(path))
+      );
+      for (const path of Object.keys(iconRetryCountsRef.current)) {
+        if (!visibleIconPaths.has(path)) {
+          delete iconRetryCountsRef.current[path];
+        }
+      }
+      const iconPaths = Array.from(
+        new Set(
+          results2.slice(0, ICON_BATCH_LIMIT).filter((result2) => !result2.iconUrl).map((result2) => result2.iconPath ?? result2.path).filter((path) => Boolean(path)).filter((path) => !iconUrls[path]).filter((path) => (iconRetryCountsRef.current[path] ?? 0) < 4)
+        )
+      );
+      if (iconPaths.length === 0) {
+        return;
+      }
+      timer = window.setTimeout(() => {
+        const traceRequestId = nextTraceRequestId("icons");
+        const startedAt = Date.now();
+        void traceEvent({
+          subsystem: "icon",
+          event: "batch-start",
+          requestId: traceRequestId,
+          resultCount: iconPaths.length
+        });
+        void launcherRuntime.getPathIcons(iconPaths, traceRequestId).then((iconMap) => {
+          if (cancelled) {
+            void traceEvent({
+              subsystem: "icon",
+              event: "batch-cancel",
+              requestId: traceRequestId,
+              durationMs: Date.now() - startedAt,
+              outcome: "cancelled"
+            });
+            return;
+          }
+          setIconUrls((current) => {
+            const next = { ...current };
+            for (const [path, icon] of Object.entries(iconMap)) {
+              if (icon) {
+                next[path] = icon;
+                delete iconRetryCountsRef.current[path];
+              }
+            }
+            return next;
+          });
+          const unresolvedPaths = iconPaths.filter((path) => !iconMap[path]);
+          if (unresolvedPaths.length > 0) {
+            let shouldRetry = false;
+            let retryDelay = Number.POSITIVE_INFINITY;
+            for (const path of unresolvedPaths) {
+              const attempt = (iconRetryCountsRef.current[path] ?? 0) + 1;
+              iconRetryCountsRef.current[path] = attempt;
+              if (attempt < 4) {
+                shouldRetry = true;
+                retryDelay = Math.min(retryDelay, attempt === 1 ? 150 : attempt === 2 ? 400 : 900);
+              }
+            }
+            if (shouldRetry) {
+              if (iconRetryTimerRef.current) {
+                window.clearTimeout(iconRetryTimerRef.current);
+              }
+              iconRetryTimerRef.current = window.setTimeout(() => {
+                iconRetryTimerRef.current = null;
+                setIconRetryTick((current) => current + 1);
+              }, retryDelay);
+            }
+          }
+          void traceEvent({
+            subsystem: "icon",
+            event: "batch-complete",
+            requestId: traceRequestId,
+            durationMs: Date.now() - startedAt,
+            resultCount: Object.keys(iconMap).length
+          });
+        });
+      }, ICON_BATCH_DEBOUNCE_MS);
+      return () => {
+        cancelled = true;
+        if (timer) {
+          window.clearTimeout(timer);
+        }
+      };
+    }, [iconRetryTick, iconUrls, isMock, nextTraceRequestId, results2, traceEvent]);
+    reactExports.useEffect(
+      () => () => {
+        if (iconRetryTimerRef.current) {
+          window.clearTimeout(iconRetryTimerRef.current);
+        }
+      },
+      []
+    );
     const toggleLauncherTheme = reactExports.useCallback(() => {
       setSettings((current) => {
         const nextSettings = {
@@ -18414,7 +18827,7 @@
           if (query.trim()) {
             event.preventDefault();
             setQuery("");
-            setResults(buildImmediateResults(""));
+            setResults(buildFreshOpenResults());
             setIsResolving(false);
             return;
           }
@@ -18484,6 +18897,7 @@
         "data-launcher-theme": activeTheme.id,
         "data-pointer-active": isPointerActive ? "true" : "false",
         "data-devtools-pinned": isDevToolsPinned ? "true" : "false",
+        "data-launcher-compact": isFreshOpen ? "true" : "false",
         style: getLauncherThemeStyle(activeTheme.id),
         onFocusCapture: (event) => {
           const target = event.target;
@@ -18675,7 +19089,7 @@
                         onMouseEnter: () => updateSelectedIndexFromPointer(absoluteIndex),
                         onClick: () => void invokeAction(result2.actions[0]),
                         children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: iconClassName(result2), "data-launcher-role": "result-icon", "data-launcher-kind": result2.kind, children: result2.iconUrl ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: classes.resultIconImage, "data-launcher-role": "result-icon-image", src: result2.iconUrl, alt: "" }) : result2.iconPath && iconUrls[result2.iconPath] ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: classes.resultIconImage, "data-launcher-role": "result-icon-image", src: iconUrls[result2.iconPath] ?? "", alt: "" }) : result2.path && iconUrls[result2.path] ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: classes.resultIconImage, "data-launcher-role": "result-icon-image", src: iconUrls[result2.path] ?? "", alt: "" }) : result2.icon ?? iconGlyph(result2.kind) }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: iconClassName(result2), "data-launcher-role": "result-icon", "data-launcher-kind": result2.kind, children: result2.iconUrl ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: classes.resultIconImage, "data-launcher-role": "result-icon-image", src: result2.iconUrl, alt: "" }) : result2.iconPath && iconUrls[result2.iconPath] ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: classes.resultIconImage, "data-launcher-role": "result-icon-image", src: iconUrls[result2.iconPath] ?? "", alt: "" }) : result2.path && iconUrls[result2.path] ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: classes.resultIconImage, "data-launcher-role": "result-icon-image", src: iconUrls[result2.path] ?? "", alt: "" }) : result2.fallbackIconUrl ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: classes.resultIconImage, "data-launcher-role": "result-icon-fallback-image", src: result2.fallbackIconUrl, alt: "" }) : result2.icon ?? iconGlyph(result2.kind) }),
                           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.resultCopy, "data-launcher-role": "result-copy", children: [
                             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.resultTitle, "data-launcher-role": "result-title", children: result2.title }),
                             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.resultSubtitle, "data-launcher-role": "result-subtitle", children: result2.subtitle })
@@ -18863,7 +19277,21 @@
     };
   }
   function cloneMockState(state) {
-    return JSON.parse(JSON.stringify(state));
+    return {
+      ...state,
+      results: state.results.map((item) => ({
+        ...item,
+        actions: item.actions.map((candidate) => ({ ...candidate }))
+      })),
+      settings: {
+        ...state.settings,
+        aliases: [...state.settings.aliases],
+        snippets: [...state.settings.snippets],
+        scopes: [...state.settings.scopes]
+      },
+      status: { ...state.status },
+      iconUrls: state.iconUrls ? { ...state.iconUrls } : void 0
+    };
   }
   const settings = {
     aliases: [],
@@ -18879,7 +19307,7 @@
     quickLookEnabled: true,
     quickLookStartsOpen: true,
     maxClipboardItems: 20,
-    launcherHotkey: "CommandOrControl+Shift+Space",
+    launcherHotkey: "CommandOrControl+Space",
     launcherPosition: null
   };
   const status = {
@@ -19059,6 +19487,50 @@
       iconUrl: icons.file
     }
   ];
+  const freshOpenResults = [
+    {
+      ...result("recent-stremio", "Stremio.app", "Recent application", "app", "/Applications/Stremio.app", appActions, stremioPreview),
+      iconUrl: icons.stremio,
+      score: 180
+    },
+    {
+      ...result("recent-keyboard-maestro", "Keyboard Maestro.app", "Recent application", "app", "/Applications/Keyboard Maestro.app", appActions, keyboardMaestroPreview),
+      iconUrl: icons.keyboardMaestro,
+      score: 176
+    },
+    {
+      id: "recent-clipboard-spec",
+      title: "Review launcher spacing and icon timing",
+      subtitle: "Clipboard · today",
+      value: "Clipboard",
+      icon: null,
+      kind: "clipboard",
+      score: 140,
+      source: "clipboard",
+      preview: {
+        title: "Clipboard item",
+        subtitle: "Today",
+        body: "Review launcher spacing and icon timing",
+        sections: [
+          { label: "Type", value: "Clipboard" },
+          { label: "Length", value: "39 chars" }
+        ]
+      },
+      actions: [action("copy-clipboard", "Copy Clipboard Item", "Enter", "Copied clipboard item")]
+    },
+    {
+      ...result("recent-downloads", "Downloads", "Recent folder", "folder", "/Users/nm4/Downloads", folderActions, {
+        title: "Downloads",
+        subtitle: "/Users/nm4/Downloads",
+        sections: [
+          { label: "Type", value: "Folder" },
+          { label: "Path", value: "/Users/nm4/Downloads" }
+        ]
+      }),
+      iconUrl: icons.folderBlue,
+      score: 132
+    }
+  ];
   function buildLauncherMockState(selectedIndex) {
     var _a;
     return {
@@ -19075,7 +19547,24 @@
       status
     };
   }
+  function buildFreshOpenMockState() {
+    return {
+      query: "",
+      results: freshOpenResults,
+      selectedIndex: 0,
+      pointerActive: false,
+      isResolving: false,
+      isActionsOpen: false,
+      actionQuery: "",
+      actionSelectedIndex: 0,
+      preview: null,
+      settings,
+      status
+    };
+  }
   const launcherMockStates = {
+    freshOpen: buildFreshOpenMockState(),
+    results: buildLauncherMockState(0),
     current: buildLauncherMockState(0),
     folderPreview: buildLauncherMockState(2),
     appPreview: buildLauncherMockState(1),

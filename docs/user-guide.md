@@ -55,7 +55,7 @@ Current built-in capabilities:
 - A persistent bottom bar always shows the primary action for the current result and an `Actions` trigger.
 - `Cmd+,` opens the Northlight settings window.
 - Clicking away from the launcher hides it again.
-- The launcher mockup in `design/launcher-current-view.html` is calibrated to the native launcher content size of `1120×760` for visual design checks.
+- The launcher design pages mount the real `LauncherBar` component from the renderer bundle: `design/launcher-fresh-open-view.html` is calibrated to the compact fresh-open content size of `760×360`, while `design/launcher-current-view.html` and `design/launcher-results-view.html` are calibrated to the full results content size of `1120×760`.
 - `npm run build:design` regenerates local design bundles in `design/assets/bundles/` from the real launcher and settings renderer sources.
 - `npm run export:design` generates one self-contained share file at `design/export/current-design.html` from the current launcher design page, so you can hand off a single HTML that opens directly without separate JS/CSS bundles.
 - `npm run design` regenerates those same local bundles, serves the launcher/settings design pages over HTTP, prints the available design URLs in the terminal, and exposes an index at `/design/`.

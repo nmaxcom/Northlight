@@ -301,9 +301,9 @@ test('shows the shared settings v2 mockup with persistent sidebar and refreshed 
 test('shows the launcher design mockup on a black review background with a realistic populated state', async ({ page }) => {
   await page.goto(localDesignUrl('launcher-current-view.html'));
 
-  const reviewFrame = page.locator('main[title="Northlight launcher current view"]');
+  const reviewFrame = page.locator('main[title="Northlight launcher results view"]');
   await expect(reviewFrame).toBeVisible();
-  await expect(page.getByText('Exact launcher viewport: 1120×760.')).toBeVisible();
+  await expect(page.getByText('Real LauncherBar component · results viewport: 1120×760.')).toBeVisible();
   await expect(page.locator('[data-launcher-role="theme-switch-value"]')).toHaveText('Sandbox');
   await expect(page.locator('[data-launcher-role="devtools-toggle-value"]')).toHaveText('Off');
   await expect(page.locator('[data-launcher-role="window"]')).toHaveCSS('border-top-color', 'rgba(106, 123, 255, 0.35)');

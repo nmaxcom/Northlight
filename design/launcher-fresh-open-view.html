@@ -3,29 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Northlight Launcher Results View</title>
+    <title>Northlight Launcher Fresh Open View</title>
     <link rel="stylesheet" href="./shell.css" />
     <link rel="stylesheet" href="../src/styles/launcher-sandbox.css" />
     <link rel="stylesheet" href="./assets/bundles/launcher-current-view.css" />
   </head>
-  <body data-mock-variant="results">
-    <header class="meta" data-design-shell="launcher">
-      <div class="title">Launcher Results</div>
-      <div class="note">Real LauncherBar component · results viewport: 1120×760.</div>
+  <body data-mock-variant="freshOpen">
+    <header class="meta" data-design-shell="launcher" data-design-size="launcher-fresh">
+      <div class="title">Launcher Fresh Open</div>
+      <div class="note">Real LauncherBar component · compact viewport: 760×360.</div>
     </header>
-    <main class="frame" data-design-shell="launcher" title="Northlight launcher results view">
+    <main class="frame" data-design-shell="launcher" data-design-size="launcher-fresh" title="Northlight launcher fresh open view">
       <div id="root"></div>
     </main>
     <script>
       (() => {
         const designShellKind = 'launcher';
-        const designPageName = 'launcher-current-view.html';
+        const designPageName = 'launcher-fresh-open-view.html';
         const script = document.createElement('script');
         script.src = './assets/bundles/launcher-current-view.js';
         script.onerror = () => {
           const note = document.createElement('p');
           note.className = 'bundleNote';
           note.dataset.designShell = designShellKind;
+          note.dataset.designSize = 'launcher-fresh';
           note.innerHTML = 'Missing local design bundle. Run <code>npm run build:design</code> from the project root, then reopen this page.';
           document.body.append(note);
         };
@@ -38,7 +39,7 @@
           'launcher-results-view.html',
           'settings-current-view.html'
         ];
-        console.log('[design] available mockups:');
+        console.log('[design] real LauncherBar pages:');
         for (const path of pages) {
           const marker = path === designPageName ? '->' : '  ';
           console.log(`${marker} ${new URL(path, window.location.href).href}`);

@@ -18,7 +18,21 @@ function action(id: string, label: string, hint: string, feedbackLabel?: string)
 }
 
 function cloneMockState(state: LauncherBarMockState): LauncherBarMockState {
-  return JSON.parse(JSON.stringify(state)) as LauncherBarMockState;
+  return {
+    ...state,
+    results: state.results.map((item) => ({
+      ...item,
+      actions: item.actions.map((candidate) => ({ ...candidate }))
+    })),
+    settings: {
+      ...state.settings,
+      aliases: [...state.settings.aliases],
+      snippets: [...state.settings.snippets],
+      scopes: [...state.settings.scopes]
+    },
+    status: { ...state.status },
+    iconUrls: state.iconUrls ? { ...state.iconUrls } : undefined
+  };
 }
 
 const settings: LauncherSettings = {
@@ -229,6 +243,51 @@ const results: LauncherResult[] = [
   }
 ];
 
+const freshOpenResults: LauncherResult[] = [
+  {
+    ...result('recent-stremio', 'Stremio.app', 'Recent application', 'app', '/Applications/Stremio.app', appActions, stremioPreview),
+    iconUrl: icons.stremio,
+    score: 180
+  },
+  {
+    ...result('recent-keyboard-maestro', 'Keyboard Maestro.app', 'Recent application', 'app', '/Applications/Keyboard Maestro.app', appActions, keyboardMaestroPreview),
+    iconUrl: icons.keyboardMaestro,
+    score: 176
+  },
+  {
+    id: 'recent-clipboard-spec',
+    title: 'Review launcher spacing and icon timing',
+    subtitle: 'Clipboard · today',
+    value: 'Clipboard',
+    icon: null,
+    kind: 'clipboard',
+    score: 140,
+    source: 'clipboard',
+    preview: {
+      title: 'Clipboard item',
+      subtitle: 'Today',
+      body: 'Review launcher spacing and icon timing',
+      sections: [
+        { label: 'Type', value: 'Clipboard' },
+        { label: 'Length', value: '39 chars' }
+      ]
+    },
+    actions: [action('copy-clipboard', 'Copy Clipboard Item', 'Enter', 'Copied clipboard item')]
+  },
+  {
+    ...result('recent-downloads', 'Downloads', 'Recent folder', 'folder', '/Users/nm4/Downloads', folderActions, {
+      title: 'Downloads',
+      subtitle: '/Users/nm4/Downloads',
+      sections: [
+        { label: 'Type', value: 'Folder' },
+        { label: 'Path', value: '/Users/nm4/Downloads' }
+      ]
+    }),
+    iconUrl: icons.folderBlue,
+    score: 132
+  }
+];
+
 function buildLauncherMockState(selectedIndex: number): LauncherBarMockState {
   return {
     query: 'str',
@@ -245,7 +304,25 @@ function buildLauncherMockState(selectedIndex: number): LauncherBarMockState {
   };
 }
 
+function buildFreshOpenMockState(): LauncherBarMockState {
+  return {
+    query: '',
+    results: freshOpenResults,
+    selectedIndex: 0,
+    pointerActive: false,
+    isResolving: false,
+    isActionsOpen: false,
+    actionQuery: '',
+    actionSelectedIndex: 0,
+    preview: null,
+    settings,
+    status
+  };
+}
+
 const launcherMockStates = {
+  freshOpen: buildFreshOpenMockState(),
+  results: buildLauncherMockState(0),
   current: buildLauncherMockState(0),
   folderPreview: buildLauncherMockState(2),
   appPreview: buildLauncherMockState(1),

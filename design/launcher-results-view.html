@@ -19,7 +19,7 @@
     <script>
       (() => {
         const designShellKind = 'launcher';
-        const designPageName = 'launcher-current-view.html';
+        const designPageName = 'launcher-results-view.html';
         const script = document.createElement('script');
         script.src = './assets/bundles/launcher-current-view.js';
         script.onerror = () => {
@@ -38,7 +38,7 @@
           'launcher-results-view.html',
           'settings-current-view.html'
         ];
-        console.log('[design] available mockups:');
+        console.log('[design] real LauncherBar pages:');
         for (const path of pages) {
           const marker = path === designPageName ? '->' : '  ';
           console.log(`${marker} ${new URL(path, window.location.href).href}`);
