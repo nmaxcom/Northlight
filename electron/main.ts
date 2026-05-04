@@ -42,7 +42,8 @@ import { prewarmFinderIconHelper, resolveFinderIconDataUrl } from './finderIcon'
 
 const BASE_APP_NAME = packageJson.productName ?? 'Northlight';
 const IS_DEV_SESSION = process.env.NORTHLIGHT_DEV === '1' || Boolean(process.env.ELECTRON_RENDERER_URL);
-const APP_NAME = IS_DEV_SESSION ? `${BASE_APP_NAME} Dev` : BASE_APP_NAME;
+const DEV_INSTANCE_SUFFIX = process.env.NORTHLIGHT_DEV_INSTANCE ? ` ${process.env.NORTHLIGHT_DEV_INSTANCE}` : '';
+const APP_NAME = IS_DEV_SESSION ? `${BASE_APP_NAME} Dev${DEV_INSTANCE_SUFFIX}` : BASE_APP_NAME;
 
 // Set identity paths before single-instance lock so dev runs do not collide with generic Electron apps.
 try {
@@ -587,6 +588,36 @@ function loadRenderer(targetWindow: BrowserWindow, view: 'launcher' | 'settings'
   });
 }
 
+function attachRendererDiagnostics(targetWindow: BrowserWindow, label: 'launcher' | 'settings-window') {
+  targetWindow.webContents.on('did-finish-load', () => {
+    console.log(`[main] ${label} loaded`);
+  });
+
+  targetWindow.webContents.on('did-fail-load', (_event, code, description, url) => {
+    console.error(`[main] ${label} failed: ${code} ${description} ${url}`);
+  });
+
+  targetWindow.webContents.on('render-process-gone', (_event, details) => {
+    logFatalContext(`${label}-render-process-gone`, details);
+  });
+
+  targetWindow.webContents.on('console-message', (_event, level, message) => {
+    if (
+      IS_DEV_SESSION &&
+      (message.includes('[vite] connecting') ||
+        message.includes('[vite] connected') ||
+        message.includes('[vite] server connection lost') ||
+        message.includes('Download the React DevTools') ||
+        message.includes('Electron Security Warning (Insecure Content-Security-Policy)'))
+    ) {
+      return;
+    }
+
+    const consoleMethod = level === 3 ? 'error' : level === 2 ? 'warn' : 'log';
+    console[consoleMethod](`[${label}] ${message}`);
+  });
+}
+
 async function createWindow() {
   if (mainWindow && !mainWindow.isDestroyed()) {
     return mainWindow;
@@ -618,33 +649,7 @@ async function createWindow() {
     }
   });
 
-  mainWindow.webContents.on('did-finish-load', () => {
-    console.log('[main] renderer loaded');
-  });
-
-  mainWindow.webContents.on('did-fail-load', (_event, code, description, url) => {
-    console.error(`[main] renderer failed: ${code} ${description} ${url}`);
-  });
-
-  mainWindow.webContents.on('render-process-gone', (_event, details) => {
-    logFatalContext('main-window-render-process-gone', details);
-  });
-
-  mainWindow.webContents.on('console-message', (_event, level, message) => {
-    if (
-      IS_DEV_SESSION &&
-      (message.includes('[vite] connecting') ||
-        message.includes('[vite] connected') ||
-        message.includes('[vite] server connection lost') ||
-        message.includes('Download the React DevTools') ||
-        message.includes('Electron Security Warning (Insecure Content-Security-Policy)'))
-    ) {
-      return;
-    }
-
-    const label = level === 3 ? 'error' : level === 2 ? 'warn' : 'log';
-    console[label](`[renderer] ${message}`);
-  });
+  attachRendererDiagnostics(mainWindow, 'launcher');
 
   mainWindow.webContents.on('devtools-closed', () => {
     if (launcherDevToolsPinned) {
@@ -745,9 +750,7 @@ function openSettingsWindow() {
     settingsWindow?.show();
   });
 
-  settingsWindow.webContents.on('render-process-gone', (_event, details) => {
-    logFatalContext('settings-window-render-process-gone', details);
-  });
+  attachRendererDiagnostics(settingsWindow, 'settings-window');
 
   settingsWindow.on('closed', () => {
     settingsWindow = null;

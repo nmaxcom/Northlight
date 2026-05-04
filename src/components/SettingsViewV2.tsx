@@ -156,6 +156,7 @@ function validate(settings: LauncherSettings): ValidationState {
 
 export function SettingsViewV2() {
   const [settings, setSettings] = useState<LauncherSettings | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchPerformance, setSearchPerformance] = useState<SearchPerformanceSummary | null>(null);
   const [scopeInsights, setScopeInsights] = useState<ScopePerformanceInsight[]>([]);
   const [effectiveShortcut, setEffectiveShortcut] = useState('');
@@ -172,27 +173,47 @@ export function SettingsViewV2() {
   useEffect(() => {
     let cancelled = false;
 
-    void launcherRuntime.getSettings().then((nextSettings) => {
-      if (!cancelled) {
-        setSettings(cloneSettings(nextSettings));
-        setSaveState('Ready');
-      }
-    });
-    void launcherRuntime.getSearchPerformance().then((nextPerformance) => {
-      if (!cancelled) {
-        setSearchPerformance(nextPerformance.summary);
-      }
-    });
-    void launcherRuntime.getScopeInsights().then((nextInsights) => {
-      if (!cancelled) {
-        setScopeInsights(nextInsights);
-      }
-    });
-    void launcherRuntime.getEffectiveShortcut().then((nextShortcut) => {
-      if (!cancelled) {
-        setEffectiveShortcut(nextShortcut);
-      }
-    });
+    const describeError = (error: unknown) => (error instanceof Error ? error.message : 'Unknown settings load error');
+
+    void launcherRuntime
+      .getSettings()
+      .then((nextSettings) => {
+        if (!cancelled) {
+          setSettings(cloneSettings(nextSettings));
+          setLoadError(null);
+          setSaveState('Ready');
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setLoadError(describeError(error));
+          setSaveState('Settings failed to load');
+        }
+      });
+    void launcherRuntime
+      .getSearchPerformance()
+      .then((nextPerformance) => {
+        if (!cancelled) {
+          setSearchPerformance(nextPerformance.summary);
+        }
+      })
+      .catch(() => undefined);
+    void launcherRuntime
+      .getScopeInsights()
+      .then((nextInsights) => {
+        if (!cancelled) {
+          setScopeInsights(nextInsights);
+        }
+      })
+      .catch(() => undefined);
+    void launcherRuntime
+      .getEffectiveShortcut()
+      .then((nextShortcut) => {
+        if (!cancelled) {
+          setEffectiveShortcut(nextShortcut);
+        }
+      })
+      .catch(() => undefined);
 
     const unsubscribe = launcherRuntime.onSettingsChanged((nextSettings) => {
       setSettings(cloneSettings(nextSettings));
@@ -221,6 +242,17 @@ export function SettingsViewV2() {
   }, []);
 
   const validation = useMemo(() => (settings ? validate(settings) : { hasErrors: false, messages: [], aliasTriggers: new Set(), snippetTriggers: new Set() }), [settings]);
+
+  if (loadError) {
+    return (
+      <div className={`${classes.page} ${classes.loadingState}`} role="alert">
+        <div className={classes.loadingCard}>
+          <div className={classes.cardTitle}>Settings failed to load</div>
+          <div className={classes.description}>{loadError}</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!settings) {
     return <div className={classes.page}>Loading…</div>;
