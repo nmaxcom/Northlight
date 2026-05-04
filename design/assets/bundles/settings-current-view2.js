@@ -8387,7 +8387,7 @@
   function createTheme(theme2) {
     return theme2;
   }
-  const DEFAULT_LAUNCHER_SHORTCUT = "CommandOrControl+Shift+Space";
+  const DEFAULT_LAUNCHER_SHORTCUT = "CommandOrControl+Space";
   const TOKEN_SYMBOLS = {
     CommandOrControl: "⌘",
     Control: "⌃",
@@ -9173,11 +9173,15 @@
     quickLookEnabled: true,
     quickLookStartsOpen: true,
     maxClipboardItems: 20,
-    launcherHotkey: "CommandOrControl+Shift+Space",
+    launcherHotkey: "CommandOrControl+Space",
     launcherPosition: null
   };
   let settingsCache = defaultSettings;
   let clipboardCache = [];
+  let recentItemsCache = {
+    local: [],
+    clipboard: []
+  };
   let searchPerformanceCache = {
     samples: [],
     summary: {
@@ -9407,6 +9411,23 @@
     getClipboardHistorySnapshot() {
       return clipboardCache;
     },
+    getRecentItems() {
+      var _a;
+      if (!((_a = window.launcher) == null ? void 0 : _a.getRecentItems)) {
+        return Promise.resolve(recentItemsCache);
+      }
+      return window.launcher.getRecentItems().then((items) => {
+        recentItemsCache = items;
+        return items;
+      });
+    },
+    getRecentItemsSnapshot() {
+      return recentItemsCache;
+    },
+    setLayoutMode(mode) {
+      var _a, _b;
+      return ((_b = (_a = window.launcher) == null ? void 0 : _a.setLayoutMode) == null ? void 0 : _b.call(_a, mode)) ?? Promise.resolve();
+    },
     openSettings() {
       var _a, _b;
       return ((_b = (_a = window.launcher) == null ? void 0 : _a.openSettings) == null ? void 0 : _b.call(_a)) ?? Promise.resolve();
@@ -9592,110 +9613,118 @@
     clearTransientCaches,
     clearVisibleSearchState
   };
-  const page = "_page_1qqr3_3";
-  const shell = "_shell_1qqr3_15";
-  const titlebar = "_titlebar_1qqr3_26";
-  const header = "_header_1qqr3_32";
-  const headerCopy = "_headerCopy_1qqr3_43";
-  const title = "_title_1qqr3_26";
-  const subtitle = "_subtitle_1qqr3_54";
-  const actions = "_actions_1qqr3_62";
-  const body = "_body_1qqr3_70";
-  const sidebarNav = "_sidebarNav_1qqr3_83";
-  const content = "_content_1qqr3_93";
-  const tab = "_tab_1qqr3_113";
-  const tabActive = "_tabActive_1qqr3_139";
-  const button = "_button_1qqr3_146";
-  const secondaryButton = "_secondaryButton_1qqr3_147";
-  const scopeActionButton = "_scopeActionButton_1qqr3_180";
-  const scopePresetButton = "_scopePresetButton_1qqr3_181";
-  const scopeComposerAdd = "_scopeComposerAdd_1qqr3_182";
-  const scopeComposerCancel = "_scopeComposerCancel_1qqr3_183";
-  const iconButton = "_iconButton_1qqr3_184";
-  const grid = "_grid_1qqr3_226";
-  const gridWithSidebar = "_gridWithSidebar_1qqr3_232";
-  const gridSingle = "_gridSingle_1qqr3_236";
-  const leftColumn = "_leftColumn_1qqr3_240";
-  const rightColumn = "_rightColumn_1qqr3_241";
-  const card = "_card_1qqr3_247";
-  const cardTitle = "_cardTitle_1qqr3_255";
-  const cardSubtitle = "_cardSubtitle_1qqr3_262";
-  const sectionHeader = "_sectionHeader_1qqr3_269";
-  const fieldGrid = "_fieldGrid_1qqr3_276";
-  const field = "_field_1qqr3_276";
-  const fieldFull = "_fieldFull_1qqr3_284";
-  const shortcutField = "_shortcutField_1qqr3_290";
-  const shortcutButton = "_shortcutButton_1qqr3_296";
-  const shortcutButtonCapturing = "_shortcutButtonCapturing_1qqr3_313";
-  const shortcutTokens = "_shortcutTokens_1qqr3_318";
-  const shortcutToken = "_shortcutToken_1qqr3_318";
-  const shortcutTokenSymbol = "_shortcutTokenSymbol_1qqr3_336";
-  const shortcutTokenLabel = "_shortcutTokenLabel_1qqr3_342";
-  const shortcutPlaceholder = "_shortcutPlaceholder_1qqr3_349";
-  const shortcutHint = "_shortcutHint_1qqr3_350";
-  const label = "_label_1qqr3_367";
-  const input = "_input_1qqr3_375";
-  const select = "_select_1qqr3_376";
-  const textarea = "_textarea_1qqr3_377";
-  const toggleRow = "_toggleRow_1qqr3_406";
-  const toggle = "_toggle_1qqr3_406";
-  const toggleText = "_toggleText_1qqr3_431";
-  const toggleLabel = "_toggleLabel_1qqr3_438";
-  const toggleHelp = "_toggleHelp_1qqr3_443";
-  const scopeToggleHeader = "_scopeToggleHeader_1qqr3_451";
-  const list = "_list_1qqr3_499";
-  const scopeHero = "_scopeHero_1qqr3_513";
-  const scopeHeroCopy = "_scopeHeroCopy_1qqr3_522";
-  const scopeLead = "_scopeLead_1qqr3_526";
-  const scopeLeadText = "_scopeLeadText_1qqr3_531";
-  const scopeMetrics = "_scopeMetrics_1qqr3_538";
-  const scopeMetric = "_scopeMetric_1qqr3_538";
-  const scopeMetricLabel = "_scopeMetricLabel_1qqr3_552";
-  const scopeMetricValue = "_scopeMetricValue_1qqr3_560";
-  const scopeToolbar = "_scopeToolbar_1qqr3_567";
-  const scopeToolbarLabel = "_scopeToolbarLabel_1qqr3_575";
-  const scopePresetRow = "_scopePresetRow_1qqr3_583";
-  const scopePresetButtonWarm = "_scopePresetButtonWarm_1qqr3_614";
-  const scopePresetButtonDanger = "_scopePresetButtonDanger_1qqr3_618";
-  const scopePresetButtonLabel = "_scopePresetButtonLabel_1qqr3_622";
-  const scopePresetButtonCost = "_scopePresetButtonCost_1qqr3_626";
-  const scopePresetNotes = "_scopePresetNotes_1qqr3_632";
-  const scopePresetNoteRow = "_scopePresetNoteRow_1qqr3_639";
-  const scopePresetNoteLabel = "_scopePresetNoteLabel_1qqr3_646";
-  const scopePresetNoteText = "_scopePresetNoteText_1qqr3_651";
-  const scopeComposer = "_scopeComposer_1qqr3_182";
-  const scopeComposerHeader = "_scopeComposerHeader_1qqr3_663";
-  const scopeComposerTitle = "_scopeComposerTitle_1qqr3_670";
-  const scopeComposerHint = "_scopeComposerHint_1qqr3_675";
-  const scopeComposerRow = "_scopeComposerRow_1qqr3_681";
-  const scopeFeedback = "_scopeFeedback_1qqr3_688";
-  const scopeList = "_scopeList_1qqr3_698";
-  const scopeRow = "_scopeRow_1qqr3_705";
-  const scopeCardMeta = "_scopeCardMeta_1qqr3_710";
-  const row = "_row_1qqr3_716";
-  const rowHeader = "_rowHeader_1qqr3_726";
-  const rowTitle = "_rowTitle_1qqr3_733";
-  const statusRow = "_statusRow_1qqr3_752";
-  const statusPill = "_statusPill_1qqr3_756";
-  const statusPillReady = "_statusPillReady_1qqr3_768";
-  const statusPillPending = "_statusPillPending_1qqr3_773";
-  const statusPillError = "_statusPillError_1qqr3_778";
-  const errorList = "_errorList_1qqr3_783";
-  const scopeToggle = "_scopeToggle_1qqr3_451";
-  const hintList = "_hintList_1qqr3_806";
-  const scopeInsightRow = "_scopeInsightRow_1qqr3_814";
-  const scopeCostPill = "_scopeCostPill_1qqr3_822";
-  const scopeCostLow = "_scopeCostLow_1qqr3_833";
-  const scopeCostMedium = "_scopeCostMedium_1qqr3_838";
-  const scopeCostHigh = "_scopeCostHigh_1qqr3_843";
-  const scopeInsightMeta = "_scopeInsightMeta_1qqr3_848";
-  const scopeInsightText = "_scopeInsightText_1qqr3_853";
-  const performanceGrid = "_performanceGrid_1qqr3_858";
-  const performanceMetric = "_performanceMetric_1qqr3_865";
-  const performanceLabel = "_performanceLabel_1qqr3_875";
-  const performanceValue = "_performanceValue_1qqr3_880";
+  const page = "_page_of7rj_3";
+  const loadingState = "_loadingState_of7rj_15";
+  const loadingCard = "_loadingCard_of7rj_21";
+  const shell = "_shell_of7rj_30";
+  const titlebar = "_titlebar_of7rj_41";
+  const header = "_header_of7rj_47";
+  const headerCopy = "_headerCopy_of7rj_58";
+  const title = "_title_of7rj_41";
+  const subtitle = "_subtitle_of7rj_69";
+  const actions = "_actions_of7rj_77";
+  const body = "_body_of7rj_85";
+  const sidebarNav = "_sidebarNav_of7rj_98";
+  const content = "_content_of7rj_108";
+  const tab = "_tab_of7rj_128";
+  const tabActive = "_tabActive_of7rj_154";
+  const button = "_button_of7rj_161";
+  const secondaryButton = "_secondaryButton_of7rj_162";
+  const scopeActionButton = "_scopeActionButton_of7rj_195";
+  const scopePresetButton = "_scopePresetButton_of7rj_196";
+  const scopeComposerAdd = "_scopeComposerAdd_of7rj_197";
+  const scopeComposerCancel = "_scopeComposerCancel_of7rj_198";
+  const iconButton = "_iconButton_of7rj_199";
+  const grid = "_grid_of7rj_241";
+  const gridWithSidebar = "_gridWithSidebar_of7rj_247";
+  const gridSingle = "_gridSingle_of7rj_251";
+  const leftColumn = "_leftColumn_of7rj_255";
+  const rightColumn = "_rightColumn_of7rj_256";
+  const card = "_card_of7rj_262";
+  const cardTitle = "_cardTitle_of7rj_270";
+  const cardSubtitle = "_cardSubtitle_of7rj_277";
+  const sectionHeader = "_sectionHeader_of7rj_284";
+  const headingWithHint = "_headingWithHint_of7rj_291";
+  const fieldGrid = "_fieldGrid_of7rj_297";
+  const field = "_field_of7rj_297";
+  const fieldFull = "_fieldFull_of7rj_305";
+  const shortcutField = "_shortcutField_of7rj_311";
+  const shortcutButton = "_shortcutButton_of7rj_317";
+  const shortcutButtonCapturing = "_shortcutButtonCapturing_of7rj_334";
+  const shortcutTokens = "_shortcutTokens_of7rj_339";
+  const shortcutToken = "_shortcutToken_of7rj_339";
+  const shortcutTokenSymbol = "_shortcutTokenSymbol_of7rj_357";
+  const shortcutTokenLabel = "_shortcutTokenLabel_of7rj_363";
+  const shortcutPlaceholder = "_shortcutPlaceholder_of7rj_370";
+  const shortcutHint = "_shortcutHint_of7rj_371";
+  const label = "_label_of7rj_388";
+  const input = "_input_of7rj_396";
+  const select = "_select_of7rj_397";
+  const textarea = "_textarea_of7rj_398";
+  const toggleRow = "_toggleRow_of7rj_427";
+  const toggle = "_toggle_of7rj_427";
+  const toggleText = "_toggleText_of7rj_452";
+  const toggleLabel = "_toggleLabel_of7rj_459";
+  const toggleHelp = "_toggleHelp_of7rj_464";
+  const scopeToggleHeader = "_scopeToggleHeader_of7rj_472";
+  const list = "_list_of7rj_520";
+  const scopeHero = "_scopeHero_of7rj_534";
+  const scopeHeroCopy = "_scopeHeroCopy_of7rj_543";
+  const scopeLead = "_scopeLead_of7rj_547";
+  const scopeLeadHint = "_scopeLeadHint_of7rj_559";
+  const scopeMetrics = "_scopeMetrics_of7rj_563";
+  const scopeMetric = "_scopeMetric_of7rj_563";
+  const scopeMetricLabel = "_scopeMetricLabel_of7rj_577";
+  const scopeMetricValue = "_scopeMetricValue_of7rj_585";
+  const scopeToolbar = "_scopeToolbar_of7rj_592";
+  const scopeToolbarLabel = "_scopeToolbarLabel_of7rj_600";
+  const scopePresetRow = "_scopePresetRow_of7rj_608";
+  const scopePresetButtonWarm = "_scopePresetButtonWarm_of7rj_639";
+  const scopePresetButtonDanger = "_scopePresetButtonDanger_of7rj_643";
+  const scopePresetButtonLabel = "_scopePresetButtonLabel_of7rj_647";
+  const scopePresetButtonCost = "_scopePresetButtonCost_of7rj_651";
+  const scopePresetNotes = "_scopePresetNotes_of7rj_657";
+  const scopePresetNoteRow = "_scopePresetNoteRow_of7rj_664";
+  const scopePresetNoteLabel = "_scopePresetNoteLabel_of7rj_671";
+  const scopePresetNoteText = "_scopePresetNoteText_of7rj_676";
+  const scopeComposer = "_scopeComposer_of7rj_197";
+  const scopeComposerHeader = "_scopeComposerHeader_of7rj_688";
+  const scopeComposerTitle = "_scopeComposerTitle_of7rj_695";
+  const scopeComposerHint = "_scopeComposerHint_of7rj_700";
+  const scopeComposerRow = "_scopeComposerRow_of7rj_706";
+  const scopeFeedback = "_scopeFeedback_of7rj_713";
+  const scopeList = "_scopeList_of7rj_723";
+  const scopeRow = "_scopeRow_of7rj_730";
+  const scopeCardMeta = "_scopeCardMeta_of7rj_735";
+  const row = "_row_of7rj_741";
+  const rowHeader = "_rowHeader_of7rj_751";
+  const rowTitle = "_rowTitle_of7rj_758";
+  const statusRow = "_statusRow_of7rj_777";
+  const statusPill = "_statusPill_of7rj_781";
+  const statusPillReady = "_statusPillReady_of7rj_793";
+  const statusPillPending = "_statusPillPending_of7rj_798";
+  const statusPillError = "_statusPillError_of7rj_803";
+  const errorList = "_errorList_of7rj_808";
+  const scopeToggle = "_scopeToggle_of7rj_472";
+  const toggleLabelWithHint = "_toggleLabelWithHint_of7rj_831";
+  const guidanceHintRow = "_guidanceHintRow_of7rj_845";
+  const cardSubtitleWithHint = "_cardSubtitleWithHint_of7rj_849";
+  const infoHint = "_infoHint_of7rj_853";
+  const scopeInsightRow = "_scopeInsightRow_of7rj_874";
+  const scopeCostPill = "_scopeCostPill_of7rj_882";
+  const scopeCostLow = "_scopeCostLow_of7rj_893";
+  const scopeCostMedium = "_scopeCostMedium_of7rj_898";
+  const scopeCostHigh = "_scopeCostHigh_of7rj_903";
+  const scopeInsightMeta = "_scopeInsightMeta_of7rj_908";
+  const scopeInsightText = "_scopeInsightText_of7rj_913";
+  const performanceGrid = "_performanceGrid_of7rj_918";
+  const performanceMetric = "_performanceMetric_of7rj_925";
+  const performanceLabel = "_performanceLabel_of7rj_935";
+  const performanceValue = "_performanceValue_of7rj_940";
   const classes = {
     page,
+    loadingState,
+    loadingCard,
     shell,
     titlebar,
     header,
@@ -9724,6 +9753,7 @@
     cardTitle,
     cardSubtitle,
     sectionHeader,
+    headingWithHint,
     fieldGrid,
     field,
     fieldFull,
@@ -9750,7 +9780,7 @@
     scopeHero,
     scopeHeroCopy,
     scopeLead,
-    scopeLeadText,
+    scopeLeadHint,
     scopeMetrics,
     scopeMetric,
     scopeMetricLabel,
@@ -9785,7 +9815,10 @@
     statusPillError,
     errorList,
     scopeToggle,
-    hintList,
+    toggleLabelWithHint,
+    guidanceHintRow,
+    cardSubtitleWithHint,
+    infoHint,
     scopeInsightRow,
     scopeCostPill,
     scopeCostLow,
@@ -9913,6 +9946,7 @@
   }
   function SettingsViewV2() {
     const [settings, setSettings] = reactExports.useState(null);
+    const [loadError, setLoadError] = reactExports.useState(null);
     const [searchPerformance, setSearchPerformance] = reactExports.useState(null);
     const [scopeInsights, setScopeInsights] = reactExports.useState([]);
     const [effectiveShortcut, setEffectiveShortcut] = reactExports.useState("");
@@ -9927,27 +9961,34 @@
     const newScopeInputRef = reactExports.useRef(null);
     reactExports.useEffect(() => {
       let cancelled = false;
+      const describeError = (error) => error instanceof Error ? error.message : "Unknown settings load error";
       void launcherRuntime.getSettings().then((nextSettings) => {
         if (!cancelled) {
           setSettings(cloneSettings(nextSettings));
+          setLoadError(null);
           setSaveState("Ready");
+        }
+      }).catch((error) => {
+        if (!cancelled) {
+          setLoadError(describeError(error));
+          setSaveState("Settings failed to load");
         }
       });
       void launcherRuntime.getSearchPerformance().then((nextPerformance) => {
         if (!cancelled) {
           setSearchPerformance(nextPerformance.summary);
         }
-      });
+      }).catch(() => void 0);
       void launcherRuntime.getScopeInsights().then((nextInsights) => {
         if (!cancelled) {
           setScopeInsights(nextInsights);
         }
-      });
+      }).catch(() => void 0);
       void launcherRuntime.getEffectiveShortcut().then((nextShortcut) => {
         if (!cancelled) {
           setEffectiveShortcut(nextShortcut);
         }
-      });
+      }).catch(() => void 0);
       const unsubscribe = launcherRuntime.onSettingsChanged((nextSettings) => {
         setSettings(cloneSettings(nextSettings));
         setSaveState("Updated from another window");
@@ -9973,6 +10014,12 @@
       };
     }, []);
     const validation = reactExports.useMemo(() => settings ? validate(settings) : { hasErrors: false, messages: [], aliasTriggers: /* @__PURE__ */ new Set(), snippetTriggers: /* @__PURE__ */ new Set() }, [settings]);
+    if (loadError) {
+      return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `${classes.page} ${classes.loadingState}`, role: "alert", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.loadingCard, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Settings failed to load" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.description, children: loadError })
+      ] }) });
+    }
     if (!settings) {
       return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.page, children: "Loading…" });
     }
@@ -10093,6 +10140,7 @@
     const insightById = new Map(scopeInsights.map((insight) => [insight.id, insight]));
     const formatMs = (value) => typeof value === "number" ? `${Math.round(value)} ms` : "No data yet";
     const formatRate = (value) => `${Math.round(value * 100)}%`;
+    const ScopeInfoHint = ({ label: label2, text }) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.infoHint, title: text, "aria-label": `${label2}: ${text}`, role: "note", children: "?" });
     return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: classes.page, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.shell, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.titlebar, "data-settings-role": "titlebar", "aria-hidden": "true" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: classes.header, "data-settings-role": "header", children: [
@@ -10473,10 +10521,16 @@
                 ] }) : null,
                 activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.sectionHeader, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.headingWithHint, children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Search Scopes" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Scopes feed the local catalog, narrow Spotlight coverage, and define safe fallback search roots." })
-                    ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        ScopeInfoHint,
+                        {
+                          label: "Search scopes",
+                          text: "Scopes feed the local catalog, narrow Spotlight coverage, and define safe fallback search roots."
+                        }
+                      )
+                    ] }) }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "button",
                       {
@@ -10497,7 +10551,13 @@
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeHero, children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeHeroCopy, children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeLead, children: "Choose which roots Northlight hydrates and prefers." }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeLeadText, children: "Northlight now uses hybrid search: Spotlight supplies broad recall on macOS, while the local catalog improves ranking, recents, and resilience. Start narrow. Add `~/Library` when you need app support files and preferences. Add Home or `/` only when broader recall matters more than speed and result cleanliness." })
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeLeadHint, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        ScopeInfoHint,
+                        {
+                          label: "Scope strategy",
+                          text: "Northlight uses hybrid search: Spotlight supplies broad recall while the local catalog improves ranking and recents. Start narrow. Add ~/Library for app support files and preferences. Add Home or / only when broader recall matters more than speed and result cleanliness."
+                        }
+                      ) })
                     ] }),
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeMetrics, children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeMetric, children: [
@@ -10628,52 +10688,64 @@
                             }
                           )
                         ] }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.scopeToggle, children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToggleHeader, children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleLabel, children: "Enabled" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: classes.scopeToggle, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToggleHeader, children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.toggleLabelWithHint, children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.toggleLabel, children: "Enabled" }),
                             /* @__PURE__ */ jsxRuntimeExports.jsx(
-                              "input",
+                              ScopeInfoHint,
                               {
-                                type: "checkbox",
-                                "aria-label": "Enabled",
-                                checked: scope.enabled,
-                                onChange: (event) => {
-                                  const checked = event.currentTarget.checked;
-                                  updateSettings((current) => ({
-                                    ...current,
-                                    scopes: current.scopes.map(
-                                      (entry) => entry.id === scope.id ? { ...entry, enabled: checked } : entry
-                                    )
-                                  }));
-                                }
+                                label: "Enabled",
+                                text: "Disabled scopes stay saved but are ignored by search."
                               }
                             )
                           ] }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleHelp, children: "Disabled scopes stay saved but are ignored by search." })
-                        ] }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.scopeToggle, children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToggleHeader, children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleLabel, children: "Fast Path" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            "input",
+                            {
+                              type: "checkbox",
+                              "aria-label": "Enabled",
+                              checked: scope.enabled,
+                              onChange: (event) => {
+                                const checked = event.currentTarget.checked;
+                                updateSettings((current) => ({
+                                  ...current,
+                                  scopes: current.scopes.map(
+                                    (entry) => entry.id === scope.id ? { ...entry, enabled: checked } : entry
+                                  )
+                                }));
+                              }
+                            }
+                          )
+                        ] }) }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: classes.scopeToggle, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToggleHeader, children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.toggleLabelWithHint, children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.toggleLabel, children: "Fast Path" }),
                             /* @__PURE__ */ jsxRuntimeExports.jsx(
-                              "input",
+                              ScopeInfoHint,
                               {
-                                type: "checkbox",
-                                "aria-label": "Fast Path",
-                                checked: scope.hot,
-                                onChange: (event) => {
-                                  const checked = event.currentTarget.checked;
-                                  updateSettings((current) => ({
-                                    ...current,
-                                    scopes: current.scopes.map(
-                                      (entry) => entry.id === scope.id ? { ...entry, hot: checked } : entry
-                                    )
-                                  }));
-                                }
+                                label: "Fast path",
+                                text: "Fast paths are searched in the immediate tier, like Desktop and Applications."
                               }
                             )
                           ] }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleHelp, children: "Fast paths are searched in the immediate tier, like Desktop and Applications." })
-                        ] })
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            "input",
+                            {
+                              type: "checkbox",
+                              "aria-label": "Fast Path",
+                              checked: scope.hot,
+                              onChange: (event) => {
+                                const checked = event.currentTarget.checked;
+                                updateSettings((current) => ({
+                                  ...current,
+                                  scopes: current.scopes.map(
+                                    (entry) => entry.id === scope.id ? { ...entry, hot: checked } : entry
+                                  )
+                                }));
+                              }
+                            }
+                          )
+                        ] }) })
                       ] }),
                       insight ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeInsightRow, children: [
                         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `${classes.scopeCostPill} ${costClass}`, children: insight.cost.toUpperCase() }),
@@ -10696,7 +10768,13 @@
                 ] }) : null,
                 activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Search Performance" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Recent measurements from real launcher queries on this machine." }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitleWithHint, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    ScopeInfoHint,
+                    {
+                      label: "Search performance",
+                      text: "Recent measurements from real launcher queries on this machine."
+                    }
+                  ) }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceGrid, children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Samples" }),
@@ -10738,17 +10816,13 @@
                 ] }) : null,
                 activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Scope Guidance" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "A few rules that matter when you widen hybrid search coverage." }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("ul", { className: classes.hintList, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "`Fast Path` means Northlight tries that scope on the low-latency tier before deep search finishes." }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Fast paths are optimized for immediate recall. Use them for apps, Desktop-like folders, and high-frequency workspaces." }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "`~/Library` is usually the highest-value expansion if you want app support files, settings, plugins, or preferences." }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Disabled scopes stay in settings but stop feeding the local catalog and scoped fallback search until you enable them again." }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Do not promote huge or noisy trees to fast paths unless they are part of your everyday workflow." }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Larger scopes take longer to hydrate and tend to push more low-value files into results, even when Spotlight recall is available." }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Watching filesystem changes helps stale results disappear faster, but it also makes broad scope sets busier." }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "The `/` scope is a power-user option. It broadens recall, but it is the slowest and noisiest choice." })
-                  ] })
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.guidanceHintRow, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    ScopeInfoHint,
+                    {
+                      label: "Scope guidance",
+                      text: "Fast Path means Northlight tries that scope on the low-latency tier before deep search finishes. Use Fast Path for apps, Desktop-like folders, and high-frequency workspaces. ~/Library is usually the highest-value expansion for app support files and preferences. Disabled scopes stay saved but stop feeding the local catalog and scoped fallback search. Avoid promoting huge or noisy trees to Fast Path unless they are part of your everyday workflow. Larger scopes take longer to hydrate and push more low-value files into results. Watching filesystem changes helps stale results disappear faster, but broad scope sets stay busier. The / scope is the widest and slowest option."
+                    }
+                  ) })
                 ] }) : null
               ] })
             ]

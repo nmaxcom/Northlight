@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Patrimonio · Resumen visual</title>
+    <style>
+      :root {
+        --bg: #0a1020;
+        --panel: rgba(18, 26, 44, 0.9);
+        --panel-soft: rgba(255, 255, 255, 0.035);
+        --line: rgba(255, 255, 255, 0.08);
+        --text: #f4f7ff;
+        --muted: #9eabc8;
+        --cyan: #4fd0f3;
+        --blue: #5d97ff;
+        --teal: #2bcfb2;
+        --lime: #8cde78;
+        --amber: #ffbf63;
+        --orange: #ff9561;
+        --rose: #ff5f90;
+        --violet: #9a7dff;
+        --danger: #ff6e84;
+        --shadow: 0 26px 64px rgba(0, 0, 0, 0.3);
+        --radius-xl: 28px;
+        --radius-lg: 22px;
+        --radius-md: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+        font-variant-numeric: tabular-nums;
+        background:
+          radial-gradient(circle at top left, rgba(79, 208, 243, 0.12), transparent 20%),
+          radial-gradient(circle at top right, rgba(154, 125, 255, 0.16), transparent 24%),
+          linear-gradient(180deg, #09101d 0%, #0c1323 52%, #0e1628 100%);
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .shell {
+        width: min(1480px, calc(100vw - 40px));
+        margin: 0 auto 48px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 90;
+        backdrop-filter: blur(16px);
+        background: linear-gradient(180deg, rgba(8, 13, 24, 0.96), rgba(8, 13, 24, 0.84));
+        border-bottom: 1px solid var(--line);
+      }
+
+      .topbar-inner {
+        width: min(1480px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 16px 0 18px;
+      }
+
+      .topbar-grid {
+        display: grid;
+        grid-template-columns: 1.2fr auto auto;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .eyebrow {
+        margin: 0;
+        color: var(--cyan);
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .title {
+        margin: 8px 0 0;
+        font-family: "Avenir Next Condensed", "Arial Narrow", sans-serif;
+        font-size: clamp(40px, 5vw, 70px);
+        line-height: 0.92;
+        letter-spacing: -0.06em;
+      }
+
+      .subtitle {
+        max-width: 760px;
+        margin: 14px 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 15px;
+      }
+
+      .segmented {
+        display: inline-flex;
+        gap: 8px;
+        padding: 7px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .segmented button,
+      .ghost-btn {
+        border: 0;
+        cursor: pointer;
+      }
+
+      .segmented button {
+        padding: 11px 16px;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+      }
+
+      .segmented button.active {
+        color: var(--text);
+        background: linear-gradient(135deg, rgba(93, 151, 255, 0.2), rgba(154, 125, 255, 0.22));
+      }
+
+      .top-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .ghost-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 14px;
+        border-radius: 999px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--line);
+      }
+
+      .ghost-btn strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .hero {
+        margin-top: 22px;
+        padding: 28px;
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--line);
+        background:
+          radial-gradient(circle at 82% 20%, rgba(255, 191, 99, 0.12), transparent 18%),
+          linear-gradient(145deg, rgba(20, 30, 52, 0.98), rgba(11, 17, 29, 0.98));
+        box-shadow: var(--shadow);
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 22px;
+      }
+
+      .hero-total {
+        margin-top: 10px;
+        font-size: clamp(52px, 6vw, 88px);
+        line-height: 0.92;
+        letter-spacing: -0.07em;
+        font-weight: 700;
+      }
+
+      .hero-copy {
+        max-width: 760px;
+        margin: 14px 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+        font-size: 16px;
+      }
+
+      .hero-strip {
+        margin-top: 22px;
+      }
+
+      .strip-track {
+        display: flex;
+        overflow: hidden;
+        height: 18px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .strip-segment {
+        min-width: 8px;
+      }
+
+      .strip-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .legend-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 11px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .legend-pill strong {
+        color: var(--text);
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .hero-side {
+        display: grid;
+        gap: 14px;
+      }
+
+      .panel,
+      .card {
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .panel {
+        padding: 22px;
+      }
+
+      .panel-label {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
+
+      .panel-value {
+        margin-top: 8px;
+        font-size: 28px;
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+        font-weight: 700;
+      }
+
+      .panel-copy {
+        margin-top: 12px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .hero-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+      }
+
+      .grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .span-3 { grid-column: span 3; }
+      .span-4 { grid-column: span 4; }
+      .span-5 { grid-column: span 5; }
+      .span-6 { grid-column: span 6; }
+      .span-7 { grid-column: span 7; }
+      .span-8 { grid-column: span 8; }
+      .span-12 { grid-column: span 12; }
+
+      .card {
+        padding: 22px;
+        box-shadow: var(--shadow);
+      }
+
+      .card h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .card-copy {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .hint {
+        position: relative;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 18px;
+        height: 18px;
+        margin-left: 6px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 11px;
+        cursor: help;
+      }
+
+      .hint::after {
+        content: attr(data-tip);
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 10px);
+        width: 240px;
+        padding: 12px;
+        transform: translateX(-50%);
+        border-radius: 14px;
+        background: rgba(8, 12, 23, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--t
+        min-height: 118px;
+        padding: 18px 4px 18px 0;
+        border-radius: 8px;
+        border: 0;
+        /* border-top: 1px solid var(--line); */
+        background: transparent;
+        box-shadow: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      .diag-title {
+        display: flex;
+        align-items: center;
+      }
+
+      .diag-status {
+        margin-top: 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .diag-track {
+        margin-top: 14px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.07);
+        overflow: hidden;
+      }
+
+      .diag-fill {
+        height: 100%;
+        border-radius: 999px;
+      }
+
+      .diag-score {
+        margin-top: 10px;
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .account-split {
+        display: grid;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .split-card {
+        padding: 18px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .split-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 12px;
+      }
+
+      .split-top strong {
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .split-tag {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
+
+      .split-copy {
+        margin-top: 10px;
+        color: var(--muted);
+        line-height: 1.58;
+      }
+
+      .mini-metrics {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .mini-metric {
+        padding: 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .mini-metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .mini-metric strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 19px;
+        letter-spacing: -0.03em;
+      }
+
+      .sunburst-stage {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .sunburst-shell {
+        display: grid;
+        place-items: center;
+        min-height: 520px;
+      }
+
+      .sunburst-box {
+        position: relative;
+        width: min(640px, 100%);
+        aspect-ratio: 1 / 1;
+      }
+
+      .sunburst-center {
+        position: absolute;
+        inset: 50%;
+        width: 180px;
+        height: 180px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 18px;
+        background: radial-gradient(circle at 30% 30%, rgba(154, 125, 255, 0.2), rgba(8, 13, 24, 0.96));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .sunburst-center strong {
+        display: block;
+        font-size: 31px;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+
+      .sunburst-center span {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .sunburst-path {
+        cursor: pointer;
+        transition: opacity 120ms ease, filter 120ms ease;
+      }
+
+      .sunburst-path.dim {
+        opacity: 0.42;
+      }
+
+      .sunburst-path.active,
+      .sunburst-path:hover {
+        opacity: 1;
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.08));
+      }
+
+      .focus-box {
+        padding: 18px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .focus-label {
+        color: var(
+        padding: 18px;
+        border-radius: 8px;
+        /* background: var(--panel-soft); */
+        /* border: 1px solid var(--line); */
+       .focus-title {
+        margin-top: 8px;
+        font-size: 28px;
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+        font-weight: 700;
+      }
+
+      .focus-copy {
+        margin-top: 10px;
+        color: var(--muted);
+        line-height: 1.58;
+      }
+
+      .focus-stats {
+        margin-top: 16px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .focus-stat {
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .focus-stat strong {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .focus-stat p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .bars
+        padding: 12px;
+        border-radius: 8px;
+        background: rgb(0 71 159 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 71 159 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 71 160 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 73 163 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 75 169 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 77 174 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 79 177 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 80 180 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 82 184 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 83 187 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 85 191 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 86 193 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 88 197 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 89 200 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 90 202 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 90 203 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 91 204 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 91 205 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 92 206 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 92 207 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 93 210 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 97 217 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 99 222 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 100 226 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 102 229 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 104 235 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 105 237 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 106 238 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 106 239 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 107 240 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 108 243 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 109 245 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 110 247 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 110 248 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 111 249 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 111 250 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 111 251 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 112 251 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 112 252 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 112 253 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 113 253 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 113 254 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 113 255 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 113 253 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 110 248 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 109 245 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 107 242 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 106 239 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 105 236 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 101 228 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 98 221 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 95 213 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 92 206 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 88 199 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 84 189 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 81 183 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 78 177 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 75 170 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 71 161 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 67 150 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 63 141 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 58 131 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 54 122 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 51 114 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 48 108 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 48 107 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 48 108 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 49 110 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 50 113 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 51 115 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 52 116 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 52 117 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 53 118 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 53 120 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 54 122 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 56 125 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 58 129 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 59 134 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 61 137 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 61 138 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 62 139 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 62 140 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 63 142 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 66 148 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 67 151 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 69 154 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 72 161 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 84 189 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 86 194 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 88 198 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 89 200 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 89 201 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 90 202 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 90 203 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 90 202 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 89 200 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 87 196 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 85 191 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 82 185 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 78 175 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 72 161 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 70 157 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 68 154 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 67 151 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 66 148 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 64 144 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 62 140 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 61 137 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 60 136 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 60 135 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 60 136 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 61 136 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 61 137 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 61 138 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 62 138 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 62 139 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 63 142 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 64 144 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 66 148 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 69 155 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 71 159 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 72 162 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 73 165 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 74 167 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 75 168 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(2 77 170 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(3 77 170 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(3 78 171 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(4 78 171 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(4 79 171 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(5 79 171 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(5 78 171 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(5 78 170 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(5 78 169 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(6 77 166 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(6 76 164 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(8 73 155 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(9 72 151 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(10 70 145 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(11 67 137 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(13 61 122 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(14 60 117 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 57 109 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 52 97 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 50 92 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 46 82 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 42 75 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 41 72 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 39 67 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 37 64 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 36 62 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 36 61 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 35 60 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 36 61 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 36 62 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(14 37 64 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(14 37 66 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(13 39 71 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(13 40 73 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(12 42 79 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(9 43 86 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(8 44 88 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(8 44 90 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(6 45 94 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(4 47 100 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(3 47 102 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(2 47 103 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(1 47 103 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(1 46 103 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 46 103 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 45 102 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 45 101 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 44 99 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 42 95 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 40 90 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 39 87 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 38 85 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 38 84 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 36 82 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 36 80 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 35 78 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 34 76 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 31 69 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 28 62 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 26 59 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 25 55 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 21 48 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 20 46 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 20 45 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 19 44 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 19 42 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 18 41 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 18 40 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 18 41 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 19 42 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 19 43 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 20 44 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 20 45 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(0 20 46 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(1 21 46 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(3 22 45 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(6 23 44 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(8 23 43 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(10 23 39 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(11 23 38 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(12 22 34 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(14 23 34 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 25 34 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(20 26 34 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(21 27 34 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(22 28 35 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(24 29 35 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(26 31 36 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(27 32 37 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(30 34 39 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(30 34 40 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(31 35 40 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(32 36 41 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(33 37 41 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(34 38 43 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(34 38 44 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(34 39 44 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(35 39 45 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(36 40 46 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(36 41 47 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(36 41 48 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(37 42 48 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(37 42 49 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(37 43 49 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(38 43 50 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(38 44 51 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(39 44 51 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(39 45 53 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(40 46 53 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(41 47 55 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(41 48 56 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(41 48 57 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(42 49 57 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(42 50 58 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(43 50 59 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(43 51 60 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(43 50 60 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(43 50 59 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(42 50 59 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(42 49 58 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(41 49 58 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(41 48 57 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(40 47 56 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(39 46 55 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(39 45 54 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(38 45 53 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(38 44 53 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(37 44 52 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(36 43 51 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(36 42 51 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(35 41 49 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(34 40 48 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(33 40 47 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(33 39 47 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(32 38 46 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(32 38 45 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(29 34 41 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(28 33 40 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(27 32 39 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(26 31 38 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(25 30 36 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(24 29 35 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(23 28 33 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(22 27 32 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(21 26 31 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(21 25 30 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(20 24 29 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(19 23 28 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(19 23 27 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 22 26 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 21 26 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 21 25 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 20 24 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 20 24 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 19 23 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 19 23 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 19 24 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 20 25 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 20 25 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 20 26 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 21 27 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 21 28 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 22 28 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 22 29 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 23 30 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 23 31 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 24 31 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 24 32 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 24 33 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 25 33 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 25 34 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 25 35 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 26 35 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(18 25 35 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 25 35 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 25 36 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 26 37 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 26 38 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 27 38 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 27 39 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(17 26 39 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 26 38 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(16 25 37 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 25 36 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 24 36 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(15 24 35 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(14 23 34 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(14 23 33 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(14 22 33 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(13 22 32 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(13 21 32 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(13 21 31 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(12 20 30 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(12 20 29 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(12 19 29 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(12 19 28 / 94%);
+        /* border: 1px solid var(--line); */
+        background: rgb(11 18 27 / 94%);
+        /* border: 1px solid var(--line); */
+        background: var(--panel);
+        /* border: 1px solid var(--line); */
+        gap: 14px;
+      }
+
+      .bar-row {
+        display: grid;
+        gap: 8px;
+      }
+
+      .bar-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: baseline;
+      }
+
+      .bar-top strong {
+        font-size: 15px;
+      }
+
+      .bar-top span {
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .track {
+        height: 12px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .fill {
+        height: 100%;
+        border-radius: 999px;
+      }
+
+      .insight-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .insight-card {
+        padding: 18px;
+        border-radius: 18px;
+        background: rgb(21 43 104 / 27%);
+        /* border: 1px solid rgba(255, 255, 255, 0.05); */
+      }
+
+      .insight-tag {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
+
+      .insight-card strong {
+        display: block;
+        margin-top: 10px;
+        font-size: 18px;
+      }
+
+      .insight-card p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.62;
+      }
+
+      details {
+        overflow: hidden;
+      }
+
+      summary {
+        list-style: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .detail-grid {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .detail-row {
+        display: grid;
+        grid-template-columns: 1.4fr 0.8fr 0.8fr;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .detail-row:first-child {
+        border-top: 0;
+      }
+
+      .detail-row span:nth-child(2),
+      .detail-row span:last-child {
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        background: rgba(6, 10, 18, 0.56);
+        backdrop-filter: blur(6px);
+        transition: opacity 180ms ease;
+        z-index: 95;
+      }
+
+      .drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: min(520px, 100vw);
+        height: 100vh;
+        padding: 24px;
+        overflow: auto;
+        background: linear-gradient(180deg, rgba(12, 18, 32, 0.98), rgba(10, 15, 27, 0.98));
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
+        transform: translateX(102%);
+        transition: transform 200ms ease;
+        z-index: 100;
+      }
+
+      .drawer.open {
+        transform: translateX(0);
+      }
+
+      .drawer-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .drawer-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .drawer-close {
+        width: 40px;
+        height: 40px;
+        border: 0;
+        border-radius: 50%;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+      }
+
+      .history-card,
+      .glossary-item {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .history-card strong,
+      .glossary-item strong {
+        display: block;
+      }
+
+      .history-card p,
+      .glossary-item p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.58;
+      }
+
+      .history-chart {
+        margin-top: 18px;
+        padding: 14px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      input[type="range"] {
+        width: 100%;
+        margin: 16px 0 0;
+        appearance: none;
+        background: transparent;
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(79, 208, 243, 0.18), rgba(154, 125, 255, 0.28));
+      }
+
+      input[type="range"]::-moz-range-track {
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(79, 208, 243, 0.18), rgba(154, 125, 255, 0.28));
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        margin-top: -6px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #fff, var(--cyan));
+        border: 0;
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #fff, var(--cyan));
+        border: 0;
+      }
+
+      @media (max-width: 1180px) {
+        .topbar-grid,
+        .hero-grid,
+        .sunburst-stage,
+        .insight-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .span-3,
+        .span-4,
+        .span-5,
+        .span-6,
+        .span-7,
+        .span-8,
+        .span-12 {
+          grid-column: span 12;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .shell,
+        .topbar-inner {
+          width: min(100vw - 24px, 1480px);
+        }
+
+        .mini-metrics {
+          grid-template-columns: 1fr;
+        }
+
+        .detail-row {
+          grid-template-columns: 1fr;
+        }
+
+        .detail-row span:nth-child(2),
+        .detail-row span:last-child {
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+
+    <aside class="drawer" id="history-drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <div>
+          <p class="eyebrow">Histórico</p>
+          <h2 style="margin:8px 0 0;">MyInvestor queda aparte</h2>
+          <p class="card-copy">El histórico sigue accesible, pero ya no manda sobre la home patrimonial actual.</p>
+        </div>
+        <button class="drawer-close" data-close="history-drawer" aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="history-chart">
+        <strong id="history-total"></strong>
+        <svg id="history-chart-svg" viewBox="0 0 440 180" width="100%" height="180" style="margin-top: 10px;"></svg>
+      </div>
+
+      <input id="history-slider" type="range" min="0" max="6" step="1" value="6" />
+
+      <div class="history-card">
+        <span class="eyebrow" id="history-date"></span>
+        <strong id="history-title"></strong>
+        <p id="history-note"></p>
+        <div class="bars" id="history-bars"></div>
+      </div>
+    </aside>
+
+    <aside class="drawer" id="glossary-drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <div>
+          <p class="eyebrow">Glosario</p>
+          <h2 style="margin:8px 0 0;">Términos en llano</h2>
+          <p class="card-copy">Ayudas rápidas para entender el panel sin jerga de más.</p>
+        </div>
+        <button class="drawer-close" data-close="glossary-drawer" aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="glossary-item">
+        <strong>Renta variable</strong>
+        <p>La parte que más puede subir o bajar. Suele ofrecer más potencial, pero se mueve más.</p>
+      </div>
+      <div class="glossary-item">
+        <strong>Defensivo</strong>
+        <p>Bloques pensados para proteger más: bonos, seguros de ahorro o posiciones que suelen moverse menos.</p>
+      </div>
+      <div class="glossary-item">
+        <strong>Monetario / liquidez</strong>
+        <p>Dinero quieto o invertido a muy corto plazo. Da estabilidad, pero normalmente rinde menos.</p>
+      </div>
+      <div class="glossary-item">
+        <strong>Diversificación</strong>
+        <p>Mide si dependes demasiado de pocos bloques. Cuanto más repartido esté todo, menos probable es que un solo golpe te marque el conjunto.</p>
+      </div>
+      <div class="glossary-item">
+        <strong>ROI</strong>
+        <p>Rentabilidad sobre lo que costó entrar. Si no hay coste visible o la app no lo muestra bien, el panel no lo inventa.</p>
+      </div>
+    </aside>
+
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-grid">
+          <div>
+            <p class="eyebrow">Patrimonio supervisado</p>
+            <div class="title">Carteras y patrimonio actual</div>
+            <p class="subtitle">
+              Una vista pensada para ver qué bloques hay, cuánto pesa cada uno, qué parte está pendiente de decisión y dónde vive de verdad el riesgo o la rentabilidad.
+            </p>
+          </div>
+
+          <div class="segmented" id="person-switch"></div>
+
+          <div class="top-actions">
+            <button class="ghost-btn" id="open-history"><span>↗</span><strong>Histórico</strong></button>
+            <button class="ghost-btn" id="open-glossary"><span>◎</span><strong>Glosario</strong></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <main class="shell">
+      <section class="hero">
+        <div class="hero-grid">
+          <div>
+            <p class="eyebrow" id="hero-person">Carles</p>
+            <div class="hero-total" id="hero-total"></div>
+            <p class="hero-copy" id="hero-copy"></p>
+
+            <div class="hero-strip">
+              <div class="strip-track" id="hero-strip"></div>
+              <div class="strip-legend" id="hero-strip-legend"></div>
+            </div>
+          </div>
+
+          <div class="hero-side">
+            <div class="panel">
+              <div class="panel-label">Lectura rápida</div>
+              <div class="panel-value" id="hero-reading"></div>
+              <p class="panel-copy" id="hero-reading-copy"></p>
+            </div>
+            <div class="panel">
+              <div class="panel-label">Cuenta o bloque dominante <span class="hint" data-tip="Aquí se destaca qué parte pesa más dentro del patrimonio visible. No es una recomendación, solo una pista de dependencia.">i</span></div>
+              <div class="panel-value" id="hero-dominant"></div>
+              <p class="panel-copy" id="hero-dominant-copy"></p>
+              <div class="hero-chip"><span class="dot" style="background:var(--cyan);"></span><span id="hero-dominant-chip"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid" id="diagnostics-grid"></section>
+
+      <section class="grid">
+        <div class="card span-5">
+          <h2 id="split-title">Las dos piezas de Carles</h2>
+          <p class="card-copy" id="split-copy">Aquí se separa lo que hoy está en modo espera de lo que ya está invertido y asumiendo mercado.</p>
+          <div class="account-split" id="split-cards"></div>
+        </div>
+
+        <div class="card span-7">
+          <h2 id="detail-hero-title">MyInvestor en detalle</h2>
+          <p class="card-copy" id="detail-hero-copy"></p>
+          <div class="sunburst-stage">
+            <div class="sunburst-shell">
+              <div class="sunburst-box">
+                <svg id="sunburst" viewBox="0 0 640 640" width="100%" height="100%"></svg>
+                <div class="sunburst-center">
+                  <div>
+                    <strong id="sunburst-total"></strong>
+                    <span id="sunburst-label"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="focus-box">
+              <div class="focus-label">Segmento activo</div>
+              <div class="focus-title" id="focus-title"></div>
+              <div class="focus-copy" id="focus-copy"></div>
+              <div class="focus-stats" id="focus-stats"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card span-4">
+          <h2>Reparto por cuenta</h2>
+          <p class="card-copy">Sirve para ver si el patrimonio depende de una sola casa o si está repartido entre distintos sitios.</p>
+          <div class="bars" id="account-bars"></div>
+        </div>
+
+        <div class="card span-8">
+          <h2 id="positions-title">Posiciones y bloques principales</h2>
+          <p class="card-copy" id="positions-copy"></p>
+          <div class="bars" id="positions-bars"></div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card span-12">
+          <h2>Lo que hoy parece más claro</h2>
+          <p class="card-copy">Pequeñas opiniones en lenguaje llano para poner contexto al reparto actual.</p>
+          <div class="insight-grid" id="insight-grid"></div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card span-12">
+          <details>
+            <summary>
+              <div>
+                <h2 style="margin:0;">Detalle completo</h2>
+                <p class="card-copy" style="margin-top:8px;">Tabla simple de cuentas, productos y montos, ya sin invadir la portada.</p>
+              </div>
+              <span class="ghost-btn" style="pointer-events:none;">Expandir</span>
+            </summary>
+            <div class="detail-grid" id="detail-grid"></div>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const palette = {
+        liquidity: "var(--cyan)",
+        defensive: "var(--teal)",
+        equity: "var(--violet)",
+        alternatives: "var(--amber)",
+        adjustments: "var(--danger)",
+        bbva: "var(--blue)",
+        myinvestor: "var(--violet)",
+        caixa: "var(--teal)",
+        ai: "var(--rose)",
+        world: "var(--blue)",
+        tercio: "var(--cyan)",
+        europe: "var(--lime)",
+        bonds: "var(--amber)",
+        emerging: "var(--orange)",
+        annuity: "var(--teal)"
+      };
+
+      const history = [
+        { date: "2024-03-27", title: "Despliegue inicial", total: 28257.52, note: "La cartera nace muy concentrada en IA y Estados Unidos.", bars: [{ label: "RV", amount: 21168.01, color: palette.equity }, { label: "Defensivo", amount: 7089.51, color: palette.defensive }] },
+        { date: "2025-12-24", title: "Refuerzo de World", total: 31890.62, note: "La pata broad mejora algo la foto, pero la cartera sigue muy cargada a renta variable.", bars: [{ label: "RV", amount: 24787.38, color: palette.equity }, { label: "Defensivo", amount: 7103.24, color: palette.defensive }] },
+        { date: "2026-03-06", title: "Base antes de fase 1", total: 49151.53, note: "La caja pasa a ser la gran duda de arquitectura.", bars: [{ label: "RV", amount: 27801.76, color: palette.equity }, { label: "Defensivo", amount: 10816.43, color: palette.defensive }, { label: "Liquidez", amount: 10533.34, color: palette.liquidity }] },
+        { date: "2026-03-17", title: "Entran Europa y defensivo", total: 48279.59, note: "Empieza a verse una arquitectura real.", bars: [{ label: "RV", amount: 33014.10, color: palette.equity }, { label: "Defensivo", amount: 13732.15, color: palette.defensive }, { label: "Liquidez", amount: 1533.34, color: palette.liquidity }] },
+        { date: "2026-03-20", title: "Todo el efectivo visible invertido", total: 48156.34, note: "La fase 1 queda cerrada y casi no queda caja visible.", bars: [{ label: "RV", amount: 34362.45, color: palette.equity }, { label: "Defensivo", amount: 13760.55, color: palette.defensive }, { label: "Liquidez", amount: 33.34, color: palette.liquidity }] },
+        { date: "2026-04-06", title: "Reaparece liquidez visible", total: 48504.49, note: "La foto rebaja un poco la tensión y devuelve una pequeña bolsa de liquidez.", bars: [{ label: "RV", amount: 33827.84, color: palette.equity }, { label: "Defensivo", amount: 13642.16, color: palette.defensive }, { label: "Liquidez", amount: 1034.49, color: palette.liquidity }] },
+        { date: "2026-04-27", title: "Rebote fuerte de mercado", total: 51671.53, note: "La subida vuelve a empujar la cartera principal a la parte alta del rango de renta variable.", bars: [{ label: "RV", amount: 36462.37, color: palette.equity }, { label: "Defensivo", amount: 14659.66, color: palette.defensive }, { label: "Liquidez", amount: 549.49, color: palette.liquidity }] }
+      ];
+
+      const views = {
+        carles: {
+          label: "Carles",
+          total: 501671.53,
+          heroCopy: "Aquí conviene separar dos cosas: 450.000 € están hoy en monetario BBVA pendientes de decisión, mientras 51.672 € ya están trabajando dentro de MyInvestor con una cartera claramente más exigente y con rentabilidad visible.",
+          reading: "Mucho patrimonio en espera, y una cartera real ya definida",
+          readingCopy: "La foto total parece prudente porque BBVA pesa muchísimo, pero el sitio donde de verdad hay que mirar riesgo, diversificación y retornos es MyInvestor.",
+          dominant: { label: "BBVA", copy: "BBVA pesa mucho más por tamaño, pero no es el sitio donde hoy vive el riesgo de mercado de Carles.", chip: "90% del patrimonio visible" },
+          strip: [
+            { label: "Liquidez / monetario", amount: 450549.49, color: palette.liquidity },
+            { label: "Renta variable", amount: 36462.37, color: palette.equity },
+            { label: "Defensivo", amount: 14659.66, color: palette.defensive }
+          ],
+          diagnostics: [
+            { title: "Diversificación", score: 54, status: "Vigilar", color: palette.amber, copy: "El patrimonio total parece repartido, pero el riesgo real sigue demasiado concentrado en la parte invertida de MyInvestor.", help: "Mide si el dinero depende demasiado de pocos bloques." },
+            { title: "Liquidez", score: 90, status: "Muy alta", color: palette.cyan, copy: "Carles no tiene un problema de falta de liquidez. La decisión pendiente es qué hacer con ella.", help: "Dinero disponible o aparcado a muy corto plazo." },
+            { title: "MyInvestor", score: 71, status: "Parte intensa", color: palette.violet, copy: "Dentro de la cartera invertida sí pesa mucho la renta variable, con foco importante en USA y tecnología.", help: "No mide el total de Carles, sino el núcleo invertido." },
+            { title: "BBVA pendiente", score: 84, status: "Gran bloque en espera", color: palette.blue, copy: "Ese monetario es patrimonio real, pero todavía no cuenta como cartera construida con criterio de largo plazo.", help: "Bloque muy estable que aún no se ha desplegado." }
+          ],
+          splitTitle: "Las dos piezas de Carles",
+          splitCopy: "Separar el bloque pendiente del bloque ya invertido evita que el tamaño de BBVA esconda cómo está realmente MyInvestor.",
+          splitCards: [
+            {
+              tag: "Pendiente de decisión",
+              title: "BBVA · monetario",
+              amount: 450000,
+              copy: "Es un bloque enorme y estable. Da tranquilidad, pero por ahora no está construyendo exposición de largo plazo.",
+              metrics: [
+                { label: "Peso en Carles", value: "90%" },
+                { label: "Rentabilidad visible", value: "+403 €" },
+                { label: "Estado", value: "En espera" }
+              ]
+            },
+            {
+              tag: "Cartera invertida",
+              title: "MyInvestor",
+              amount: 51672,
+              copy: "Aquí sí hay una cartera como tal: posiciones, mezcla RV/RF, concentración geográfica y rentabilidad acumulada visible.",
+              metrics: [
+                { label: "ROI visible", value: "+32%" },
+                { label: "Ganancia visible", value: "+12.403 €" },
+                { label: "Caja interna", value: "549 €" }
+              ]
+            }
+          ],
+          detailTitle: "MyInvestor en detalle",
+          detailCopy: "El radial se centra en MyInvestor porque ahí están las posiciones reales, el mix entre renta variable y defensivo, la geografía y la rentabilidad visible.",
+          detailRootLabel: "MyInvestor visible",
+          focusDefault: {
+            title: "MyInvestor",
+            copy: "Esta es la cartera de inversión real de Carles. El resto del patrimonio visible hoy está más en modo espera que en construcción.",
+            stats: [
+              { label: "Total visible", value: "51.672 €", copy: "Incluye posiciones y caja residual." },
+              { label: "ROI visible", value: "+32%", copy: "Rentabilidad estimada a partir de las ganancias visibles por posición." },
+              { label: "Mix", value: "71% RV", copy: "La cartera principal sigue siendo exigente en riesgo." }
+            ]
+          },
+          detailTree: [
+            {
+              label: "Renta variable",
+              value: 36462.37,
+              color: palette.equity,
+              copy: "La parte que más pesa y la que más manda en el comportamiento de MyInvestor.",
+              children: [
+                { label: "Tercio RV", value: 9892.93, color: palette.tercio, copy: "La parte accionaria estimada dentro de Tercio." },
+                { label: "Developed World", value: 9842.07, color: palette.world, copy: "La pata broad de mundo desarrollado." },
+                { label: "X AI Big Data", value: 9265.30, color: palette.ai, copy: "La pata temática más agresiva y más reconocible." },
+                { label: "Europa", value: 5738.73, color: palette.europe, copy: "La parte europea dedicada." },
+                { label: "Emergentes", value: 1723.34, color: palette.emerging, copy: "Aún pequeña frente al resto." }
+              ]
+            },
+            {
+              label: "Defensivo",
+              value: 14659.66,
+              color: palette.defensive,
+              copy: "La parte que amortigua la cartera principal de MyInvestor.",
+              children: [
+                { label: "Tercio defensivo", value: 10890.54, color: palette.defensive, copy: "La parte no-RV que Tercio ya lleva por dentro." },
+                { label: "Bonos globales", value: 3769.12, color: palette.bonds, copy: "El bloque defensivo explícito y visible." }
+              ]
+            },
+            {
+              label: "Liquidez",
+              value: 549.49,
+              color: palette.liquidity,
+              copy: "Caja residual dentro de MyInvestor.",
+              children: [{ label: "Efectivo", value: 549.49, color: palette.liquidity, copy: "No cambia casi nada la foto general de la cuenta." }]
+            }
+          ],
+          accounts: [
+            { label: "BBVA", amount: 450000, color: palette.bbva },
+            { label: "MyInvestor", amount: 51671.53, color: palette.myinvestor }
+          ],
+          positionsTitle: "Posiciones y retornos visibles",
+          positionsCopy: "Aquí se mezclan tamaño y rentabilidad visible para entender qué pesa y qué ha funcionado mejor dentro de la cartera ya invertida.",
+          positions: [
+            { label: "Fondo monetario BBVA", amount: 450000, sub: "+403 € visible", color: palette.bbva },
+            { label: "Tercio Capital", amount: 20783.47, sub: "+7.228 € visible", color: palette.tercio },
+            { label: "Developed World", amount: 9842.07, sub: "+1.955 € visible", color: palette.world },
+            { label: "X AI Big Data", amount: 9265.30, sub: "+2.973 € visible", color: palette.ai },
+            { label: "Europa", amount: 5738.73, sub: "+139 € visible", color: palette.europe },
+            { label: "Bonos globales", amount: 3769.12, sub: "+19 € visible", color: palette.bonds },
+            { label: "Emergentes", amount: 1723.34, sub: "+88 € visible", color: palette.emerging },
+            { label: "Liquidez MyInvestor", amount: 549.49, sub: "Sin ROI", color: palette.liquidity }
+          ],
+          insights: [
+            { tag: "Lo más importante", title: "Carles no tiene una sola cartera, sino una cartera y un gran bloque pendiente", body: "Si no separas BBVA de MyInvestor, parece todo muy prudente. En realidad son dos problemas distintos: dinero en espera y dinero ya invertido." },
+            { tag: "Qué vigilar", title: "La calidad de MyInvestor importa más que seguir acumulando caja", body: "Liquidez ya hay muchísima. La pregunta útil es si la cartera invertida está suficientemente bien repartida para el riesgo que asume." },
+            { tag: "Lectura práctica", title: "El ROI visible de MyInvestor ya es material", body: "La cartera principal no está solo construida: también acumula una ganancia visible relevante. Eso merece un análisis propio, separado del monetario BBVA." }
+          ],
+          details: [
+            { label: "BBVA · fondo monetario", account: "BBVA", amount: 450000 },
+            { label: "MyInvestor · Tercio Capital", account: "MyInvestor", amount: 20783.47 },
+            { label: "MyInvestor · Developed World", account: "MyInvestor", amount: 9842.07 },
+            { label: "MyInvestor · X AI Big Data", account: "MyInvestor", amount: 9265.30 },
+            { label: "MyInvestor · Europa", account: "MyInvestor", amount: 5738.73 },
+            { label: "MyInvestor · Bonos globales", account: "MyInvestor", amount: 3769.12 },
+            { label: "MyInvestor · Emergentes", account: "MyInvestor", amount: 1723.34 },
+            { label: "MyInvestor · Liquidez", account: "MyInvestor", amount: 549.49 }
+          ]
+        },
+        natalia: {
+          label: "Natalia",
+          total: 271462.91,
+          heroCopy: "Natalia tiene un perfil mucho más patrimonial y defensivo: Caixabank estructura la mayor parte del conjunto y BBVA aporta un segundo bloque de monetario y liquidez.",
+          reading: "Más conservador y más ordenado",
+          readingCopy: "Aquí el foco no es una cartera agresiva, sino cómo conviven renta vitalicia, renta fija, monetario y una parte menor de renta variable.",
+          dominant: { label: "Caixabank", copy: "Caixabank manda sobre la personalidad del patrimonio de Natalia: más defensa, más estabilidad y menos dependencia de la bolsa.", chip: "66% del patrimonio visible" },
+          strip: [
+            { label: "Defensivo", amount: 147316.57, color: palette.defensive },
+            { label: "Liquidez / monetario", amount: 100599.33, color: palette.liquidity },
+            { label: "Renta variable", amount: 31506.61, color: palette.equity },
+            { label: "Alternativos", amount: 4657.56, color: palette.alternatives },
+            { label: "Ajustes", amount: -12617.17, color: palette.adjustments }
+          ],
+          diagnostics: [
+            { title: "Diversificación", score: 68, status: "Aceptable", color: palette.defensive, copy: "Hay varios motores distintos y no todo depende de una sola idea de mercado.", help: "Mide si el patrimonio está repartido entre varios bloques." },
+            { title: "Liquidez", score: 74, status: "Alta", color: palette.cyan, copy: "La estabilidad es buena y hay bastante capacidad de espera.", help: "Dinero a la vista o a muy corto plazo." },
+            { title: "Peso RV", score: 22, status: "Bajo", color: palette.violet, copy: "La renta variable existe, pero no manda sobre la foto total de Natalia.", help: "La parte que más suele oscilar." },
+            { title: "Concentración", score: 38, status: "Moderada", color: palette.amber, copy: "La dependencia mayor está en Caixabank como cuenta, no en una temática concreta de mercado.", help: "Demasiado peso concentrado en un solo sitio." }
+          ],
+          splitTitle: "Los dos bloques de Natalia",
+          splitCopy: "Aquí tiene más sentido separar Caixabank como columna principal del patrimonio y BBVA como capa de liquidez y monetario.",
+          splitCards: [
+            {
+              tag: "Bloque principal",
+              title: "Caixabank",
+              amount: 179703,
+              copy: "Es la parte que define el carácter del patrimonio: renta vitalicia, fondo gestionado y una estructura mucho más defensiva.",
+              metrics: [
+                { label: "Peso en Natalia", value: "66%" },
+                { label: "RV visible", value: "31.507 €" },
+                { label: "Defensivo visible", value: "147.317 €" }
+              ]
+            },
+            {
+              tag: "Bolsa estable",
+              title: "BBVA",
+              amount: 91760,
+              copy: "Aporta monetario y liquidez. Es patrimonio real y muy visible, pero no una cartera de riesgo comparable a MyInvestor.",
+              metrics: [
+                { label: "Peso en Natalia", value: "34%" },
+                { label: "Monetario", value: "53.900 €" },
+                { label: "Liquidez", value: "37.860 €" }
+              ]
+            }
+          ],
+          detailTitle: "Caixabank en detalle",
+          detailCopy: "Aquí el foco principal es Caixabank, porque es la cuenta que mejor explica cómo está construido el patrimonio de Natalia.",
+          detailRootLabel: "Caixabank visible",
+          focusDefault: {
+            title: "Caixabank",
+            copy: "Es el bloque que mejor explica la personalidad del patrimonio de Natalia: más renta fija, más seguro vitalicio y menos bolsa dominante.",
+            stats: [
+              { label: "Total visible", value: "179.703 €", copy: "Suma de cuenta, Master Patrimonio y Renta Vitalicia." },
+              { label: "Renta Vitalicia", value: "100.427 €", copy: "Es el bloque individual más grande de Natalia." },
+              { label: "RV en Master", value: "31.507 €", copy: "La parte accionaria visible queda lejos de mandar en el conjunto." }
+            ]
+          },
+          detailTree: [
+            {
+              label: "Defensivo",
+              value: 147316.57,
+              color: palette.defensive,
+              copy: "El patrimonio de Natalia se apoya sobre todo en esta parte.",
+              children: [
+                { label: "Renta Vitalicia", value: 100427.10, color: palette.annuity, copy: "El bloque patrimonial más grande y estable." },
+                { label: "Renta fija Master", value: 46889.47, color: palette.defensive, copy: "La parte defensiva visible del fondo Master Patrimonio." }
+              ]
+            },
+            {
+              label: "Renta variable",
+              value: 31506.61,
+              color: palette.equity,
+              copy: "La bolsa visible dentro de Caixabank es real, pero no domina el conjunto.",
+              children: [{ label: "RV Master", value: 31506.61, color: palette.equity, copy: "La exposición a bolsa que muestra el Master Patrimonio." }]
+            },
+            {
+              label: "Monetario / liquidez",
+              value: 8839.39,
+              color: palette.liquidity,
+              copy: "La parte más líquida o casi líquida visible dentro de Caixabank.",
+              children: [
+                { label: "Monetarios Master", value: 7223.97, color: palette.liquidity, copy: "La parte monetaria del fondo gestionado." },
+                { label: "Liquidez Caixabank", value: 1615.42, color: palette.caixa, copy: "Dinero a la vista dentro de Caixabank." }
+              ]
+            },
+            {
+              label: "Alternativos",
+              value: 4657.56,
+              color: palette.alternatives,
+              copy: "Pequeña capa alternativa dentro del Master Patrimonio.",
+              children: [{ label: "Alternativos Master", value: 4657.56, color: palette.alternatives, copy: "Tiene presencia, pero no condiciona la foto total." }]
+            }
+          ],
+          accounts: [
+            { label: "Caixabank", amount: 179702.97, color: palette.caixa },
+            { label: "BBVA", amount: 91759.94, color: palette.bbva }
+          ],
+          positionsTitle: "Bloques principales de Natalia",
+          positionsCopy: "Aquí la lectura se centra en peso patrimonial y función de cada sitio, más que en ROI visible por producto.",
+          positions: [
+            { label: "Renta Vitalicia", amount: 100427.10, sub: "Bloque estable", color: palette.annuity },
+            { label: "Master Patrimonio", amount: 77660.45, sub: "Fondo gestionado", color: palette.caixa },
+            { label: "Fondo monetario BBVA", amount: 53899.81, sub: "Muy corto plazo", color: palette.bbva },
+            { label: "Liquidez BBVA", amount: 37860.13, sub: "Caja visible", color: palette.liquidity },
+            { label: "Liquidez Caixabank", amount: 1615.42, sub: "Caja visible", color: palette.cyan }
+          ],
+          insights: [
+            { tag: "Lo más importante", title: "Natalia tiene una estructura mucho más defensiva", body: "Aquí la bolsa existe, pero no domina. El corazón del patrimonio está en el bloque conservador de Caixabank." },
+            { tag: "Qué vigilar", title: "La liquidez y el monetario ya pesan bastante", body: "Eso da mucha calma, pero conviene revisar con el tiempo si tanta prudencia es intencional o solo se ha ido acumulando." },
+            { tag: "Lectura práctica", title: "La cuenta clave es Caixabank", body: "Si quieres entender a Natalia, lo importante no es una temática concreta de mercado, sino cómo evolucionan Renta Vitalicia y Master Patrimonio." }
+          ],
+          details: [
+            { label: "Caixabank · Renta Vitalicia", account: "Caixabank", amount: 100427.10 },
+            { label: "Caixabank · Master Patrimonio", account: "Caixabank", amount: 77660.45 },
+            { label: "BBVA · fondo monetario", account: "BBVA", amount: 53899.81 },
+            { label: "BBVA · liquidez", account: "BBVA", amount: 37860.13 },
+            { label: "Caixabank · liquidez", account: "Caixabank", amount: 1615.42 }
+          ]
+        },
+        global: {
+          label: "Global",
+          total: 773134.44,
+          heroCopy: "Visto desde arriba, el patrimonio conjunto es mucho más prudente que una cartera agresiva típica: domina el monetario, la renta vitalicia y los bloques defensivos. Aun así, el riesgo de mercado no está repartido por igual.",
+          reading: "Muy estable en el conjunto, desigual por dentro",
+          readingCopy: "El total parece muy calmado. El matiz importante es que la tensión de mercado visible se concentra sobre todo en la parte invertida de Carles.",
+          dominant: { label: "BBVA", copy: "BBVA domina por tamaño porque concentra mucho monetario y liquidez. Eso hace la foto global más estable de lo que sería solo mirando las carteras invertidas.", chip: "70% del patrimonio visible" },
+          strip: [
+            { label: "Liquidez / monetario", amount: 551148.82, color: palette.liquidity },
+            { label: "Defensivo", amount: 161976.23, color: palette.defensive },
+            { label: "Renta variable", amount: 67968.98, color: palette.equity },
+            { label: "Alternativos", amount: 4657.56, color: palette.alternatives },
+            { label: "Ajustes", amount: -12617.17, color: palette.adjustments }
+          ],
+          diagnostics: [
+            { title: "Diversificación", score: 72, status: "Buena por mezcla", color: palette.defensive, copy: "El conjunto es bastante menos frágil que cualquiera de sus piezas por separado.", help: "Más bloques distintos suele significar menos dependencia de uno solo." },
+            { title: "Liquidez", score: 86, status: "Muy alta", color: palette.cyan, copy: "La foto global está muy protegida por monetario y caja, aunque eso también frena rendimiento potencial.", help: "Dinero disponible o aparcado a muy corto plazo." },
+            { title: "Peso RV", score: 18, status: "Bajo", color: palette.violet, copy: "Sobre el patrimonio total, la renta variable pesa poco. El riesgo existe, pero está localizado.", help: "La parte que más suele moverse." },
+            { title: "Concentración", score: 59, status: "Media", color: palette.amber, copy: "La concentración visible está más en grandes cuentas que en una sola temática concreta.", help: "Demasiado peso en un solo sitio o una sola idea." }
+          ],
+          splitTitle: "Las dos personalidades del patrimonio",
+          splitCopy: "La visión global gana mucho si separas el bloque más invertido de Carles del bloque más conservador y patrimonial de Natalia.",
+          splitCards: [
+            {
+              tag: "Perfil más agresivo",
+              title: "Carles",
+              amount: 501672,
+              copy: "Mucho monetario por tamaño, sí, pero el núcleo de mercado está aquí y vive sobre todo en MyInvestor.",
+              metrics: [
+                { label: "Peso en total", value: "65%" },
+                { label: "MyInvestor", value: "51.672 €" },
+                { label: "Monetario BBVA", value: "450.000 €" }
+              ]
+            },
+            {
+              tag: "Perfil más defensivo",
+              title: "Natalia",
+              amount: 271463,
+              copy: "Más apoyo en renta vitalicia, renta fija y monetario. Mucho menos dependiente de una cartera de bolsa clásica.",
+              metrics: [
+                { label: "Peso en total", value: "35%" },
+                { label: "Caixabank", value: "179.703 €" },
+                { label: "BBVA", value: "91.760 €" }
+              ]
+            }
+          ],
+          detailTitle: "Dónde vive de verdad el patrimonio",
+          detailCopy: "El radial abre el patrimonio conjunto por grandes tipos y por cuentas, para que se vea rápido qué es estructura estable y qué es riesgo de mercado.",
+          detailRootLabel: "Patrimonio visible",
+          focusDefault: {
+            title: "Patrimonio conjunto",
+            copy: "La foto completa es mucho más prudente que la suma mental de las posiciones de bolsa, porque dominan el monetario y los bloques defensivos.",
+            stats: [
+              { label: "Total visible", value: "773.134 €", copy: "Suma patrimonial actual por titulares." },
+              { label: "Liquidez / monetario", value: "71%", copy: "Es el bloque más grande con mucha diferencia." },
+              { label: "Riesgo visible", value: "MyInvestor", copy: "La bolsa y la concentración real siguen viviendo sobre todo ahí." }
+            ]
+          },
+          detailTree: [
+            {
+              label: "Liquidez / monetario",
+              value: 551148.82,
+              color: palette.liquidity,
+              copy: "Es el gran bloque que estabiliza la foto total.",
+              children: [
+                { label: "BBVA Carles", value: 450000, color: palette.bbva, copy: "El bloque más grande de todo el patrimonio conjunto." },
+                { label: "BBVA Natalia monetario", value: 53899.81, color: palette.liquidity, copy: "Monetario de muy corto plazo asignado a Natalia." },
+                { label: "BBVA Natalia liquidez", value: 37860.13, color: palette.cyan, copy: "Caja visible en BBVA." },
+                { label: "Caixabank monetarios", value: 7223.97, color: palette.caixa, copy: "Parte monetaria del Master Patrimonio." },
+                { label: "Caixabank liquidez", value: 1615.42, color: palette.caixa, copy: "Caja visible en Caixabank." },
+                { label: "MyInvestor liquidez", value: 549.49, color: palette.cyan, copy: "Caja residual de la cartera principal." }
+              ]
+            },
+            {
+              label: "Defensivo",
+              value: 161976.23,
+              color: palette.defensive,
+              copy: "La segunda gran capa del patrimonio conjunto.",
+              children: [
+                { label: "Renta Vitalicia", value: 100427.10, color: palette.annuity, copy: "Gran bloque estable dentro de Natalia." },
+                { label: "Master renta fija", value: 46889.47, color: palette.defensive, copy: "La parte defensiva del Master Patrimonio." },
+                { label: "Tercio defensivo", value: 10890.54, color: palette.defensive, copy: "La parte no-RV de Tercio." },
+                { label: "Bonos globales", value: 3769.12, color: palette.bonds, copy: "Bloque defensivo explícito de MyInvestor." }
+              ]
+            },
+            {
+              label: "Renta variable",
+              value: 67968.98,
+              color: palette.equity,
+              copy: "Pesa poco sobre el total, pero es la parte que más personalidad de mercado tiene.",
+              children: [
+                { label: "Master RV", value: 31506.61, color: palette.equity, copy: "La parte accionaria visible de Natalia." },
+                { label: "MyInvestor RV", value: 36462.37, color: palette.violet, copy: "La parte accionaria visible de Carles dentro de MyInvestor." }
+              ]
+            },
+            {
+              label: "Alternativos",
+              value: 4657.56,
+              color: palette.alternatives,
+              copy: "Pequeño bloque alternativo visible en Caixabank.",
+              children: [{ label: "Master alternativos", value: 4657.56, color: palette.alternatives, copy: "No manda en la foto total." }]
+            }
+          ],
+          accounts: [
+            { label: "BBVA", amount: 541759.94, color: palette.bbva },
+            { label: "Caixabank", amount: 179702.97, color: palette.caixa },
+            { label: "MyInvestor", amount: 51671.53, color: palette.myinvestor }
+          ],
+          positionsTitle: "Grandes bloques actuales",
+          positionsCopy: "Aquí importa más ver dónde está el dinero que intentar forzar una lectura de ROI homogénea cuando cada cuenta muestra cosas distintas.",
+          positions: [
+            { label: "Monetario BBVA Carles", amount: 450000, sub: "Pendiente", color: palette.bbva },
+            { label: "Renta Vitalicia", amount: 100427.10, sub: "Defensivo", color: palette.annuity },
+            { label: "Master Patrimonio", amount: 77660.45, sub: "Mixto gestionado", color: palette.caixa },
+            { label: "Monetario BBVA Natalia", amount: 53899.81, sub: "Muy corto plazo", color: palette.liquidity },
+            { label: "MyInvestor total", amount: 51671.53, sub: "Cartera invertida", color: palette.myinvestor },
+            { label: "Liquidez BBVA Natalia", amount: 37860.13, sub: "Caja visible", color: palette.cyan },
+            { label: "Liquidez Caixabank", amount: 1615.42, sub: "Caja visible", color: palette.teal }
+          ],
+          insights: [
+            { tag: "Lo más importante", title: "El patrimonio conjunto es mucho más prudente que la cartera de Carles", body: "Si miras todo junto, dominan monetario, renta vitalicia y defensivo. La bolsa no manda sobre el total." },
+            { tag: "Qué vigilar", title: "El riesgo real está localizado y conviene no perderlo de vista", body: "La tranquilidad del total puede ocultar dónde vive la volatilidad de verdad: en la parte invertida de MyInvestor." },
+            { tag: "Lectura práctica", title: "Hay mucha estabilidad y también mucho dinero quieto", body: "Eso puede ser perfectamente correcto, pero ya no es una pregunta de falta de liquidez sino de intención patrimonial." }
+          ],
+          details: [
+            { label: "BBVA · monetario Carles", account: "BBVA", amount: 450000 },
+            { label: "Caixabank · Renta Vitalicia", account: "Caixabank", amount: 100427.10 },
+            { label: "Caixabank · Master Patrimonio", account: "Caixabank", amount: 77660.45 },
+            { label: "BBVA · monetario Natalia", account: "BBVA", amount: 53899.81 },
+            { label: "MyInvestor · total visible", account: "MyInvestor", amount: 51671.53 },
+            { label: "BBVA · liquidez Natalia", account: "BBVA", amount: 37860.13 },
+            { label: "Caixabank · liquidez", account: "Caixabank", amount: 1615.42 }
+          ]
+        }
+      };
+
+      let currentPerson = "carles";
+      let historyIndex = history.length - 1;
+      let activeNodeKey = null;
+      let flatNodes = [];
+      let detailTotal = 0;
+
+      function round0(value) {
+        return Math.round(value);
+      }
+
+      function eur(value) {
+        return new Intl.NumberFormat("es-ES", {
+          style: "currency",
+          currency: "EUR",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(round0(value));
+      }
+
+      function pct(value) {
+        return `${Math.round(value)}%`;
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function buildSwitch() {
+        const target = document.getElementById("person-switch");
+        target.innerHTML = Object.entries(views).map(([key, view]) => `
+          <button class="${key === currentPerson ? "active" : ""}" data-person="${key}">${view.label}</button>
+        `).join("");
+        Array.from(target.querySelectorAll("button")).forEach((button) => {
+          button.onclick = () => {
+            currentPerson = button.dataset.person;
+            activeNodeKey = null;
+            renderCurrent();
+          };
+        });
+      }
+
+      function renderHero(view) {
+        document.getElementById("hero-person").textContent = view.label;
+        document.getElementById("hero-total").textContent = eur(view.total);
+        document.getElementById("hero-copy").textContent = view.heroCopy;
+        document.getElementById("hero-reading").textContent = view.reading;
+        document.getElementById("hero-reading-copy").textContent = view.readingCopy;
+        document.getElementById("hero-dominant").textContent = view.dominant.label;
+        document.getElementById("hero-dominant-copy").textContent = view.dominant.copy;
+        document.getElementById("hero-dominant-chip").textContent = view.dominant.chip;
+
+        const strip = document.getElementById("hero-strip");
+        const legend = document.getElementById("hero-strip-legend");
+        strip.innerHTML = "";
+        legend.innerHTML = "";
+        view.strip.filter((item) => item.amount > 0).forEach((item) => {
+          const pctValue = item.amount / view.total * 100;
+          const seg = document.createElement("div");
+          seg.className = "strip-segment";
+          seg.style.flexBasis = `${pctValue}%`;
+          seg.style.background = item.color;
+          strip.appendChild(seg);
+
+          const pill = document.createElement("div");
+          pill.className = "legend-pill";
+          pill.innerHTML = `<span class="dot" style="background:${item.color};"></span><span>${item.label}</span><strong>${pct(pctValue)}</strong>`;
+          legend.appendChild(pill);
+        });
+      }
+
+      function renderDiagnostics(view) {
+        document.getElementById("diagnostics-grid").innerHTML = view.diagnostics.map((item) => `
+          <article class="card span-3">
+            <div class="diag-title">
+              <h2 style="margin:0;">${item.title}</h2>
+              <span class="hint" data-tip="${item.help}">i</span>
+            </div>
+            <p class="card-copy">${item.copy}</p>
+            <div class="diag-status"><span class="dot" style="background:${item.color};"></span><strong>${item.status}</strong></div>
+            <div class="diag-track"><div class="diag-fill" style="width:${item.score}%; background:${item.color};"></div></div>
+            <div class="diag-score">${item.score}</div>
+          </article>
+        `).join("");
+      }
+
+      function renderSplit(view) {
+        document.getElementById("split-title").textContent = view.splitTitle;
+        document.getElementById("split-copy").textContent = view.splitCopy;
+        document.getElementById("split-cards").innerHTML = view.splitCards.map((item) => `
+          <article class="split-card">
+            <div class="split-top">
+              <div>
+                <div class="split-tag">${item.tag}</div>
+                <strong>${item.title}</strong>
+              </div>
+              <strong>${eur(item.amount)}</strong>
+            </div>
+            <p class="split-copy">${item.copy}</p>
+            <div class="mini-metrics">
+              ${item.metrics.map((metric) => `
+                <div class="mini-metric">
+                  <span>${metric.label}</span>
+                  <strong>${metric.value}</strong>
+                </div>
+              `).join("")}
+            </div>
+          </article>
+        `).join("");
+      }
+
+      function describeArc(cx, cy, innerR, outerR, startAngle, endAngle) {
+        const polar = (radius, angle) => {
+          const radians = (angle - 90) * Math.PI / 180;
+          return { x: cx + radius * Math.cos(radians), y: cy + radius * Math.sin(radians) };
+        };
+        const outerStart = polar(outerR, startAngle);
+        const outerEnd = polar(outerR, endAngle);
+        const innerEnd = polar(innerR, endAngle);
+        const innerStart = polar(innerR, startAngle);
+        const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+        return [
+          `M ${outerStart.x} ${outerStart.y}`,
+          `A ${outerR} ${outerR} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y}`,
+          `L ${innerEnd.x} ${innerEnd.y}`,
+          `A ${innerR} ${innerR} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y}`,
+          "Z"
+        ].join(" ");
+      }
+
+      function buildTreeNodes(view) {
+        const nodes = [];
+        let start = 0;
+        const total = view.detailTree.reduce((sum, node) => sum + node.value, 0);
+        view.detailTree.forEach((root) => {
+          const sweep = root.value / total * 360;
+          const rootStart = start;
+          const rootEnd = start + sweep;
+          nodes.push({ level: 1, key: root.label, label: root.label, value: root.value, start: rootStart, end: rootEnd, color: root.color, copy: root.copy });
+          let childStart = rootStart;
+          root.children.forEach((child) => {
+            const childSweep = child.value / root.value * sweep;
+            const childEnd = childStart + childSweep;
+            nodes.push({ level: 2, key: `${root.label}-${child.label}`, label: child.label, value: child.value, start: childStart, end: childEnd, color: child.color, copy: child.copy });
+            childStart = childEnd;
+          });
+          start = rootEnd;
+        });
+        return { nodes, total };
+      }
+
+      function renderTree(view) {
+        document.getElementById("detail-hero-title").textContent = view.detailTitle;
+        document.getElementById("detail-hero-copy").textContent = view.detailCopy;
+        document.getElementById("sunburst-label").textContent = view.detailRootLabel;
+        document.getElementById("sunburst-total").textContent = eur(view.detailTree.reduce((sum, node) => sum + node.value, 0));
+
+        const { nodes, total } = buildTreeNodes(view);
+        flatNodes = nodes;
+        detailTotal = total;
+        const svg = document.getElementById("sunburst");
+        svg.innerHTML = "";
+        const rings = { 1: [160, 230], 2: [242, 312] };
+
+        nodes.forEach((node) => {
+          const [innerR, outerR] = rings[node.level];
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", describeArc(320, 320, innerR, outerR, node.start, node.end));
+          path.setAttribute("fill", node.color);
+          path.setAttribute("class", "sunburst-path");
+          path.dataset.key = node.key;
+          path.onmouseenter = () => {
+            activeNodeKey = node.key;
+            paintFocus(view);
+          };
+          path.onclick = () => {
+            activeNodeKey = node.key;
+            paintFocus(view);
+          };
+          svg.appendChild(path);
+        });
+        paintFocus(view);
+      }
+
+      function paintFocus(view) {
+        const active = flatNodes.find((node) => node.key === activeNodeKey) || null;
+        Array.from(document.querySelectorAll(".sunburst-path")).forEach((path) => {
+          if (!active) {
+            path.classList.remove("dim", "active");
+          } else if (path.dataset.key === active.key) {
+            path.classList.add("active");
+            path.classList.remove("dim");
+          } else {
+            path.classList.add("dim");
+            path.classList.remove("active");
+          }
+        });
+
+        if (!active) {
+          document.getElementById("focus-title").textContent = view.focusDefault.title;
+          document.getElementById("focus-copy").textContent = view.focusDefault.copy;
+          document.getElementById("focus-stats").innerHTML = view.focusDefault.stats.map((item) => `
+            <div class="focus-stat">
+              <strong><span>${item.label}</span><span>${item.value}</span></strong>
+              <p>${item.copy}</p>
+            </div>
+          `).join("");
+          return;
+        }
+
+        const share = active.value / detailTotal * 100;
+        document.getElementById("focus-title").textContent = active.label;
+        document.getElementById("focus-copy").textContent = active.copy;
+        document.getElementById("focus-stats").innerHTML = `
+          <div class="focus-stat">
+            <strong><span>Peso en este bloque</span><span>${pct(share)}</span></strong>
+            <p>${eur(active.value)} visibles dentro de ${views[currentPerson].detailRootLabel.toLowerCase()}.</p>
+          </div>
+          <div class="focus-stat">
+            <strong><span>Importe</span><span>${eur(active.value)}</span></strong>
+            <p>Lectura rápida del tamaño real de este segmento.</p>
+          </div>
+        `;
+      }
+
+      function renderBars(targetId, rows, total) {
+        document.getElementById(targetId).innerHTML = rows.map((row) => {
+          const width = total > 0 ? Math.abs(row.amount) / total * 100 : 0;
+          return `
+            <div class="bar-row">
+              <div class="bar-top">
+                <strong>${row.label}</strong>
+                <span>${eur(row.amount)} · ${row.sub || pct(width)}</span>
+              </div>
+              <div class="track">
+                <div class="fill" style="width:${clamp(width, 0, 100)}%; background:${row.color};"></div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderInsights(view) {
+        document.getElementById("insight-grid").innerHTML = view.insights.map((item) => `
+          <article class="insight-card">
+            <div class="insight-tag">${item.tag}</div>
+            <strong>${item.title}</strong>
+            <p>${item.body}</p>
+          </article>
+        `).join("");
+      }
+
+      function renderDetails(view) {
+        document.getElementById("detail-grid").innerHTML = view.details.map((row) => `
+          <div class="detail-row">
+            <strong>${row.label}</strong>
+            <span>${row.account}</span>
+            <span>${eur(row.amount)}</span>
+          </div>
+        `).join("");
+      }
+
+      function renderCurrent() {
+        const view = views[currentPerson];
+        buildSwitch();
+        renderHero(view);
+        renderDiagnostics(view);
+        renderSplit(view);
+        renderTree(view);
+        renderBars("account-bars", view.accounts, view.total);
+        document.getElementById("positions-title").textContent = view.positionsTitle;
+        document.getElementById("positions-copy").textContent = view.positionsCopy;
+        renderBars("positions-bars", view.positions, view.total);
+        renderInsights(view);
+        renderDetails(view);
+      }
+
+      function renderHistory() {
+        document.getElementById("history-slider").max = history.length - 1;
+        document.getElementById("history-slider").value = historyIndex;
+        const item = history[historyIndex];
+        document.getElementById("history-total").textContent = eur(item.total);
+        document.getElementById("history-date").textContent = item.date;
+        document.getElementById("history-title").textContent = item.title;
+        document.getElementById("history-note").textContent = item.note;
+        renderBars("history-bars", item.bars, item.total);
+        renderHistoryChart();
+      }
+
+      function renderHistoryChart() {
+        const svg = document.getElementById("history-chart-svg");
+        const width = 440;
+        const height = 180;
+        const padX = 18;
+        const padY = 22;
+        const values = history.map((item) => item.total);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const span = max - min || 1;
+        const step = (width - padX * 2) / (history.length - 1);
+        const points = history.map((item, index) => {
+          const x = padX + step * index;
+          const y = height - padY - ((item.total - min) / span) * (height - padY * 2);
+          return { x, y };
+        });
+        const line = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
+        const area = `${line} L ${points.at(-1).x} ${height - padY} L ${points[0].x} ${height - padY} Z`;
+        svg.innerHTML = `
+          <defs>
+            <linearGradient id="line-gradient" x1="0%" x2="100%" y1="0%" y2="0%">
+              <stop offset="0%" stop-color="${palette.cyan}" />
+              <stop offset="100%" stop-color="${palette.violet}" />
+            </linearGradient>
+          </defs>
+          <path d="${area}" fill="rgba(154,125,255,0.10)"></path>
+          <path d="${line}" fill="none" stroke="url(#line-gradient)" stroke-width="4" stroke-linecap="round"></path>
+          ${points.map((point, index) => `<circle cx="${point.x}" cy="${point.y}" r="${index === historyIndex ? 6 : 4}" fill="${index === historyIndex ? "#4fd0f3" : "rgba(255,255,255,0.45)"}"></circle>`).join("")}
+        `;
+      }
+
+      function openDrawer(id) {
+        document.getElementById(id).classList.add("open");
+        document.getElementById("drawer-backdrop").classList.add("open");
+      }
+
+      function closeDrawers() {
+        Array.from(document.querySelectorAll(".drawer")).forEach((drawer) => drawer.classList.remove("open"));
+        document.getElementById("drawer-backdrop").classList.remove("open");
+      }
+
+      document.getElementById("open-history").onclick = () => openDrawer("history-drawer");
+      document.getElementById("open-glossary").onclick = () => openDrawer("glossary-drawer");
+      document.getElementById("drawer-backdrop").onclick = closeDrawers;
+      Array.from(document.querySelectorAll("[data-close]")).forEach((button) => {
+        button.onclick = closeDrawers;
+      });
+      document.getElementById("history-slider").oninput = (event) => {
+        historyIndex = Number(event.target.value);
+        renderHistory();
+      };
+
+      renderCurrent();
+      renderHistory();
+    </script>
+  </body>
+</html>

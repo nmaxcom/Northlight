@@ -13,6 +13,14 @@ describe('buildDeterministicCalculation', () => {
     expect(buildDeterministicCalculation('-(2+3)*4')?.value).toBe('-20');
   });
 
+  it('ignores incomplete or invalid arithmetic input without throwing', () => {
+    expect(buildDeterministicCalculation('1+')).toBeNull();
+    expect(buildDeterministicCalculation('3^')).toBeNull();
+    expect(buildDeterministicCalculation('(2+')).toBeNull();
+    expect(buildDeterministicCalculation('-')).toBeNull();
+    expect(buildDeterministicCalculation('2/0')).toBeNull();
+  });
+
   it('builds timezone conversions', () => {
     const result = buildDeterministicCalculation('2pm CET in Tokyo');
     expect(result?.title).toContain('Tokyo');

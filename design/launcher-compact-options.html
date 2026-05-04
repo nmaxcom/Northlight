@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Northlight Compact Launcher Options</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; }
+      body {
+        min-height: 100vh;
+        padding: 34px;
+        font-family: Inter, "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+        color: #f5f7fa;
+        background: #05070a;
+      }
+      .page { max-width: 1800px; margin: 0 auto; }
+      .topline {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 24px;
+        margin-bottom: 28px;
+      }
+      h1 { margin: 0; font-size: 1.5rem; letter-spacing: 0; }
+      .summary { margin: 8px 0 0; color: rgba(245, 247, 250, 0.64); line-height: 1.45; }
+      .contract {
+        color: rgba(245, 247, 250, 0.72);
+        font-size: 0.84rem;
+        text-align: right;
+        line-height: 1.45;
+      }
+      .option {
+        padding: 26px 0 34px;
+        border-top: 1px solid rgba(180, 198, 216, 0.16);
+      }
+      .optionHead {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+      h2 { margin: 0; font-size: 1.05rem; letter-spacing: 0; }
+      .note { color: rgba(245, 247, 250, 0.58); font-size: 0.88rem; }
+      .pair {
+        display: grid;
+        grid-template-columns: max-content max-content;
+        gap: 24px;
+        align-items: start;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+      .label {
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        color: rgba(245, 247, 250, 0.7);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .frame {
+        overflow: hidden;
+        border-radius: 10px;
+        border: 1px solid rgba(186, 207, 228, 0.16);
+        background: linear-gradient(180deg, rgba(21, 28, 36, 0.96), rgba(9, 13, 18, 0.98));
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+          0 18px 46px rgba(0, 0, 0, 0.38);
+      }
+      .chrome {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        color: #eef4fa;
+      }
+      .bar {
+        height: 44px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 14px;
+      }
+      .brand {
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+      .pill {
+        min-height: 24px;
+        padding: 0 9px;
+        border-radius: 7px;
+        display: inline-flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(238, 244, 250, 0.72);
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+      .search {
+        margin: 0 14px 10px;
+        height: 38px;
+        border-radius: 9px;
+        border: 1px solid rgba(205, 221, 235, 0.18);
+        background: rgba(255, 255, 255, 0.055);
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) 30px;
+        align-items: center;
+        padding: 0 8px;
+        gap: 6px;
+      }
+      .mag { color: rgba(238, 244, 250, 0.66); font-size: 1.2rem; }
+      .query {
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 0.94rem;
+        font-weight: 750;
+      }
+      .muted { color: rgba(238, 244, 250, 0.42); }
+      .body { min-height: 0; padding: 0 14px; display: grid; gap: 10px; }
+      .body.resultsWide { grid-template-columns: minmax(0, 1fr) 300px; }
+      .hintGrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 9px;
+      }
+      .hint {
+        min-height: 58px;
+        border-radius: 8px;
+        border: 1px solid rgba(190, 209, 226, 0.1);
+        background: rgba(255, 255, 255, 0.035);
+        padding: 10px;
+      }
+      .hint strong { display: block; font-size: 0.8rem; }
+      .hint span { display: block; margin-top: 5px; color: rgba(238, 244, 250, 0.48); font-size: 0.72rem; }
+      .results {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        overflow: hidden;
+      }
+      .best {
+        min-height: 82px;
+        display: grid;
+        grid-template-columns: 46px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(122, 172, 212, 0.3);
+        background: rgba(83, 124, 158, 0.22);
+        padding: 11px 12px;
+      }
+      .row {
+        min-height: 45px;
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.038);
+        padding: 6px 10px;
+      }
+      .icon {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, #6eaee8, #356fa8);
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 900;
+      }
+      .icon.app { background: linear-gradient(180deg, #8e75ff, #3848cc); }
+      .icon.file { background: linear-gradient(180deg, #f7fafc, #cbd3dc); color: #65707b; }
+      .copy { min-width: 0; }
+      .title {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 0.9rem;
+        font-weight: 780;
+      }
+      .sub {
+        margin-top: 4px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        color: rgba(238, 244, 250, 0.5);
+        font-size: 0.72rem;
+      }
+      .kind {
+        min-height: 24px;
+        padding: 0 9px;
+        border-radius: 7px;
+        display: inline-flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.065);
+        color: rgba(238, 244, 250, 0.62);
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+      .preview {
+        min-height: 0;
+        border-radius: 10px;
+        border: 1px solid rgba(190, 209, 226, 0.12);
+        background: rgba(255, 255, 255, 0.035);
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+      .previewHead {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        border-bottom: 1px solid rgba(190, 209, 226, 0.1);
+        color: rgba(238, 244, 250, 0.6);
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .previewBody {
+        min-height: 0;
+        padding: 14px;
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+      .previewArt {
+        width: 96px;
+        height: 96px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #242b35, #090b10);
+        display: grid;
+        place-items: center;
+        color: #9f83ff;
+        font-size: 2rem;
+        font-weight: 900;
+      }
+      .metaRow {
+        min-height: 30px;
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.045);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 0 10px;
+        color: rgba(238, 244, 250, 0.62);
+        font-size: 0.74rem;
+      }
+      .footer {
+        min-height: 43px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 14px 12px;
+        color: rgba(238, 244, 250, 0.52);
+        font-size: 0.74rem;
+      }
+      .keys { display: inline-flex; gap: 5px; }
+      .key {
+        min-width: 24px;
+        min-height: 22px;
+        padding: 0 6px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.075);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(238, 244, 250, 0.78);
+        font-weight: 750;
+      }
+      .a-initial { width: 760px; height: 430px; }
+      .a-results { width: 920px; height: 620px; }
+      .b-initial { width: 680px; height: 360px; }
+      .b-results { width: 860px; height: 560px; }
+      .c-initial { width: 820px; height: 300px; }
+      .c-results { width: 900px; height: 600px; }
+      .c-initial .hintGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .c-initial .hint { min-height: 48px; }
+      @media (max-width: 900px) {
+        body { padding: 20px; }
+        .topline, .optionHead { display: block; }
+        .contract { text-align: left; margin-top: 12px; }
+        .pair { grid-template-columns: minmax(0, auto); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="topline">
+        <div>
+          <h1>Northlight Compact Launcher Options</h1>
+          <p class="summary">Static sizing study for the next launcher pass. Each frame is drawn at the exact Electron content size proposed for that state.</p>
+        </div>
+        <div class="contract">Current shipped launcher: 1120x760<br />Approved option should become shared HTML + Electron dimensions.</div>
+      </section>
+
+      <section class="option">
+        <div class="optionHead">
+          <h2>Option A: Balanced Compact</h2>
+          <div class="note">Initial 760x430, results 920x620. Keeps room for hints and preview without feeling full-screen.</div>
+        </div>
+        <div class="pair">
+          <article>
+            <div class="label"><span>Fresh open</span><span>760x430</span></div>
+            <div class="frame a-initial"><div class="chrome">
+              <div class="bar"><div class="brand">Northlight</div><div class="pill">Ready</div></div>
+              <div class="search"><div class="mag">⌕</div><div class="query muted">Search apps, files, folders, settings</div><div class="mag">↵</div></div>
+              <div class="body"><div class="hintGrid">
+                <div class="hint"><strong>Apps</strong><span>Open local apps fast</span></div>
+                <div class="hint"><strong>Files</strong><span>Type names or paths</span></div>
+                <div class="hint"><strong>Actions</strong><span>Enter, reveal, copy</span></div>
+              </div></div>
+              <div class="footer"><span>Index ready</span><span class="keys"><span class="key">⌘</span><span class="key">K</span></span></div>
+            </div></div>
+          </article>
+          <article>
+            <div class="label"><span>With results</span><span>920x620</span></div>
+            <div class="frame a-results"><div class="chrome">
+              <div class="bar"><div class="brand">Northlight</div><div class="pill">102k indexed</div></div>
+              <div class="search"><div class="mag">⌕</div><div class="query">str</div><div class="mag">↵</div></div>
+              <div class="body resultsWide">
+                <div class="results">
+                  <div class="best"><div class="icon app">▶</div><div class="copy"><div class="title">Stremio.app</div><div class="sub">/Applications/Stremio.app</div></div><div class="kind">App</div></div>
+                  <div class="row"><div class="icon app">⌘</div><div class="copy"><div class="title">Keyboard Maestro.app</div><div class="sub">/Applications/Keyboard Maestro.app</div></div><div class="kind">App</div></div>
+                  <div class="row"><div class="icon">⌂</div><div class="copy"><div class="title">strace</div><div class="sub">~/.config/cheat/cheatsheets/community/strace</div></div><div class="kind">Folder</div></div>
+                  <div class="row"><div class="icon file">h</div><div class="copy"><div class="title">string_cmp.h</div><div class="sub">~/.powerlevel10k/gitstatus/src/string_cmp.h</div></div><div class="kind">File</div></div>
+                </div>
+                <aside class="preview"><div class="previewHead">Preview</div><div class="previewBody"><div class="previewArt">▶</div><div class="title">Stremio</div><div class="sub">/Applications/Stremio.app</div><div class="metaRow"><span>Type</span><strong>Application</strong></div><div class="metaRow"><span>Action</span><strong>Launch</strong></div></div></aside>
+              </div>
+              <div class="footer"><span>Enter to launch</span><span class="keys"><span class="key">⌘</span><span class="key">↵</span><span class="key">Reveal</span></span></div>
+            </div></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="option">
+        <div class="optionHead">
+          <h2>Option B: Smallest Practical</h2>
+          <div class="note">Initial 680x360, results 860x560. Most aggressive reduction; preview is tighter.</div>
+        </div>
+        <div class="pair">
+          <article>
+            <div class="label"><span>Fresh open</span><span>680x360</span></div>
+            <div class="frame b-initial"><div class="chrome">
+              <div class="bar"><div class="brand">Northlight</div><div class="pill">Ready</div></div>
+              <div class="search"><div class="mag">⌕</div><div class="query muted">Search</div><div class="mag">↵</div></div>
+              <div class="body"><div class="hintGrid">
+                <div class="hint"><strong>Apps</strong><span>Launch</span></div>
+                <div class="hint"><strong>Files</strong><span>Find</span></div>
+                <div class="hint"><strong>Math</strong><span>Convert</span></div>
+              </div></div>
+              <div class="footer"><span>Compact idle state</span><span class="keys"><span class="key">Esc</span></span></div>
+            </div></div>
+          </article>
+          <article>
+            <div class="label"><span>With results</span><span>860x560</span></div>
+            <div class="frame b-results"><div class="chrome">
+              <div class="bar"><div class="brand">Northlight</div><div class="pill">Ready</div></div>
+              <div class="search"><div class="mag">⌕</div><div class="query">str</div><div class="mag">↵</div></div>
+              <div class="body resultsWide">
+                <div class="results">
+                  <div class="best"><div class="icon app">▶</div><div class="copy"><div class="title">Stremio.app</div><div class="sub">/Applications/Stremio.app</div></div><div class="kind">App</div></div>
+                  <div class="row"><div class="icon app">⌘</div><div class="copy"><div class="title">Keyboard Maestro.app</div><div class="sub">/Applications/Keyboard Maestro.app</div></div><div class="kind">App</div></div>
+                  <div class="row"><div class="icon">⌂</div><div class="copy"><div class="title">strace</div><div class="sub">~/.config/cheat/cheatsheets/community/strace</div></div><div class="kind">Folder</div></div>
+                </div>
+                <aside class="preview"><div class="previewHead">Preview</div><div class="previewBody"><div class="previewArt">▶</div><div class="title">Stremio</div><div class="metaRow"><span>Type</span><strong>App</strong></div></div></aside>
+              </div>
+              <div class="footer"><span>Enter to launch</span><span class="keys"><span class="key">⌘</span><span class="key">↵</span></span></div>
+            </div></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="option">
+        <div class="optionHead">
+          <h2>Option C: Command Bar First</h2>
+          <div class="note">Initial 820x300, results 900x600. Shortest opening state, still wide enough for long paths.</div>
+        </div>
+        <div class="pair">
+          <article>
+            <div class="label"><span>Fresh open</span><span>820x300</span></div>
+            <div class="frame c-initial"><div class="chrome">
+              <div class="bar"><div class="brand">Northlight</div><div class="pill">Ready</div></div>
+              <div class="search"><div class="mag">⌕</div><div class="query muted">Search apps, files, settings, or type a path</div><div class="mag">↵</div></div>
+              <div class="body"><div class="hintGrid">
+                <div class="hint"><strong>Apps</strong><span>Stremio</span></div>
+                <div class="hint"><strong>Folders</strong><span>~/Downloads</span></div>
+                <div class="hint"><strong>Settings</strong><span>Wi-Fi</span></div>
+                <div class="hint"><strong>Convert</strong><span>10 usd eur</span></div>
+              </div></div>
+              <div class="footer"><span>No preview until results</span><span class="keys"><span class="key">⌘</span><span class="key">Space</span></span></div>
+            </div></div>
+          </article>
+          <article>
+            <div class="label"><span>With results</span><span>900x600</span></div>
+            <div class="frame c-results"><div class="chrome">
+              <div class="bar"><div class="brand">Northlight</div><div class="pill">102k indexed</div></div>
+              <div class="search"><div class="mag">⌕</div><div class="query">str</div><div class="mag">↵</div></div>
+              <div class="body resultsWide">
+                <div class="results">
+                  <div class="best"><div class="icon app">▶</div><div class="copy"><div class="title">Stremio.app</div><div class="sub">/Applications/Stremio.app</div></div><div class="kind">App</div></div>
+                  <div class="row"><div class="icon app">⌘</div><div class="copy"><div class="title">Keyboard Maestro.app</div><div class="sub">/Applications/Keyboard Maestro.app</div></div><div class="kind">App</div></div>
+                  <div class="row"><div class="icon">⌂</div><div class="copy"><div class="title">strace</div><div class="sub">~/.config/cheat/cheatsheets/community/strace</div></div><div class="kind">Folder</div></div>
+                  <div class="row"><div class="icon file">h</div><div class="copy"><div class="title">string_cmp.h</div><div class="sub">~/.powerlevel10k/gitstatus/src/string_cmp.h</div></div><div class="kind">File</div></div>
+                </div>
+                <aside class="preview"><div class="previewHead">Preview</div><div class="previewBody"><div class="previewArt">▶</div><div class="title">Stremio</div><div class="sub">Application preview opens only when useful.</div><div class="metaRow"><span>Bundle</span><strong>Stremio.app</strong></div></div></aside>
+              </div>
+              <div class="footer"><span>Selection stays keyboard-first</span><span class="keys"><span class="key">↑</span><span class="key">↓</span><span class="key">↵</span></span></div>
+            </div></div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

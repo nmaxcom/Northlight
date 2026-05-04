@@ -389,6 +389,11 @@ export function SettingsViewV2() {
   const insightById = new Map(scopeInsights.map((insight) => [insight.id, insight]));
   const formatMs = (value: number | null) => (typeof value === 'number' ? `${Math.round(value)} ms` : 'No data yet');
   const formatRate = (value: number) => `${Math.round(value * 100)}%`;
+  const ScopeInfoHint = ({ label, text }: { label: string; text: string }) => (
+    <span className={classes.infoHint} title={text} aria-label={`${label}: ${text}`} role="note">
+      ?
+    </span>
+  );
 
   return (
     <main className={classes.page}>
@@ -792,8 +797,13 @@ export function SettingsViewV2() {
               <section className={classes.card}>
                 <div className={classes.sectionHeader}>
                   <div>
-                    <div className={classes.cardTitle}>Search Scopes</div>
-                    <div className={classes.cardSubtitle}>Scopes feed the local catalog, narrow Spotlight coverage, and define safe fallback search roots.</div>
+                    <div className={classes.headingWithHint}>
+                      <div className={classes.cardTitle}>Search Scopes</div>
+                      <ScopeInfoHint
+                        label="Search scopes"
+                        text="Scopes feed the local catalog, narrow Spotlight coverage, and define safe fallback search roots."
+                      />
+                    </div>
                   </div>
                   <button
                     className={classes.scopeActionButton}
@@ -811,8 +821,11 @@ export function SettingsViewV2() {
                 <div className={classes.scopeHero}>
                   <div className={classes.scopeHeroCopy}>
                     <div className={classes.scopeLead}>Choose which roots Northlight hydrates and prefers.</div>
-                    <div className={classes.scopeLeadText}>
-                      Northlight now uses hybrid search: Spotlight supplies broad recall on macOS, while the local catalog improves ranking, recents, and resilience. Start narrow. Add `~/Library` when you need app support files and preferences. Add Home or `/` only when broader recall matters more than speed and result cleanliness.
+                    <div className={classes.scopeLeadHint}>
+                      <ScopeInfoHint
+                        label="Scope strategy"
+                        text="Northlight uses hybrid search: Spotlight supplies broad recall while the local catalog improves ranking and recents. Start narrow. Add ~/Library for app support files and preferences. Add Home or / only when broader recall matters more than speed and result cleanliness."
+                      />
                     </div>
                   </div>
                   <div className={classes.scopeMetrics}>
@@ -956,7 +969,13 @@ export function SettingsViewV2() {
                         </label>
                         <label className={classes.scopeToggle}>
                           <div className={classes.scopeToggleHeader}>
-                            <div className={classes.toggleLabel}>Enabled</div>
+                            <div className={classes.toggleLabelWithHint}>
+                              <span className={classes.toggleLabel}>Enabled</span>
+                              <ScopeInfoHint
+                                label="Enabled"
+                                text="Disabled scopes stay saved but are ignored by search."
+                              />
+                            </div>
                             <input
                               type="checkbox"
                               aria-label="Enabled"
@@ -972,11 +991,16 @@ export function SettingsViewV2() {
                               }}
                             />
                           </div>
-                          <div className={classes.toggleHelp}>Disabled scopes stay saved but are ignored by search.</div>
                         </label>
                         <label className={classes.scopeToggle}>
                           <div className={classes.scopeToggleHeader}>
-                            <div className={classes.toggleLabel}>Fast Path</div>
+                            <div className={classes.toggleLabelWithHint}>
+                              <span className={classes.toggleLabel}>Fast Path</span>
+                              <ScopeInfoHint
+                                label="Fast path"
+                                text="Fast paths are searched in the immediate tier, like Desktop and Applications."
+                              />
+                            </div>
                             <input
                               type="checkbox"
                               aria-label="Fast Path"
@@ -991,9 +1015,6 @@ export function SettingsViewV2() {
                                 }));
                               }}
                             />
-                          </div>
-                          <div className={classes.toggleHelp}>
-                            Fast paths are searched in the immediate tier, like Desktop and Applications.
                           </div>
                         </label>
                       </div>
@@ -1038,7 +1059,12 @@ export function SettingsViewV2() {
               {activeTab === 'scopes' ? (
               <section className={classes.card}>
                 <div className={classes.cardTitle}>Search Performance</div>
-                <div className={classes.cardSubtitle}>Recent measurements from real launcher queries on this machine.</div>
+                <div className={classes.cardSubtitleWithHint}>
+                  <ScopeInfoHint
+                    label="Search performance"
+                    text="Recent measurements from real launcher queries on this machine."
+                  />
+                </div>
                 <div className={classes.performanceGrid}>
                   <div className={classes.performanceMetric}>
                     <span className={classes.performanceLabel}>Samples</span>
@@ -1083,17 +1109,12 @@ export function SettingsViewV2() {
               {activeTab === 'scopes' ? (
               <section className={classes.card}>
                 <div className={classes.cardTitle}>Scope Guidance</div>
-                <div className={classes.cardSubtitle}>A few rules that matter when you widen hybrid search coverage.</div>
-                <ul className={classes.hintList}>
-                  <li>`Fast Path` means Northlight tries that scope on the low-latency tier before deep search finishes.</li>
-                  <li>Fast paths are optimized for immediate recall. Use them for apps, Desktop-like folders, and high-frequency workspaces.</li>
-                  <li>`~/Library` is usually the highest-value expansion if you want app support files, settings, plugins, or preferences.</li>
-                  <li>Disabled scopes stay in settings but stop feeding the local catalog and scoped fallback search until you enable them again.</li>
-                  <li>Do not promote huge or noisy trees to fast paths unless they are part of your everyday workflow.</li>
-                  <li>Larger scopes take longer to hydrate and tend to push more low-value files into results, even when Spotlight recall is available.</li>
-                  <li>Watching filesystem changes helps stale results disappear faster, but it also makes broad scope sets busier.</li>
-                  <li>The `/` scope is a power-user option. It broadens recall, but it is the slowest and noisiest choice.</li>
-                </ul>
+                <div className={classes.guidanceHintRow}>
+                  <ScopeInfoHint
+                    label="Scope guidance"
+                    text="Fast Path means Northlight tries that scope on the low-latency tier before deep search finishes. Use Fast Path for apps, Desktop-like folders, and high-frequency workspaces. ~/Library is usually the highest-value expansion for app support files and preferences. Disabled scopes stay saved but stop feeding the local catalog and scoped fallback search. Avoid promoting huge or noisy trees to Fast Path unless they are part of your everyday workflow. Larger scopes take longer to hydrate and push more low-value files into results. Watching filesystem changes helps stale results disappear faster, but broad scope sets stay busier. The / scope is the widest and slowest option."
+                  />
+                </div>
               </section>
               ) : null}
             </div>

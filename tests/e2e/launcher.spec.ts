@@ -33,6 +33,27 @@ test('shows extended deterministic calculations', async ({ page }) => {
   await expect(page.getByText('3^4 = 81').first()).toBeVisible();
 });
 
+test('does not crash on incomplete arithmetic while typing', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => {
+    pageErrors.push(error.message);
+  });
+
+  await page.goto('/');
+  const input = page.getByLabel('Launcher query');
+
+  await input.fill('1+');
+  await expect(input).toHaveValue('1+');
+
+  await input.fill('(2+');
+  await expect(input).toHaveValue('(2+');
+
+  await input.fill('3^');
+  await expect(input).toHaveValue('3^');
+
+  expect(pageErrors).toEqual([]);
+});
+
 test('shows local fixture results and keyboard action hints', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Launcher query').fill('product');

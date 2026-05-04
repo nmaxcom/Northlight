@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Quick Summarizer Settings</title>
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --panel: rgba(18, 21, 28, 0.94);
+      --panel-soft: rgba(255, 255, 255, 0.04);
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #f3f6fb;
+      --muted: #9ba7bb;
+      --blue: #1a74ff;
+      --blue-2: #005be8;
+      --danger: #ff8d8d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(26, 116, 255, 0.18), transparent 35%),
+        radial-gradient(circle at 80% 10%, rgba(26, 116, 255, 0.08), transparent 35%),
+        linear-gradient(180deg, #090b10, #0e1117 35%, #090b10);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+    .hero, .section {
+      /* background: var(--panel); */
+      /* border: 1px solid var(--line); */
+      /* border-radius: 24px; */
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+    }
+    .hero {
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #d7e5ff;
+      background: rgba(26, 116, 255, 0.16);
+      border: 1px solid rgba(26, 116, 255, 0.34);
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+    .hero-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .hero-logo {
+      width: 42px;
+      height: 30px;
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 10px 18px rgba(0, 91, 232, 0.22));
+    }
+    .hero-logo svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .hero-wordmark {
+      min-width: 0;
+    }
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.1;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .hero-meta {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .grid {
+      display: grid;
+      gap: 20px;
+    }
+    .section {
+      padding: 24px;
+    }
+    .section + .section {
+      margin-top: 24px;
+    }
+    .section h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+    .section p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .provider-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+    .provider-tab {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      min-height: 34px;
+      padding: 0 14px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: none;
+    }
+    .provider-tab.active {
+      border-color: rgba(26, 116, 255, 0.4);
+      background: linear-gradient(180deg, rgba(26, 116, 255, 0.18), rgba(255, 255, 255, 0.03));
+      box-shadow: 0 0 0 1px rgba(26, 116, 255, 0.14), 0 10px 22px rgba(0, 91, 232, 0.14);
+    }
+    .provider-stack {
+      margin-top: 16px;
+    }
+    .provider-box {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .provider-box.is-hidden {
+      display: none;
+    }
+    .provider-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .provider-copy {
+      display: grid;
+      gap: 4px;
+    }
+    .provider-box h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .provider-copy p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .subtle-btn {
+      min-height: 30px;
+      padding: 0 12px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #dfe8ff;
+      box-shadow: none;
+      font-size: 12px;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+    .field label {
+      color: #ced7e6;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .field input,
+    .field select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      background: rgba(8, 10, 15, 0.75);
+      color: var(--text);
+      padding: 0 12px;
+      font-size: 14px;
+    }
+    .split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .note {
+      border-radius: 16px;
+      border: 1px solid rgba(26, 116, 255, 0.24);
+      background: rgba(26, 116, 255, 0.08);
+      padding: 14px 16px;
+      color: #dbe7ff;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .stat {
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      padding: 14px 16px;
+    }
+    .stat strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      color: #ced7e6;
+    }
+    .stat span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      min-height: 38px;
+      padding: 0 16px;
+      background: linear-gradient(180deg, var(--blue), var(--blue-2));
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(0, 91, 232, 0.18);
+    }
+    .ghost {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      box-shadow: none;
+    }
+    .danger {
+      background: rgba(255, 141, 141, 0.12);
+      color: var(--danger);
+      box-shadow: none;
+    }
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      transform: translateY(-16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: .18s ease;
+      background: #16321f;
+      color: #91efb0;
+      border: 1px solid rgba(145, 239, 176, 0.22);
+      border-radius: 14px;
+      padding: 12px 14px;
+      z-index: 1000;
+      max-width: 420px;
+      white-space: pre-line;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .toast.error {
+      background: #351b1b;
+      color: #ffb7b7;
+      border-color: rgba(255, 183, 183, 0.18);
+    }
+    @media (max-width: 820px) {
+      .split,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Settings</div>
+      <div class="hero-brand">
+        <span class="hero-logo" aria-hidden="true">
+          <svg viewBox="0 0 28.57 20" role="img"><g><path fill="#0066ff" d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 0 14.285 0 14.285 0C14.285 0 5.35042 0 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324C0 5.35042 0 10 0 10C0 10 0 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026C5.35042 20 14.285 20 14.285 20C14.285 20 23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768C28.5701 14.6496 28.5701 10 28.5701 10C28.5701 10 28.5677 5.35042 27.9727 3.12324Z"/><path fill="#ffffff" d="M11.4253 14.2854L18.8477 10.0004L11.4253 5.71533V14.2854Z"/></g></svg>
+        </span>
+        <div class="hero-wordmark">
+          <h1>YouTube Quick Summarizer</h1>
+        </div>
+      </div>
+      <p class="sub">Everything now runs from the YouTube panel and inline summaries. Bring one API key from OpenRouter, OpenAI, Anthropic, or Google AI.</p>
+      <div class="hero-meta" id="version"></div>
+    </section>
+
+    <section class="section">
+      <h2>AI Backends</h2>
+      <p>Choose the provider the extension should use for Guide, Summary, Ask, and inline summaries. You only need one configured backend to use the extension.</p>
+      <div class="note">The extension itself is free. Model-backed features require your own provider key. OpenRouter is a good cheap default; direct OpenAI, Anthropic, or Google AI keys are also supported if you want to stay on your own account end-to-end.</div>
+      <div class="provider-tabs">
+        <button class="provider-tab active" type="button" data-backend-tab="openrouter">OpenRouter</button>
+        <button class="provider-tab" type="button" data-backend-tab="openai">OpenAI</button>
+        <button class="provider-tab" type="button" data-backend-tab="anthropic">Anthropic</button>
+        <button class="provider-tab" type="button" data-backend-tab="google">Google AI</button>
+      </div>
+      <div class="provider-stack">
+        <div class="provider-box" data-provider-pane="openrouter">
+          <div class="provider-head">
+            <div class="provider-copy">
+              <h3>OpenRouter</h3>
+              <p>Unified endpoint with broad model choice. Click this tab to make it the active backend.</p>
+            </div>
+            <button id="testOpenRouter" class="subtle-btn" type="button">Test</button>
+          </div>
+          <div class="field">
+            <label for="openRouterApiKey">API key</label>
+            <input id="openRouterApiKey" type="password" placeholder="sk-or-v1-...">
+          </div>
+          <div class="field">
+            <label for="openRouterModel">Model</label>
+            <input id="openRouterModel" type="text" placeholder="google/gemini-2.0-flash-001">
+          </div>
+        </div>
+        <div class="provider-box is-hidden" data-provider-pane="openai">
+          <div class="provider-head">
+            <div class="provider-copy">
+              <h3>OpenAI</h3>
+              <p>Direct API integration with your OpenAI account.</p>
+            </div>
+            <button id="testOpenAi" class="subtle-btn" type="button">Test</button>
+          </div>
+          <div class="field">
+            <label for="openAiApiKey">API key</label>
+            <input id="openAiApiKey" type="password" placeholder="sk-...">
+          </div>
+          <div class="field">
+            <label for="openAiModel">Model</label>
+            <input id="openAiModel" type="text" placeholder="gpt-4o-mini">
+          </div>
+        </div>
+        <div class="provider-box is-hidden" data-provider-pane="anthropic">
+          <div class="provider-head">
+            <div class="provider-copy">
+              <h3>Anthropic</h3>
+              <p>Direct Claude API integration with your Anthropic key.</p>
+            </div>
+            <button id="testAnthropic" class="subtle-btn" type="button">Test</button>
+          </div>
+          <div class="field">
+            <label for="anthropicApiKey">API key</label>
+            <input id="anthropicApiKey" type="password" placeholder="sk-ant-...">
+          </div>
+          <div class="field">
+            <label for="anthropicModel">Model</label>
+            <input id="anthropicModel" type="text" placeholder="claude-sonnet-4-20250514">
+          </div>
+        </div>
+        <div class="provider-box is-hidden" data-provider-pane="google">
+          <div class="provider-head">
+            <div class="provider-copy">
+              <h3>Google AI</h3>
+              <p>Direct Gemini API integration through Google AI Studio / Gemini API.</p>
+            </div>
+            <button id="testGoogle" class="subtle-btn" type="button">Test</button>
+          </div>
+          <div class="field">
+            <label for="googleApiKey">API key</label>
+            <input id="googleApiKey" type="password" placeholder="AIza...">
+          </div>
+          <div class="field">
+            <label for="googleModel">Model</label>
+            <input id="googleModel" type="text" placeholder="gemini-2.5-flash">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Transcript & Guide</h2>
+      <p>Keep the panel compact but configurable.</p>
+      <div class="split">
+        <div class="field">
+          <label for="captionPreference">Caption track preference</label>
+          <select id="captionPreference">
+            <option value="auto">Auto</option>
+            <option value="uploaded">Uploaded first</option>
+            <option value="ask">Always ask</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="guideDensity">Guide density</label>
+          <select id="guideDensity">
+            <option value="concise">Brief</option>
+            <option value="standard">Standard</option>
+            <option value="detailed">Detailed</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top: 16px;">
+        <label for="guideCacheMaxMb">Guide cache limit (MB)</label>
+        <input id="guideCacheMaxMb" type="number" min="1" max="4.5" step="0.5">
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Local Data</h2>
+      <p>The panel now includes history. These controls manage the local cache and exported backups.</p>
+      <div class="stats">
+        <div class="stat"><strong>Cache entries</strong><span id="cacheCount">-</span></div>
+        <div class="stat"><strong>Cache size</strong><span id="cacheSize">-</span></div>
+        <div class="stat"><strong>History</strong><span id="historyCount">-</span></div>
+      </div>
+      <div class="actions">
+        <button id="exportData">Export backup</button>
+        <button id="importData" class="ghost">Import backup</button>
+        <button id="clearCache" class="danger">Clear cache + history</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"><span id="toastMessage"></span></div>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

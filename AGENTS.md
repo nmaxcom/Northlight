@@ -28,6 +28,8 @@
 - Pair every feature spec with an explicit test plan that states unit, integration, and e2e coverage.
 - Add or update tests for parser, ranking, and provider behavior when changing those areas.
 - Use `npx playwright` for keyboard-flow and UI regressions.
+- Parser changes must cover incremental typing states, not only valid finished queries. Incomplete or malformed input must degrade safely without crashing the renderer.
+- If a change depends on Electron main-process code, native macOS integration, or filesystem-backed behavior, add at least one real integration test for that path. Browser-only or fixture-only tests are not sufficient by themselves.
 - Before committing in a dirty worktree, stage only files from the current task.
 - Make a commit for each significant completed slice that changes user-visible behavior, architecture, or persisted settings; avoid commits for tiny churn or half-finished noise.
 - Commit only files or hunks created or modified by the current task; never bundle unrelated user edits.

@@ -8387,7 +8387,7 @@
   function createTheme(theme2) {
     return theme2;
   }
-  const DEFAULT_LAUNCHER_SHORTCUT = "CommandOrControl+Shift+Space";
+  const DEFAULT_LAUNCHER_SHORTCUT = "CommandOrControl+Space";
   const TOKEN_SYMBOLS = {
     CommandOrControl: "⌘",
     Control: "⌃",
@@ -9173,11 +9173,15 @@
     quickLookEnabled: true,
     quickLookStartsOpen: true,
     maxClipboardItems: 20,
-    launcherHotkey: "CommandOrControl+Shift+Space",
+    launcherHotkey: "CommandOrControl+Space",
     launcherPosition: null
   };
   let settingsCache = defaultSettings;
   let clipboardCache = [];
+  let recentItemsCache = {
+    local: [],
+    clipboard: []
+  };
   let searchPerformanceCache = {
     samples: [],
     summary: {
@@ -9406,6 +9410,23 @@
     },
     getClipboardHistorySnapshot() {
       return clipboardCache;
+    },
+    getRecentItems() {
+      var _a;
+      if (!((_a = window.launcher) == null ? void 0 : _a.getRecentItems)) {
+        return Promise.resolve(recentItemsCache);
+      }
+      return window.launcher.getRecentItems().then((items) => {
+        recentItemsCache = items;
+        return items;
+      });
+    },
+    getRecentItemsSnapshot() {
+      return recentItemsCache;
+    },
+    setLayoutMode(mode) {
+      var _a, _b;
+      return ((_b = (_a = window.launcher) == null ? void 0 : _a.setLayoutMode) == null ? void 0 : _b.call(_a, mode)) ?? Promise.resolve();
     },
     openSettings() {
       var _a, _b;

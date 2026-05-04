@@ -8387,7 +8387,7 @@
   function createTheme(theme2) {
     return theme2;
   }
-  const DEFAULT_LAUNCHER_SHORTCUT = "CommandOrControl+Shift+Space";
+  const DEFAULT_LAUNCHER_SHORTCUT = "CommandOrControl+Space";
   const TOKEN_SYMBOLS = {
     CommandOrControl: "⌘",
     Control: "⌃",
@@ -9173,11 +9173,15 @@
     quickLookEnabled: true,
     quickLookStartsOpen: true,
     maxClipboardItems: 20,
-    launcherHotkey: "CommandOrControl+Shift+Space",
+    launcherHotkey: "CommandOrControl+Space",
     launcherPosition: null
   };
   let settingsCache = defaultSettings;
   let clipboardCache = [];
+  let recentItemsCache = {
+    local: [],
+    clipboard: []
+  };
   let searchPerformanceCache = {
     samples: [],
     summary: {
@@ -9407,6 +9411,23 @@
     getClipboardHistorySnapshot() {
       return clipboardCache;
     },
+    getRecentItems() {
+      var _a;
+      if (!((_a = window.launcher) == null ? void 0 : _a.getRecentItems)) {
+        return Promise.resolve(recentItemsCache);
+      }
+      return window.launcher.getRecentItems().then((items) => {
+        recentItemsCache = items;
+        return items;
+      });
+    },
+    getRecentItemsSnapshot() {
+      return recentItemsCache;
+    },
+    setLayoutMode(mode) {
+      var _a, _b;
+      return ((_b = (_a = window.launcher) == null ? void 0 : _a.setLayoutMode) == null ? void 0 : _b.call(_a, mode)) ?? Promise.resolve();
+    },
     openSettings() {
       var _a, _b;
       return ((_b = (_a = window.launcher) == null ? void 0 : _a.openSettings) == null ? void 0 : _b.call(_a)) ?? Promise.resolve();
@@ -9592,120 +9613,130 @@
     clearTransientCaches,
     clearVisibleSearchState
   };
-  const page = "_page_1rkwy_1";
-  const shell = "_shell_1rkwy_12";
-  const titlebar = "_titlebar_1rkwy_22";
-  const header = "_header_1rkwy_27";
-  const headerCopy = "_headerCopy_1rkwy_36";
-  const content = "_content_1rkwy_40";
-  const tabs = "_tabs_1rkwy_49";
-  const tab = "_tab_1rkwy_49";
-  const tabActive = "_tabActive_1rkwy_71";
-  const title = "_title_1rkwy_22";
-  const subtitle = "_subtitle_1rkwy_95";
-  const actions = "_actions_1rkwy_102";
-  const button = "_button_1rkwy_109";
-  const secondaryButton = "_secondaryButton_1rkwy_110";
-  const scopeActionButton = "_scopeActionButton_1rkwy_136";
-  const scopePresetButton = "_scopePresetButton_1rkwy_137";
-  const scopeComposerAdd = "_scopeComposerAdd_1rkwy_138";
-  const scopeComposerCancel = "_scopeComposerCancel_1rkwy_139";
-  const iconButton = "_iconButton_1rkwy_140";
-  const grid = "_grid_1rkwy_171";
-  const gridWithSidebar = "_gridWithSidebar_1rkwy_177";
-  const gridSingle = "_gridSingle_1rkwy_181";
-  const leftColumn = "_leftColumn_1rkwy_185";
-  const rightColumn = "_rightColumn_1rkwy_186";
-  const card = "_card_1rkwy_192";
-  const cardTitle = "_cardTitle_1rkwy_199";
-  const cardSubtitle = "_cardSubtitle_1rkwy_204";
-  const sectionHeader = "_sectionHeader_1rkwy_210";
-  const fieldGrid = "_fieldGrid_1rkwy_217";
-  const field = "_field_1rkwy_217";
-  const fieldFull = "_fieldFull_1rkwy_225";
-  const shortcutField = "_shortcutField_1rkwy_231";
-  const shortcutButton = "_shortcutButton_1rkwy_237";
-  const shortcutButtonCapturing = "_shortcutButtonCapturing_1rkwy_251";
-  const shortcutTokens = "_shortcutTokens_1rkwy_256";
-  const shortcutToken = "_shortcutToken_1rkwy_256";
-  const shortcutTokenSymbol = "_shortcutTokenSymbol_1rkwy_275";
-  const shortcutTokenLabel = "_shortcutTokenLabel_1rkwy_281";
-  const shortcutPlaceholder = "_shortcutPlaceholder_1rkwy_288";
-  const shortcutHint = "_shortcutHint_1rkwy_289";
-  const label = "_label_1rkwy_306";
-  const input = "_input_1rkwy_311";
-  const select = "_select_1rkwy_312";
-  const textarea = "_textarea_1rkwy_313";
-  const toggleRow = "_toggleRow_1rkwy_328";
-  const toggle = "_toggle_1rkwy_328";
-  const toggleText = "_toggleText_1rkwy_350";
-  const toggleLabel = "_toggleLabel_1rkwy_357";
-  const toggleHelp = "_toggleHelp_1rkwy_361";
-  const list = "_list_1rkwy_366";
-  const scopeHero = "_scopeHero_1rkwy_380";
-  const scopeHeroCopy = "_scopeHeroCopy_1rkwy_389";
-  const scopeLead = "_scopeLead_1rkwy_393";
-  const scopeLeadText = "_scopeLeadText_1rkwy_398";
-  const scopeMetrics = "_scopeMetrics_1rkwy_404";
-  const scopeMetric = "_scopeMetric_1rkwy_404";
-  const scopeMetricLabel = "_scopeMetricLabel_1rkwy_418";
-  const scopeMetricValue = "_scopeMetricValue_1rkwy_426";
-  const scopeToolbar = "_scopeToolbar_1rkwy_433";
-  const scopeToolbarLabel = "_scopeToolbarLabel_1rkwy_441";
-  const scopePresetRow = "_scopePresetRow_1rkwy_449";
-  const scopePresetButtonWarm = "_scopePresetButtonWarm_1rkwy_477";
-  const scopePresetButtonDanger = "_scopePresetButtonDanger_1rkwy_481";
-  const scopePresetButtonLabel = "_scopePresetButtonLabel_1rkwy_485";
-  const scopePresetButtonCost = "_scopePresetButtonCost_1rkwy_489";
-  const scopePresetNotes = "_scopePresetNotes_1rkwy_495";
-  const scopePresetNoteRow = "_scopePresetNoteRow_1rkwy_502";
-  const scopePresetNoteLabel = "_scopePresetNoteLabel_1rkwy_509";
-  const scopePresetNoteText = "_scopePresetNoteText_1rkwy_514";
-  const scopeComposer = "_scopeComposer_1rkwy_138";
-  const scopeComposerHeader = "_scopeComposerHeader_1rkwy_525";
-  const scopeComposerTitle = "_scopeComposerTitle_1rkwy_532";
-  const scopeComposerHint = "_scopeComposerHint_1rkwy_536";
-  const scopeComposerRow = "_scopeComposerRow_1rkwy_542";
-  const scopeFeedback = "_scopeFeedback_1rkwy_549";
-  const scopeList = "_scopeList_1rkwy_559";
-  const scopeRow = "_scopeRow_1rkwy_566";
-  const scopeCardMeta = "_scopeCardMeta_1rkwy_571";
-  const row = "_row_1rkwy_577";
-  const rowHeader = "_rowHeader_1rkwy_587";
-  const rowTitle = "_rowTitle_1rkwy_594";
-  const statusRow = "_statusRow_1rkwy_610";
-  const statusPill = "_statusPill_1rkwy_614";
-  const statusPillReady = "_statusPillReady_1rkwy_626";
-  const statusPillPending = "_statusPillPending_1rkwy_631";
-  const statusPillError = "_statusPillError_1rkwy_636";
-  const errorList = "_errorList_1rkwy_641";
-  const scopeToggle = "_scopeToggle_1rkwy_648";
-  const scopeToggleHeader = "_scopeToggleHeader_1rkwy_655";
-  const hintList = "_hintList_1rkwy_663";
-  const scopeInsightRow = "_scopeInsightRow_1rkwy_670";
-  const scopeCostPill = "_scopeCostPill_1rkwy_678";
-  const scopeCostLow = "_scopeCostLow_1rkwy_689";
-  const scopeCostMedium = "_scopeCostMedium_1rkwy_694";
-  const scopeCostHigh = "_scopeCostHigh_1rkwy_699";
-  const scopeInsightMeta = "_scopeInsightMeta_1rkwy_704";
-  const scopeInsightText = "_scopeInsightText_1rkwy_709";
-  const performanceGrid = "_performanceGrid_1rkwy_714";
-  const performanceMetric = "_performanceMetric_1rkwy_721";
-  const performanceLabel = "_performanceLabel_1rkwy_731";
-  const performanceValue = "_performanceValue_1rkwy_736";
+  const page = "_page_of7rj_3";
+  const loadingState = "_loadingState_of7rj_15";
+  const loadingCard = "_loadingCard_of7rj_21";
+  const shell = "_shell_of7rj_30";
+  const titlebar = "_titlebar_of7rj_41";
+  const header = "_header_of7rj_47";
+  const headerCopy = "_headerCopy_of7rj_58";
+  const title = "_title_of7rj_41";
+  const subtitle = "_subtitle_of7rj_69";
+  const actions = "_actions_of7rj_77";
+  const body = "_body_of7rj_85";
+  const sidebarNav = "_sidebarNav_of7rj_98";
+  const content = "_content_of7rj_108";
+  const tab = "_tab_of7rj_128";
+  const tabActive = "_tabActive_of7rj_154";
+  const button = "_button_of7rj_161";
+  const secondaryButton = "_secondaryButton_of7rj_162";
+  const scopeActionButton = "_scopeActionButton_of7rj_195";
+  const scopePresetButton = "_scopePresetButton_of7rj_196";
+  const scopeComposerAdd = "_scopeComposerAdd_of7rj_197";
+  const scopeComposerCancel = "_scopeComposerCancel_of7rj_198";
+  const iconButton = "_iconButton_of7rj_199";
+  const grid = "_grid_of7rj_241";
+  const gridWithSidebar = "_gridWithSidebar_of7rj_247";
+  const gridSingle = "_gridSingle_of7rj_251";
+  const leftColumn = "_leftColumn_of7rj_255";
+  const rightColumn = "_rightColumn_of7rj_256";
+  const card = "_card_of7rj_262";
+  const cardTitle = "_cardTitle_of7rj_270";
+  const cardSubtitle = "_cardSubtitle_of7rj_277";
+  const sectionHeader = "_sectionHeader_of7rj_284";
+  const headingWithHint = "_headingWithHint_of7rj_291";
+  const fieldGrid = "_fieldGrid_of7rj_297";
+  const field = "_field_of7rj_297";
+  const fieldFull = "_fieldFull_of7rj_305";
+  const shortcutField = "_shortcutField_of7rj_311";
+  const shortcutButton = "_shortcutButton_of7rj_317";
+  const shortcutButtonCapturing = "_shortcutButtonCapturing_of7rj_334";
+  const shortcutTokens = "_shortcutTokens_of7rj_339";
+  const shortcutToken = "_shortcutToken_of7rj_339";
+  const shortcutTokenSymbol = "_shortcutTokenSymbol_of7rj_357";
+  const shortcutTokenLabel = "_shortcutTokenLabel_of7rj_363";
+  const shortcutPlaceholder = "_shortcutPlaceholder_of7rj_370";
+  const shortcutHint = "_shortcutHint_of7rj_371";
+  const label = "_label_of7rj_388";
+  const input = "_input_of7rj_396";
+  const select = "_select_of7rj_397";
+  const textarea = "_textarea_of7rj_398";
+  const toggleRow = "_toggleRow_of7rj_427";
+  const toggle = "_toggle_of7rj_427";
+  const toggleText = "_toggleText_of7rj_452";
+  const toggleLabel = "_toggleLabel_of7rj_459";
+  const toggleHelp = "_toggleHelp_of7rj_464";
+  const scopeToggleHeader = "_scopeToggleHeader_of7rj_472";
+  const list = "_list_of7rj_520";
+  const scopeHero = "_scopeHero_of7rj_534";
+  const scopeHeroCopy = "_scopeHeroCopy_of7rj_543";
+  const scopeLead = "_scopeLead_of7rj_547";
+  const scopeLeadHint = "_scopeLeadHint_of7rj_559";
+  const scopeMetrics = "_scopeMetrics_of7rj_563";
+  const scopeMetric = "_scopeMetric_of7rj_563";
+  const scopeMetricLabel = "_scopeMetricLabel_of7rj_577";
+  const scopeMetricValue = "_scopeMetricValue_of7rj_585";
+  const scopeToolbar = "_scopeToolbar_of7rj_592";
+  const scopeToolbarLabel = "_scopeToolbarLabel_of7rj_600";
+  const scopePresetRow = "_scopePresetRow_of7rj_608";
+  const scopePresetButtonWarm = "_scopePresetButtonWarm_of7rj_639";
+  const scopePresetButtonDanger = "_scopePresetButtonDanger_of7rj_643";
+  const scopePresetButtonLabel = "_scopePresetButtonLabel_of7rj_647";
+  const scopePresetButtonCost = "_scopePresetButtonCost_of7rj_651";
+  const scopePresetNotes = "_scopePresetNotes_of7rj_657";
+  const scopePresetNoteRow = "_scopePresetNoteRow_of7rj_664";
+  const scopePresetNoteLabel = "_scopePresetNoteLabel_of7rj_671";
+  const scopePresetNoteText = "_scopePresetNoteText_of7rj_676";
+  const scopeComposer = "_scopeComposer_of7rj_197";
+  const scopeComposerHeader = "_scopeComposerHeader_of7rj_688";
+  const scopeComposerTitle = "_scopeComposerTitle_of7rj_695";
+  const scopeComposerHint = "_scopeComposerHint_of7rj_700";
+  const scopeComposerRow = "_scopeComposerRow_of7rj_706";
+  const scopeFeedback = "_scopeFeedback_of7rj_713";
+  const scopeList = "_scopeList_of7rj_723";
+  const scopeRow = "_scopeRow_of7rj_730";
+  const scopeCardMeta = "_scopeCardMeta_of7rj_735";
+  const row = "_row_of7rj_741";
+  const rowHeader = "_rowHeader_of7rj_751";
+  const rowTitle = "_rowTitle_of7rj_758";
+  const statusRow = "_statusRow_of7rj_777";
+  const statusPill = "_statusPill_of7rj_781";
+  const statusPillReady = "_statusPillReady_of7rj_793";
+  const statusPillPending = "_statusPillPending_of7rj_798";
+  const statusPillError = "_statusPillError_of7rj_803";
+  const errorList = "_errorList_of7rj_808";
+  const scopeToggle = "_scopeToggle_of7rj_472";
+  const toggleLabelWithHint = "_toggleLabelWithHint_of7rj_831";
+  const guidanceHintRow = "_guidanceHintRow_of7rj_845";
+  const cardSubtitleWithHint = "_cardSubtitleWithHint_of7rj_849";
+  const infoHint = "_infoHint_of7rj_853";
+  const scopeInsightRow = "_scopeInsightRow_of7rj_874";
+  const scopeCostPill = "_scopeCostPill_of7rj_882";
+  const scopeCostLow = "_scopeCostLow_of7rj_893";
+  const scopeCostMedium = "_scopeCostMedium_of7rj_898";
+  const scopeCostHigh = "_scopeCostHigh_of7rj_903";
+  const scopeInsightMeta = "_scopeInsightMeta_of7rj_908";
+  const scopeInsightText = "_scopeInsightText_of7rj_913";
+  const performanceGrid = "_performanceGrid_of7rj_918";
+  const performanceMetric = "_performanceMetric_of7rj_925";
+  const performanceLabel = "_performanceLabel_of7rj_935";
+  const performanceValue = "_performanceValue_of7rj_940";
   const classes = {
     page,
+    loadingState,
+    loadingCard,
     shell,
     titlebar,
     header,
     headerCopy,
-    content,
-    tabs,
-    tab,
-    tabActive,
     title,
     subtitle,
     actions,
+    body,
+    sidebarNav,
+    content,
+    tab,
+    tabActive,
     button,
     secondaryButton,
     scopeActionButton,
@@ -9722,6 +9753,7 @@
     cardTitle,
     cardSubtitle,
     sectionHeader,
+    headingWithHint,
     fieldGrid,
     field,
     fieldFull,
@@ -9743,11 +9775,12 @@
     toggleText,
     toggleLabel,
     toggleHelp,
+    scopeToggleHeader,
     list,
     scopeHero,
     scopeHeroCopy,
     scopeLead,
-    scopeLeadText,
+    scopeLeadHint,
     scopeMetrics,
     scopeMetric,
     scopeMetricLabel,
@@ -9782,8 +9815,10 @@
     statusPillError,
     errorList,
     scopeToggle,
-    scopeToggleHeader,
-    hintList,
+    toggleLabelWithHint,
+    guidanceHintRow,
+    cardSubtitleWithHint,
+    infoHint,
     scopeInsightRow,
     scopeCostPill,
     scopeCostLow,
@@ -9909,8 +9944,9 @@
       messages: Array.from(messages)
     };
   }
-  function SettingsView() {
+  function SettingsViewV2() {
     const [settings, setSettings] = reactExports.useState(null);
+    const [loadError, setLoadError] = reactExports.useState(null);
     const [searchPerformance, setSearchPerformance] = reactExports.useState(null);
     const [scopeInsights, setScopeInsights] = reactExports.useState([]);
     const [effectiveShortcut, setEffectiveShortcut] = reactExports.useState("");
@@ -9925,27 +9961,34 @@
     const newScopeInputRef = reactExports.useRef(null);
     reactExports.useEffect(() => {
       let cancelled = false;
+      const describeError = (error) => error instanceof Error ? error.message : "Unknown settings load error";
       void launcherRuntime.getSettings().then((nextSettings) => {
         if (!cancelled) {
           setSettings(cloneSettings(nextSettings));
+          setLoadError(null);
           setSaveState("Ready");
+        }
+      }).catch((error) => {
+        if (!cancelled) {
+          setLoadError(describeError(error));
+          setSaveState("Settings failed to load");
         }
       });
       void launcherRuntime.getSearchPerformance().then((nextPerformance) => {
         if (!cancelled) {
           setSearchPerformance(nextPerformance.summary);
         }
-      });
+      }).catch(() => void 0);
       void launcherRuntime.getScopeInsights().then((nextInsights) => {
         if (!cancelled) {
           setScopeInsights(nextInsights);
         }
-      });
+      }).catch(() => void 0);
       void launcherRuntime.getEffectiveShortcut().then((nextShortcut) => {
         if (!cancelled) {
           setEffectiveShortcut(nextShortcut);
         }
-      });
+      }).catch(() => void 0);
       const unsubscribe = launcherRuntime.onSettingsChanged((nextSettings) => {
         setSettings(cloneSettings(nextSettings));
         setSaveState("Updated from another window");
@@ -9971,6 +10014,12 @@
       };
     }, []);
     const validation = reactExports.useMemo(() => settings ? validate(settings) : { hasErrors: false, messages: [], aliasTriggers: /* @__PURE__ */ new Set(), snippetTriggers: /* @__PURE__ */ new Set() }, [settings]);
+    if (loadError) {
+      return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `${classes.page} ${classes.loadingState}`, role: "alert", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.loadingCard, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Settings failed to load" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.description, children: loadError })
+      ] }) });
+    }
     if (!settings) {
       return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.page, children: "Loading…" });
     }
@@ -10091,6 +10140,7 @@
     const insightById = new Map(scopeInsights.map((insight) => [insight.id, insight]));
     const formatMs = (value) => typeof value === "number" ? `${Math.round(value)} ms` : "No data yet";
     const formatRate = (value) => `${Math.round(value * 100)}%`;
+    const ScopeInfoHint = ({ label: label2, text }) => /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.infoHint, title: text, "aria-label": `${label2}: ${text}`, role: "note", children: "?" });
     return /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: classes.page, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.shell, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.titlebar, "data-settings-role": "titlebar", "aria-hidden": "true" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: classes.header, "data-settings-role": "header", children: [
@@ -10103,133 +10153,156 @@
           /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: classes.button, "data-settings-role": "primary-button", type: "button", disabled: isSaving || !hasUnsavedChanges && !validation.hasErrors, onClick: () => void save(), children: isSaving ? "Saving…" : "Save Settings" })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("nav", { className: classes.tabs, "data-settings-role": "tabs", "aria-label": "Settings sections", role: "tablist", children: [
-        ["overview", "Overview"],
-        ["content", "Aliases & Snippets"],
-        ["scopes", "Scopes & Status"]
-      ].map(([id, label2]) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          type: "button",
-          className: `${classes.tab} ${activeTab === id ? classes.tabActive : ""}`,
-          "data-settings-role": "tab",
-          role: "tab",
-          "aria-selected": activeTab === id,
-          "aria-controls": `settings-panel-${id}`,
-          onClick: () => setActiveTab(id),
-          children: label2
-        },
-        id
-      )) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.content, "data-settings-role": "content", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "div",
-        {
-          id: `settings-panel-${activeTab}`,
-          className: `${classes.grid} ${activeTab === "scopes" ? classes.gridWithSidebar : classes.gridSingle}`,
-          "data-settings-role": "panel",
-          role: "tabpanel",
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.leftColumn, children: [
-              activeTab === "overview" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Search And Ranking" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Tune app priority, preview defaults, and clipboard/snippet participation." }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleRow, children: [
-                  ["appFirstEnabled", "Prefer apps", "Boost app candidates over similarly named files."],
-                  ["previewEnabled", "Preview pane", "Keep an inline preview panel available in the launcher."],
-                  ["quickLookStartsOpen", "Preview open by default", "Open the preview pane automatically when the launcher appears."],
-                  ["clipboardHistoryEnabled", "Clipboard history", "Track recent clipboard text and expose it in search."],
-                  ["snippetsEnabled", "Snippets", "Include saved text snippets in search results."]
-                ].map(([key, label2, help]) => /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.toggle, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.toggleText, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleLabel, children: label2 }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleHelp, children: help })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "input",
-                    {
-                      type: "checkbox",
-                      checked: Boolean(settings[key]),
-                      onChange: (event) => {
-                        const checked = event.currentTarget.checked;
-                        updateSettings((current) => ({
-                          ...current,
-                          [key]: checked
-                        }));
-                      }
-                    }
-                  )
-                ] }, key)) }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.fieldGrid, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Clipboard items" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "input",
-                    {
-                      className: classes.input,
-                      type: "number",
-                      min: 5,
-                      max: 50,
-                      value: settings.maxClipboardItems,
-                      onChange: (event) => {
-                        const value = Number(event.currentTarget.value);
-                        updateSettings((current) => ({
-                          ...current,
-                          maxClipboardItems: value || current.maxClipboardItems
-                        }));
-                      }
-                    }
-                  )
-                ] }) })
-              ] }) : null,
-              activeTab === "overview" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Launcher Window" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Control the global shortcut and native utility-window behavior." }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.fieldGrid, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Launcher shortcut" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.shortcutField, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.body, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("nav", { className: classes.sidebarNav, "data-settings-role": "tabs", "aria-label": "Settings sections", role: "tablist", children: [
+          ["overview", "Overview"],
+          ["content", "Aliases & Snippets"],
+          ["scopes", "Scopes & Status"]
+        ].map(([id, label2]) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            className: `${classes.tab} ${activeTab === id ? classes.tabActive : ""}`,
+            "data-settings-role": "tab",
+            role: "tab",
+            "aria-selected": activeTab === id,
+            "aria-controls": `settings-panel-${id}`,
+            onClick: () => setActiveTab(id),
+            children: label2
+          },
+          id
+        )) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.content, "data-settings-role": "content", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            id: `settings-panel-${activeTab}`,
+            className: `${classes.grid} ${activeTab === "scopes" ? classes.gridWithSidebar : classes.gridSingle}`,
+            "data-settings-role": "panel",
+            role: "tabpanel",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.leftColumn, children: [
+                activeTab === "overview" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Search And Ranking" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Tune app priority, preview defaults, and clipboard/snippet participation." }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleRow, children: [
+                    ["appFirstEnabled", "Prefer apps", "Boost app candidates over similarly named files."],
+                    ["previewEnabled", "Preview pane", "Keep an inline preview panel available in the launcher."],
+                    ["quickLookStartsOpen", "Preview open by default", "Open the preview pane automatically when the launcher appears."],
+                    ["clipboardHistoryEnabled", "Clipboard history", "Track recent clipboard text and expose it in search."],
+                    ["snippetsEnabled", "Snippets", "Include saved text snippets in search results."]
+                  ].map(([key, label2, help]) => /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.toggle, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.toggleText, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleLabel, children: label2 }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleHelp, children: help })
+                    ] }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
+                      "input",
                       {
-                        "aria-label": "Launcher shortcut",
-                        className: `${classes.shortcutButton} ${isCapturingShortcut ? classes.shortcutButtonCapturing : ""}`,
-                        type: "button",
-                        onFocus: () => setIsCapturingShortcut(true),
-                        onBlur: () => setIsCapturingShortcut(false),
-                        onKeyDown: (event) => {
-                          if (event.key === "Tab") {
-                            return;
-                          }
-                          event.preventDefault();
-                          if (!event.metaKey && !event.ctrlKey && !event.altKey && ["Backspace", "Delete"].includes(event.key)) {
+                        type: "checkbox",
+                        checked: Boolean(settings[key]),
+                        onChange: (event) => {
+                          const checked = event.currentTarget.checked;
+                          updateSettings((current) => ({
+                            ...current,
+                            [key]: checked
+                          }));
+                        }
+                      }
+                    )
+                  ] }, key)) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.fieldGrid, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Clipboard items" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "input",
+                      {
+                        className: classes.input,
+                        type: "number",
+                        min: 5,
+                        max: 50,
+                        value: settings.maxClipboardItems,
+                        onChange: (event) => {
+                          const value = Number(event.currentTarget.value);
+                          updateSettings((current) => ({
+                            ...current,
+                            maxClipboardItems: value || current.maxClipboardItems
+                          }));
+                        }
+                      }
+                    )
+                  ] }) })
+                ] }) : null,
+                activeTab === "overview" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Launcher Window" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Control the global shortcut and native utility-window behavior." }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.fieldGrid, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Launcher shortcut" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.shortcutField, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          "aria-label": "Launcher shortcut",
+                          className: `${classes.shortcutButton} ${isCapturingShortcut ? classes.shortcutButtonCapturing : ""}`,
+                          type: "button",
+                          onFocus: () => setIsCapturingShortcut(true),
+                          onBlur: () => setIsCapturingShortcut(false),
+                          onKeyDown: (event) => {
+                            if (event.key === "Tab") {
+                              return;
+                            }
+                            event.preventDefault();
+                            if (!event.metaKey && !event.ctrlKey && !event.altKey && ["Backspace", "Delete"].includes(event.key)) {
+                              updateSettings((current) => ({
+                                ...current,
+                                launcherHotkey: ""
+                              }));
+                              setIsCapturingShortcut(false);
+                              event.currentTarget.blur();
+                              return;
+                            }
+                            if (!event.metaKey && !event.ctrlKey && !event.altKey && event.key === "Escape") {
+                              setIsCapturingShortcut(false);
+                              event.currentTarget.blur();
+                              return;
+                            }
+                            const nextShortcut = shortcutFromEvent(event);
+                            if (!nextShortcut) {
+                              return;
+                            }
                             updateSettings((current) => ({
                               ...current,
-                              launcherHotkey: ""
+                              launcherHotkey: nextShortcut
                             }));
                             setIsCapturingShortcut(false);
                             event.currentTarget.blur();
-                            return;
-                          }
-                          if (!event.metaKey && !event.ctrlKey && !event.altKey && event.key === "Escape") {
-                            setIsCapturingShortcut(false);
-                            event.currentTarget.blur();
-                            return;
-                          }
-                          const nextShortcut = shortcutFromEvent(event);
-                          if (!nextShortcut) {
-                            return;
-                          }
-                          updateSettings((current) => ({
+                          },
+                          children: isCapturingShortcut ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutPlaceholder, children: "Press a shortcut…" }) : displayTokens.length > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutTokens, "aria-hidden": "true", children: displayTokens.map((token) => /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: classes.shortcutToken, children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutTokenSymbol, children: token.symbol ?? token.label }),
+                            token.symbol ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutTokenLabel, children: token.label }) : null
+                          ] }, token.id)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutPlaceholder, children: "Disabled" })
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          className: classes.secondaryButton,
+                          type: "button",
+                          onClick: () => updateSettings((current) => ({
                             ...current,
-                            launcherHotkey: nextShortcut
-                          }));
-                          setIsCapturingShortcut(false);
-                          event.currentTarget.blur();
-                        },
-                        children: isCapturingShortcut ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutPlaceholder, children: "Press a shortcut…" }) : displayTokens.length > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutTokens, "aria-hidden": "true", children: displayTokens.map((token) => /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: classes.shortcutToken, children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutTokenSymbol, children: token.symbol ?? token.label }),
-                          token.symbol ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutTokenLabel, children: token.label }) : null
-                        ] }, token.id)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutPlaceholder, children: "Disabled" })
-                      }
-                    ),
+                            launcherHotkey: ""
+                          })),
+                          children: "Clear"
+                        }
+                      )
+                    ] }),
+                    usesSessionFallback ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutHint, children: "Using the dev-session fallback shortcut until you save a new one." }) : null
+                  ] }) })
+                ] }) : null,
+                activeTab === "content" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.sectionHeader, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Aliases" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Short triggers for paths, snippets, or direct settings access." })
+                    ] }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "button",
                       {
@@ -10237,359 +10310,17 @@
                         type: "button",
                         onClick: () => updateSettings((current) => ({
                           ...current,
-                          launcherHotkey: ""
+                          aliases: [...current.aliases, createAlias()]
                         })),
-                        children: "Clear"
+                        children: "Add Alias"
                       }
                     )
                   ] }),
-                  usesSessionFallback ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.shortcutHint, children: "Using the dev-session fallback shortcut until you save a new one." }) : null
-                ] }) })
-              ] }) : null,
-              activeTab === "content" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.sectionHeader, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Aliases" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Short triggers for paths, snippets, or direct settings access." })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "button",
-                    {
-                      className: classes.secondaryButton,
-                      type: "button",
-                      onClick: () => updateSettings((current) => ({
-                        ...current,
-                        aliases: [...current.aliases, createAlias()]
-                      })),
-                      children: "Add Alias"
-                    }
-                  )
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.list, children: settings.aliases.map((alias, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.row, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowHeader, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowTitle, children: [
-                      "Alias ",
-                      index + 1
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        className: classes.iconButton,
-                        type: "button",
-                        onClick: () => updateSettings((current) => ({
-                          ...current,
-                          aliases: current.aliases.filter((entry) => entry.id !== alias.id)
-                        })),
-                        children: "×"
-                      }
-                    )
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.fieldGrid, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Trigger" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "input",
-                        {
-                          className: classes.input,
-                          value: alias.trigger,
-                          onChange: (event) => {
-                            const value = event.currentTarget.value;
-                            updateSettings((current) => ({
-                              ...current,
-                              aliases: current.aliases.map(
-                                (entry) => entry.id === alias.id ? { ...entry, trigger: value } : entry
-                              )
-                            }));
-                          }
-                        }
-                      )
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Target type" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                        "select",
-                        {
-                          className: classes.select,
-                          value: alias.targetType,
-                          onChange: (event) => {
-                            const value = event.currentTarget.value;
-                            updateSettings((current) => ({
-                              ...current,
-                              aliases: current.aliases.map(
-                                (entry) => entry.id === alias.id ? { ...entry, targetType: value } : entry
-                              )
-                            }));
-                          },
-                          children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "path", children: "Path" }),
-                            /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "snippet", children: "Snippet" }),
-                            /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "settings", children: "Settings" })
-                          ]
-                        }
-                      )
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.fieldFull, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Target" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "input",
-                        {
-                          className: classes.input,
-                          value: alias.target,
-                          onChange: (event) => {
-                            const value = event.currentTarget.value;
-                            updateSettings((current) => ({
-                              ...current,
-                              aliases: current.aliases.map(
-                                (entry) => entry.id === alias.id ? { ...entry, target: value } : entry
-                              )
-                            }));
-                          }
-                        }
-                      )
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.fieldFull, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Note" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "input",
-                        {
-                          className: classes.input,
-                          value: alias.note ?? "",
-                          onChange: (event) => {
-                            const value = event.currentTarget.value;
-                            updateSettings((current) => ({
-                              ...current,
-                              aliases: current.aliases.map(
-                                (entry) => entry.id === alias.id ? { ...entry, note: value } : entry
-                              )
-                            }));
-                          }
-                        }
-                      )
-                    ] })
-                  ] })
-                ] }, alias.id)) })
-              ] }) : null,
-              activeTab === "content" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.sectionHeader, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Snippets" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Reusable text blocks that appear as launcher results." })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "button",
-                    {
-                      className: classes.secondaryButton,
-                      type: "button",
-                      onClick: () => updateSettings((current) => ({
-                        ...current,
-                        snippets: [...current.snippets, createSnippet()]
-                      })),
-                      children: "Add Snippet"
-                    }
-                  )
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.list, children: settings.snippets.map((snippet, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.row, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowHeader, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowTitle, children: [
-                      "Snippet ",
-                      index + 1
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        className: classes.iconButton,
-                        type: "button",
-                        onClick: () => updateSettings((current) => ({
-                          ...current,
-                          snippets: current.snippets.filter((entry) => entry.id !== snippet.id)
-                        })),
-                        children: "×"
-                      }
-                    )
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.fieldGrid, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Trigger" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "input",
-                        {
-                          className: classes.input,
-                          value: snippet.trigger,
-                          onChange: (event) => {
-                            const value = event.currentTarget.value;
-                            updateSettings((current) => ({
-                              ...current,
-                              snippets: current.snippets.map(
-                                (entry) => entry.id === snippet.id ? { ...entry, trigger: value } : entry
-                              )
-                            }));
-                          }
-                        }
-                      )
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Note" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "input",
-                        {
-                          className: classes.input,
-                          value: snippet.note ?? "",
-                          onChange: (event) => {
-                            const value = event.currentTarget.value;
-                            updateSettings((current) => ({
-                              ...current,
-                              snippets: current.snippets.map(
-                                (entry) => entry.id === snippet.id ? { ...entry, note: value } : entry
-                              )
-                            }));
-                          }
-                        }
-                      )
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.fieldFull, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Content" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "textarea",
-                        {
-                          className: classes.textarea,
-                          value: snippet.content,
-                          onChange: (event) => {
-                            const value = event.currentTarget.value;
-                            updateSettings((current) => ({
-                              ...current,
-                              snippets: current.snippets.map(
-                                (entry) => entry.id === snippet.id ? { ...entry, content: value } : entry
-                              )
-                            }));
-                          }
-                        }
-                      )
-                    ] })
-                  ] })
-                ] }, snippet.id)) })
-              ] }) : null,
-              activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.sectionHeader, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Search Scopes" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Scopes feed the local catalog, narrow Spotlight coverage, and define safe fallback search roots." })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "button",
-                    {
-                      className: classes.scopeActionButton,
-                      type: "button",
-                      onClick: () => {
-                        setIsAddingScope(true);
-                        setScopeFeedback(null);
-                        window.requestAnimationFrame(() => {
-                          var _a;
-                          return (_a = newScopeInputRef.current) == null ? void 0 : _a.focus();
-                        });
-                      },
-                      children: "Add Scope"
-                    }
-                  )
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeHero, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeHeroCopy, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeLead, children: "Choose which roots Northlight hydrates and prefers." }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeLeadText, children: "Northlight now uses hybrid search: Spotlight supplies broad recall on macOS, while the local catalog improves ranking, recents, and resilience. Start narrow. Add `~/Library` when you need app support files and preferences. Add Home or `/` only when broader recall matters more than speed and result cleanliness." })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeMetrics, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeMetric, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeMetricLabel, children: "Enabled" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeMetricValue, children: enabledScopes })
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeMetric, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeMetricLabel, children: "Watchers" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeMetricValue, children: settings.watchFsChangesEnabled ? "On" : "Off" })
-                    ] })
-                  ] })
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToolbar, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeToolbarLabel, children: "Quick Add" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopePresetRow, children: scopePresets.map((preset) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "button",
-                    {
-                      type: "button",
-                      className: `${classes.scopePresetButton} ${preset.tone === "danger" ? classes.scopePresetButtonDanger : preset.tone === "warm" ? classes.scopePresetButtonWarm : ""}`,
-                      onClick: () => addScopePath(preset.path),
-                      children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopePresetButtonLabel, children: preset.label }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopePresetButtonCost, children: preset.cost })
-                      ]
-                    },
-                    preset.id
-                  )) })
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopePresetNotes, children: scopePresets.map((preset) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopePresetNoteRow, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopePresetNoteLabel, children: preset.label }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopePresetNoteText, children: preset.note })
-                ] }, preset.id)) }),
-                isAddingScope ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeComposer, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeComposerHeader, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeComposerTitle, children: "Add Custom Scope" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeComposerHint, children: "Paste a folder path, then add it to the list. You can promote it to fast search afterward." })
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: classes.scopeComposerCancel, type: "button", onClick: () => {
-                      setIsAddingScope(false);
-                      setNewScopePath("");
-                    }, children: "Cancel" })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeComposerRow, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "input",
-                      {
-                        ref: newScopeInputRef,
-                        className: classes.input,
-                        placeholder: "/Users/you/Library",
-                        value: newScopePath,
-                        onChange: (event) => setNewScopePath(event.currentTarget.value),
-                        onKeyDown: (event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            addCustomScope();
-                          }
-                        }
-                      }
-                    ),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: classes.scopeComposerAdd, type: "button", onClick: addCustomScope, children: "Add Path" })
-                  ] })
-                ] }) : null,
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleRow, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.toggle, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.toggleText, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleLabel, children: "Watch filesystem changes" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleHelp, children: "Listen for changes in enabled scopes and invalidate stale results faster." })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "input",
-                    {
-                      type: "checkbox",
-                      checked: settings.watchFsChangesEnabled,
-                      onChange: (event) => {
-                        const checked = event.currentTarget.checked;
-                        updateSettings((current) => ({
-                          ...current,
-                          watchFsChangesEnabled: checked
-                        }));
-                      }
-                    }
-                  )
-                ] }) }),
-                scopeFeedback2 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeFeedback, children: scopeFeedback2 }) : null,
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeList, ref: scopeListRef, children: settings.scopes.map((scope, index) => {
-                  const insight = insightById.get(scope.id);
-                  const costClass = (insight == null ? void 0 : insight.cost) === "high" ? classes.scopeCostHigh : (insight == null ? void 0 : insight.cost) === "medium" ? classes.scopeCostMedium : classes.scopeCostLow;
-                  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeRow, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.list, children: settings.aliases.map((alias, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.row, children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowHeader, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowTitle, children: [
-                          "Scope ",
-                          index + 1
-                        ] }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeCardMeta, children: scope.path === "/" ? "Whole disk" : scope.path.includes("/Library") ? "Library-heavy scope" : "Custom scope" })
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowTitle, children: [
+                        "Alias ",
+                        index + 1
                       ] }),
                       /* @__PURE__ */ jsxRuntimeExports.jsx(
                         "button",
@@ -10598,36 +10329,376 @@
                           type: "button",
                           onClick: () => updateSettings((current) => ({
                             ...current,
-                            scopes: current.scopes.filter((entry) => entry.id !== scope.id)
+                            aliases: current.aliases.filter((entry) => entry.id !== alias.id)
                           })),
                           children: "×"
                         }
                       )
                     ] }),
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.fieldGrid, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.fieldFull, children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Path" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Trigger" }),
                         /* @__PURE__ */ jsxRuntimeExports.jsx(
                           "input",
                           {
-                            "data-scope-path": "true",
                             className: classes.input,
-                            value: scope.path,
+                            value: alias.trigger,
                             onChange: (event) => {
                               const value = event.currentTarget.value;
                               updateSettings((current) => ({
                                 ...current,
-                                scopes: current.scopes.map(
-                                  (entry) => entry.id === scope.id ? { ...entry, path: value } : entry
+                                aliases: current.aliases.map(
+                                  (entry) => entry.id === alias.id ? { ...entry, trigger: value } : entry
                                 )
                               }));
                             }
                           }
                         )
                       ] }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.scopeToggle, children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToggleHeader, children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleLabel, children: "Enabled" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Target type" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                          "select",
+                          {
+                            className: classes.select,
+                            value: alias.targetType,
+                            onChange: (event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                aliases: current.aliases.map(
+                                  (entry) => entry.id === alias.id ? { ...entry, targetType: value } : entry
+                                )
+                              }));
+                            },
+                            children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "path", children: "Path" }),
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "snippet", children: "Snippet" }),
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "settings", children: "Settings" })
+                            ]
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.fieldFull, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Target" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "input",
+                          {
+                            className: classes.input,
+                            value: alias.target,
+                            onChange: (event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                aliases: current.aliases.map(
+                                  (entry) => entry.id === alias.id ? { ...entry, target: value } : entry
+                                )
+                              }));
+                            }
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.fieldFull, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Note" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "input",
+                          {
+                            className: classes.input,
+                            value: alias.note ?? "",
+                            onChange: (event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                aliases: current.aliases.map(
+                                  (entry) => entry.id === alias.id ? { ...entry, note: value } : entry
+                                )
+                              }));
+                            }
+                          }
+                        )
+                      ] })
+                    ] })
+                  ] }, alias.id)) })
+                ] }) : null,
+                activeTab === "content" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.sectionHeader, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Snippets" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Reusable text blocks that appear as launcher results." })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        className: classes.secondaryButton,
+                        type: "button",
+                        onClick: () => updateSettings((current) => ({
+                          ...current,
+                          snippets: [...current.snippets, createSnippet()]
+                        })),
+                        children: "Add Snippet"
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.list, children: settings.snippets.map((snippet, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.row, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowHeader, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowTitle, children: [
+                        "Snippet ",
+                        index + 1
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          className: classes.iconButton,
+                          type: "button",
+                          onClick: () => updateSettings((current) => ({
+                            ...current,
+                            snippets: current.snippets.filter((entry) => entry.id !== snippet.id)
+                          })),
+                          children: "×"
+                        }
+                      )
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.fieldGrid, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Trigger" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "input",
+                          {
+                            className: classes.input,
+                            value: snippet.trigger,
+                            onChange: (event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                snippets: current.snippets.map(
+                                  (entry) => entry.id === snippet.id ? { ...entry, trigger: value } : entry
+                                )
+                              }));
+                            }
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.field, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Note" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "input",
+                          {
+                            className: classes.input,
+                            value: snippet.note ?? "",
+                            onChange: (event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                snippets: current.snippets.map(
+                                  (entry) => entry.id === snippet.id ? { ...entry, note: value } : entry
+                                )
+                              }));
+                            }
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.fieldFull, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Content" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "textarea",
+                          {
+                            className: classes.textarea,
+                            value: snippet.content,
+                            onChange: (event) => {
+                              const value = event.currentTarget.value;
+                              updateSettings((current) => ({
+                                ...current,
+                                snippets: current.snippets.map(
+                                  (entry) => entry.id === snippet.id ? { ...entry, content: value } : entry
+                                )
+                              }));
+                            }
+                          }
+                        )
+                      ] })
+                    ] })
+                  ] }, snippet.id)) })
+                ] }) : null,
+                activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.sectionHeader, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.headingWithHint, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Search Scopes" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        ScopeInfoHint,
+                        {
+                          label: "Search scopes",
+                          text: "Scopes feed the local catalog, narrow Spotlight coverage, and define safe fallback search roots."
+                        }
+                      )
+                    ] }) }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        className: classes.scopeActionButton,
+                        type: "button",
+                        onClick: () => {
+                          setIsAddingScope(true);
+                          setScopeFeedback(null);
+                          window.requestAnimationFrame(() => {
+                            var _a;
+                            return (_a = newScopeInputRef.current) == null ? void 0 : _a.focus();
+                          });
+                        },
+                        children: "Add Scope"
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeHero, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeHeroCopy, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeLead, children: "Choose which roots Northlight hydrates and prefers." }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeLeadHint, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        ScopeInfoHint,
+                        {
+                          label: "Scope strategy",
+                          text: "Northlight uses hybrid search: Spotlight supplies broad recall while the local catalog improves ranking and recents. Start narrow. Add ~/Library for app support files and preferences. Add Home or / only when broader recall matters more than speed and result cleanliness."
+                        }
+                      ) })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeMetrics, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeMetric, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeMetricLabel, children: "Enabled" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeMetricValue, children: enabledScopes })
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeMetric, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeMetricLabel, children: "Watchers" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeMetricValue, children: settings.watchFsChangesEnabled ? "On" : "Off" })
+                      ] })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToolbar, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeToolbarLabel, children: "Quick Add" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopePresetRow, children: scopePresets.map((preset) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        className: `${classes.scopePresetButton} ${preset.tone === "danger" ? classes.scopePresetButtonDanger : preset.tone === "warm" ? classes.scopePresetButtonWarm : ""}`,
+                        onClick: () => addScopePath(preset.path),
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopePresetButtonLabel, children: preset.label }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopePresetButtonCost, children: preset.cost })
+                        ]
+                      },
+                      preset.id
+                    )) })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopePresetNotes, children: scopePresets.map((preset) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopePresetNoteRow, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopePresetNoteLabel, children: preset.label }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopePresetNoteText, children: preset.note })
+                  ] }, preset.id)) }),
+                  isAddingScope ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeComposer, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeComposerHeader, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeComposerTitle, children: "Add Custom Scope" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeComposerHint, children: "Paste a folder path, then add it to the list. You can promote it to fast search afterward." })
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: classes.scopeComposerCancel, type: "button", onClick: () => {
+                        setIsAddingScope(false);
+                        setNewScopePath("");
+                      }, children: "Cancel" })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeComposerRow, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "input",
+                        {
+                          ref: newScopeInputRef,
+                          className: classes.input,
+                          placeholder: "/Users/you/Library",
+                          value: newScopePath,
+                          onChange: (event) => setNewScopePath(event.currentTarget.value),
+                          onKeyDown: (event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              addCustomScope();
+                            }
+                          }
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: classes.scopeComposerAdd, type: "button", onClick: addCustomScope, children: "Add Path" })
+                    ] })
+                  ] }) : null,
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleRow, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.toggle, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.toggleText, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleLabel, children: "Watch filesystem changes" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleHelp, children: "Listen for changes in enabled scopes and invalidate stale results faster." })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "input",
+                      {
+                        type: "checkbox",
+                        checked: settings.watchFsChangesEnabled,
+                        onChange: (event) => {
+                          const checked = event.currentTarget.checked;
+                          updateSettings((current) => ({
+                            ...current,
+                            watchFsChangesEnabled: checked
+                          }));
+                        }
+                      }
+                    )
+                  ] }) }),
+                  scopeFeedback2 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeFeedback, children: scopeFeedback2 }) : null,
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeList, ref: scopeListRef, children: settings.scopes.map((scope, index) => {
+                    const insight = insightById.get(scope.id);
+                    const costClass = (insight == null ? void 0 : insight.cost) === "high" ? classes.scopeCostHigh : (insight == null ? void 0 : insight.cost) === "medium" ? classes.scopeCostMedium : classes.scopeCostLow;
+                    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeRow, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowHeader, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rowTitle, children: [
+                            "Scope ",
+                            index + 1
+                          ] }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.scopeCardMeta, children: scope.path === "/" ? "Whole disk" : scope.path.includes("/Library") ? "Library-heavy scope" : "Custom scope" })
+                        ] }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "button",
+                          {
+                            className: classes.iconButton,
+                            type: "button",
+                            onClick: () => updateSettings((current) => ({
+                              ...current,
+                              scopes: current.scopes.filter((entry) => entry.id !== scope.id)
+                            })),
+                            children: "×"
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.fieldGrid, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.fieldFull, children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.label, children: "Path" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            "input",
+                            {
+                              "data-scope-path": "true",
+                              className: classes.input,
+                              value: scope.path,
+                              onChange: (event) => {
+                                const value = event.currentTarget.value;
+                                updateSettings((current) => ({
+                                  ...current,
+                                  scopes: current.scopes.map(
+                                    (entry) => entry.id === scope.id ? { ...entry, path: value } : entry
+                                  )
+                                }));
+                              }
+                            }
+                          )
+                        ] }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: classes.scopeToggle, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToggleHeader, children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.toggleLabelWithHint, children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.toggleLabel, children: "Enabled" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              ScopeInfoHint,
+                              {
+                                label: "Enabled",
+                                text: "Disabled scopes stay saved but are ignored by search."
+                              }
+                            )
+                          ] }),
                           /* @__PURE__ */ jsxRuntimeExports.jsx(
                             "input",
                             {
@@ -10645,12 +10716,18 @@
                               }
                             }
                           )
-                        ] }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleHelp, children: "Disabled scopes stay saved but are ignored by search." })
-                      ] }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: classes.scopeToggle, children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToggleHeader, children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleLabel, children: "Fast Path" }),
+                        ] }) }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: classes.scopeToggle, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeToggleHeader, children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.toggleLabelWithHint, children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.toggleLabel, children: "Fast Path" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              ScopeInfoHint,
+                              {
+                                label: "Fast path",
+                                text: "Fast paths are searched in the immediate tier, like Desktop and Applications."
+                              }
+                            )
+                          ] }),
                           /* @__PURE__ */ jsxRuntimeExports.jsx(
                             "input",
                             {
@@ -10668,89 +10745,90 @@
                               }
                             }
                           )
-                        ] }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.toggleHelp, children: "Fast paths are searched in the immediate tier, like Desktop and Applications." })
-                      ] })
-                    ] }),
-                    insight ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeInsightRow, children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `${classes.scopeCostPill} ${costClass}`, children: insight.cost.toUpperCase() }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: classes.scopeInsightMeta, children: [
-                        insight.estimatedItems.toLocaleString(),
-                        " indexed items"
+                        ] }) })
                       ] }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeInsightText, children: insight.recommendation })
-                    ] }) : null
-                  ] }, scope.id);
-                }) })
-              ] }) : null
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rightColumn, children: [
-              activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Status" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Read-only state for this settings session." }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.statusRow, children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `${classes.statusPill} ${statusTone === "ready" ? classes.statusPillReady : statusTone === "error" ? classes.statusPillError : classes.statusPillPending}`, children: saveState }) }),
-                validation.hasErrors ? /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: classes.errorList, children: validation.messages.map((message) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: message }, message)) }) : null
-              ] }) : null,
-              activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Search Performance" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Recent measurements from real launcher queries on this machine." }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceGrid, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Samples" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: (searchPerformance == null ? void 0 : searchPerformance.sampleCount) ?? 0 })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Hot Avg" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.hotAverageMs) ?? null) })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Hot P95" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.hotP95Ms) ?? null) })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Deep Avg" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.deepAverageMs) ?? null) })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Deep P95" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.deepP95Ms) ?? null) })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "First Visible" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.firstVisibleAverageMs) ?? null) })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "First Useful" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.firstUsefulAverageMs) ?? null) })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Top Replacements" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatRate((searchPerformance == null ? void 0 : searchPerformance.topReplacementRate) ?? 0) })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Clipboard Flashes" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatRate((searchPerformance == null ? void 0 : searchPerformance.clipboardFirstFlashRate) ?? 0) })
+                      insight ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.scopeInsightRow, children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `${classes.scopeCostPill} ${costClass}`, children: insight.cost.toUpperCase() }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: classes.scopeInsightMeta, children: [
+                          insight.estimatedItems.toLocaleString(),
+                          " indexed items"
+                        ] }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.scopeInsightText, children: insight.recommendation })
+                      ] }) : null
+                    ] }, scope.id);
+                  }) })
+                ] }) : null
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.rightColumn, children: [
+                activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Status" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "Read-only state for this settings session." }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.statusRow, children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `${classes.statusPill} ${statusTone === "ready" ? classes.statusPillReady : statusTone === "error" ? classes.statusPillError : classes.statusPillPending}`, children: saveState }) }),
+                  validation.hasErrors ? /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: classes.errorList, children: validation.messages.map((message) => /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: message }, message)) }) : null
+                ] }) : null,
+                activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Search Performance" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitleWithHint, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    ScopeInfoHint,
+                    {
+                      label: "Search performance",
+                      text: "Recent measurements from real launcher queries on this machine."
+                    }
+                  ) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceGrid, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Samples" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: (searchPerformance == null ? void 0 : searchPerformance.sampleCount) ?? 0 })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Hot Avg" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.hotAverageMs) ?? null) })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Hot P95" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.hotP95Ms) ?? null) })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Deep Avg" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.deepAverageMs) ?? null) })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Deep P95" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.deepP95Ms) ?? null) })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "First Visible" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.firstVisibleAverageMs) ?? null) })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "First Useful" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatMs((searchPerformance == null ? void 0 : searchPerformance.firstUsefulAverageMs) ?? null) })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Top Replacements" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatRate((searchPerformance == null ? void 0 : searchPerformance.topReplacementRate) ?? 0) })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: classes.performanceMetric, children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceLabel, children: "Clipboard Flashes" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: classes.performanceValue, children: formatRate((searchPerformance == null ? void 0 : searchPerformance.clipboardFirstFlashRate) ?? 0) })
+                    ] })
                   ] })
-                ] })
-              ] }) : null,
-              activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Scope Guidance" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardSubtitle, children: "A few rules that matter when you widen hybrid search coverage." }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("ul", { className: classes.hintList, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "`Fast Path` means Northlight tries that scope on the low-latency tier before deep search finishes." }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Fast paths are optimized for immediate recall. Use them for apps, Desktop-like folders, and high-frequency workspaces." }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "`~/Library` is usually the highest-value expansion if you want app support files, settings, plugins, or preferences." }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Disabled scopes stay in settings but stop feeding the local catalog and scoped fallback search until you enable them again." }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Do not promote huge or noisy trees to fast paths unless they are part of your everyday workflow." }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Larger scopes take longer to hydrate and tend to push more low-value files into results, even when Spotlight recall is available." }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "Watching filesystem changes helps stale results disappear faster, but it also makes broad scope sets busier." }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("li", { children: "The `/` scope is a power-user option. It broadens recall, but it is the slowest and noisiest choice." })
-                ] })
-              ] }) : null
-            ] })
-          ]
-        }
-      ) })
+                ] }) : null,
+                activeTab === "scopes" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: classes.card, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.cardTitle, children: "Scope Guidance" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: classes.guidanceHintRow, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    ScopeInfoHint,
+                    {
+                      label: "Scope guidance",
+                      text: "Fast Path means Northlight tries that scope on the low-latency tier before deep search finishes. Use Fast Path for apps, Desktop-like folders, and high-frequency workspaces. ~/Library is usually the highest-value expansion for app support files and preferences. Disabled scopes stay saved but stop feeding the local catalog and scoped fallback search. Avoid promoting huge or noisy trees to Fast Path unless they are part of your everyday workflow. Larger scopes take longer to hydrate and push more low-value files into results. Watching filesystem changes helps stale results disappear faster, but broad scope sets stay busier. The / scope is the widest and slowest option."
+                    }
+                  ) })
+                ] }) : null
+              ] })
+            ]
+          }
+        ) })
+      ] })
     ] }) });
   }
   const theme = createTheme({
@@ -10784,7 +10862,7 @@
   });
   document.body.dataset.nativeShell = "true";
   ReactDOM.createRoot(document.getElementById("root")).render(
-    /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(MantineProvider, { theme, defaultColorScheme: "dark", children: /* @__PURE__ */ jsxRuntimeExports.jsx(SettingsView, {}) }) })
+    /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(MantineProvider, { theme, defaultColorScheme: "dark", children: /* @__PURE__ */ jsxRuntimeExports.jsx(SettingsViewV2, {}) }) })
   );
 })();
 //# sourceMappingURL=settings-current-view.js.map

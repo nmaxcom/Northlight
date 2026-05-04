@@ -451,61 +451,65 @@ function evaluateArithmeticExpression(query: string) {
     return null;
   }
 
-  const values: number[] = [];
-  const operators: Array<ArithmeticOperator | '('> = [];
+  try {
+    const values: number[] = [];
+    const operators: Array<ArithmeticOperator | '('> = [];
 
-  for (const token of tokens) {
-    if (token.kind === 'number') {
-      values.push(token.value);
-      continue;
-    }
+    for (const token of tokens) {
+      if (token.kind === 'number') {
+        values.push(token.value);
+        continue;
+      }
 
-    if (token.kind === 'left-paren') {
-      operators.push('(');
-      continue;
-    }
+      if (token.kind === 'left-paren') {
+        operators.push('(');
+        continue;
+      }
 
-    if (token.kind === 'right-paren') {
+      if (token.kind === 'right-paren') {
+        while (operators.length > 0 && operators[operators.length - 1] !== '(') {
+          applyArithmeticOperator(values, operators.pop() as ArithmeticOperator);
+        }
+
+        if (operators.pop() !== '(') {
+          return null;
+        }
+        continue;
+      }
+
       while (operators.length > 0 && operators[operators.length - 1] !== '(') {
+        const previous = operators[operators.length - 1] as ArithmeticOperator;
+        const shouldPop = arithmeticRightAssociative(token.value)
+          ? arithmeticPrecedence(previous) > arithmeticPrecedence(token.value)
+          : arithmeticPrecedence(previous) >= arithmeticPrecedence(token.value);
+
+        if (!shouldPop) {
+          break;
+        }
+
         applyArithmeticOperator(values, operators.pop() as ArithmeticOperator);
       }
 
-      if (operators.pop() !== '(') {
+      operators.push(token.value);
+    }
+
+    while (operators.length > 0) {
+      const operator = operators.pop();
+      if (operator === '(' || operator === undefined) {
         return null;
       }
-      continue;
+
+      applyArithmeticOperator(values, operator);
     }
 
-    while (operators.length > 0 && operators[operators.length - 1] !== '(') {
-      const previous = operators[operators.length - 1] as ArithmeticOperator;
-      const shouldPop = arithmeticRightAssociative(token.value)
-        ? arithmeticPrecedence(previous) > arithmeticPrecedence(token.value)
-        : arithmeticPrecedence(previous) >= arithmeticPrecedence(token.value);
-
-      if (!shouldPop) {
-        break;
-      }
-
-      applyArithmeticOperator(values, operators.pop() as ArithmeticOperator);
-    }
-
-    operators.push(token.value);
-  }
-
-  while (operators.length > 0) {
-    const operator = operators.pop();
-    if (operator === '(' || operator === undefined) {
+    if (values.length !== 1 || !Number.isFinite(values[0])) {
       return null;
     }
 
-    applyArithmeticOperator(values, operator);
-  }
-
-  if (values.length !== 1 || !Number.isFinite(values[0])) {
+    return formatNumber(values[0]);
+  } catch {
     return null;
   }
-
-  return formatNumber(values[0]);
 }
 
 function buildResult(builder: Builder, score = 160): LauncherResult {

@@ -288,6 +288,12 @@
   gap: 14px;
 }
 
+.headingWithHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .fieldGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -548,6 +554,10 @@
   color: rgba(232, 237, 244, 0.55);
   line-height: 1.5;
   font-size: 0.8125rem;
+}
+
+.scopeLeadHint {
+  margin-top: 8px;
 }
 
 .scopeMetrics {
@@ -818,12 +828,47 @@
   min-height: 28px;
 }
 
+.toggleLabelWithHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .hintList {
   margin: 12px 0 0;
   padding-left: 18px;
   color: rgba(232, 237, 244, 0.62);
   line-height: 1.5;
   font-size: 0.8125rem;
+}
+
+.guidanceHintRow {
+  margin-top: 10px;
+}
+
+.cardSubtitleWithHint {
+  margin-top: 6px;
+}
+
+.infoHint {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(232, 237, 244, 0.24);
+  color: rgba(232, 237, 244, 0.72);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+}
+
+.infoHint:hover {
+  border-color: rgba(232, 237, 244, 0.4);
+  color: #f0f4f8;
 }
 
 .scopeInsightRow {
